@@ -1,32 +1,80 @@
-import { Scene, GameObjects } from 'phaser';
+import { Scene } from 'phaser';
+import { GameState } from '../systems/GameState';
 
-export class MainMenu extends Scene
-{
-    background: GameObjects.Image;
-    logo: GameObjects.Image;
-    title: GameObjects.Text;
-
-    constructor ()
-    {
+export class MainMenu extends Scene {
+    constructor() {
         super('MainMenu');
     }
 
-    create ()
-    {
-        this.background = this.add.image(512, 384, 'background');
+    create() {
+        const { width, height } = this.scale;
 
-        this.logo = this.add.image(512, 300, 'logo');
+        this.cameras.main.setBackgroundColor(0x000000);
 
-        this.title = this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setOrigin(0.5);
+        // Starfield background
+        const gfx = this.add.graphics();
+        for (let i = 0; i < 150; i++) {
+            const x = Phaser.Math.Between(0, width);
+            const y = Phaser.Math.Between(0, height);
+            const brightness = Phaser.Math.FloatBetween(0.2, 0.8);
+            gfx.fillStyle(Phaser.Display.Color.GetColor(
+                Math.floor(255 * brightness),
+                Math.floor(255 * brightness),
+                Math.floor(255 * brightness)
+            ), 1);
+            gfx.fillCircle(x, y, Phaser.Math.FloatBetween(0.5, 1.5));
+        }
 
+        // Title
+        const title = this.add.text(width * 0.5, height * 0.35, 'Lost in Space', {
+            fontFamily: 'Georgia, serif',
+            fontSize: '52px',
+            color: '#888888',
+        }).setOrigin(0.5).setAlpha(0);
+
+        // Subtitle
+        const subtitle = this.add.text(width * 0.5, height * 0.45, 'A game about being alone', {
+            fontFamily: 'Georgia, serif',
+            fontSize: '18px',
+            color: '#555555',
+        }).setOrigin(0.5).setAlpha(0);
+
+        // Start prompt
+        const prompt = this.add.text(width * 0.5, height * 0.65, 'Click to begin', {
+            fontFamily: 'Georgia, serif',
+            fontSize: '16px',
+            color: '#444444',
+        }).setOrigin(0.5).setAlpha(0);
+
+        // Fade in sequence
+        this.tweens.add({ targets: title, alpha: 1, duration: 2000, ease: 'Power2' });
+        this.tweens.add({ targets: subtitle, alpha: 1, duration: 2000, delay: 800, ease: 'Power2' });
+        this.tweens.add({
+            targets: prompt,
+            alpha: 0.7,
+            duration: 1500,
+            delay: 2000,
+            ease: 'Power2',
+            onComplete: () => {
+                // Pulse the prompt
+                this.tweens.add({
+                    targets: prompt,
+                    alpha: 0.3,
+                    duration: 1200,
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut',
+                });
+            },
+        });
+
+        // Grayscale
+        this.cameras.main.postFX.addColorMatrix().grayscale(1);
+
+        // Click to start
         this.input.once('pointerdown', () => {
-
-            this.scene.start('Game');
-
+            GameState.init(this);
+            this.scene.start('DayIntro');
         });
     }
 }
