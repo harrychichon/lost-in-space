@@ -13,6 +13,10 @@ const RESOURCE_COLORS: Record<string, number> = {
     fuel: 0xaa8844,
     parts: 0x888888,
     unique: 0xcc88cc,
+    rubber_ball: 0xcc5544,
+    squeaky_bone: 0xddcc88,
+    chew_rope: 0xaa7755,
+    cozy_blanket: 0x7788aa,
     voidbloom: 0x663366,
     sweetmoss: 0x55aa77,
     starspice: 0xbbaa44,
@@ -23,10 +27,22 @@ const ITEM_INFO: Record<string, { name: string; desc: string; resource?: Resourc
     food:    { name: 'Space Fruit',  desc: 'Edible. Bland, but nutritious.',                         resource: 'food',   gain: 10 },
     fuel:    { name: 'Fuel Cell',    desc: 'Concentrated fuel deposit. Keeps the engines running.',   resource: 'fuel',   gain: 10 },
     parts:   { name: 'Scrap Metal',  desc: 'Salvageable parts. Useful for repairs.',                  resource: 'parts',  gain: 10 },
-    // Unique items — locked by default, unlockable via companion hints
+    // Dog toys — locked by default, unlocked when dog is found
     rubber_ball: {
         name: 'Old Rubber Ball',
         desc: 'A chewed-up rubber ball. Useless.',
+    },
+    squeaky_bone: {
+        name: 'Squeaky Bone',
+        desc: 'A plastic bone. It squeaks when you squeeze it.\nWho would want this?',
+    },
+    chew_rope: {
+        name: 'Knotted Rope',
+        desc: 'A thick rope tied in knots. Just taking up space.',
+    },
+    cozy_blanket: {
+        name: 'Tattered Blanket',
+        desc: 'A small, worn blanket. Too small for a person.',
     },
     // Exotic plants — locked until human companion
     voidbloom: {
@@ -284,8 +300,9 @@ export class Planet extends Scene {
         }
 
         // Special unique item handling
-        if (pickup.item.uniqueId === 'rubber_ball') {
-            GameState.update(this, { dogHasToy: true });
+        const DOG_TOYS = ['rubber_ball', 'squeaky_bone', 'chew_rope', 'cozy_blanket'];
+        if (DOG_TOYS.includes(pickup.item.uniqueId ?? '')) {
+            GameState.collectDogToy(this, pickup.item.uniqueId!);
         }
         if (['voidbloom', 'sweetmoss', 'starspice'].includes(pickup.item.uniqueId ?? '')) {
             GameState.collectExoticPlant(this, pickup.item.uniqueId!);

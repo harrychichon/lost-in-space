@@ -45,11 +45,17 @@ export interface GameStateData {
     colorSaturation: number;
     chores: Chores;
     planets: PlanetData[];
-    dogHasToy: boolean; // tracks whether the dog's toy has been collected
+    collectedDogToys: string[]; // uniqueIds of collected dog toys
     collectedExoticPlants: string[]; // uniqueIds of collected exotic plants
 }
 
-const EXOTIC_PLANT_IDS = ['voidbloom', 'sweetmoss', 'starspice'];
+const EXOTIC_PLANT_IDS = ["voidbloom", "sweetmoss", "starspice"];
+const DOG_TOY_IDS = [
+    "rubber_ball",
+    "squeaky_bone",
+    "chew_rope",
+    "cozy_blanket",
+];
 
 const PLANET_NAMES = [
     "Kara-7",
@@ -84,7 +90,7 @@ const DEFAULT_STATE: GameStateData = {
     colorSaturation: 0,
     chores: { kitchen: false, greenhouse: false, engine: false, comms: false },
     planets: [],
-    dogHasToy: false,
+    collectedDogToys: [],
     collectedExoticPlants: [],
 };
 
@@ -102,6 +108,7 @@ export class GameState {
             chores: { ...DEFAULT_STATE.chores },
             companionList: [],
             planets: [],
+            collectedDogToys: [],
             collectedExoticPlants: [],
         });
     }
@@ -173,12 +180,12 @@ export class GameState {
 
     static isCompanionEventDay(scene: Phaser.Scene): boolean {
         const state = GameState.get(scene);
-        return state.currentDay === 7 && state.companions === 0;
+        return state.currentDay === 5;
     }
 
     static isRescueEventReady(scene: Phaser.Scene): boolean {
         const state = GameState.get(scene);
-        return state.currentDay >= 11 && state.companions === 1 && !GameState.hasCompanion(scene, 'human');
+        return state.currentDay >= 9 && !GameState.hasCompanion(scene, "human");
     }
 
     static getSaturation(scene: Phaser.Scene): number {
@@ -201,6 +208,21 @@ export class GameState {
         return state.companionList.some((c) => c.id === id);
     }
 
+    static unlockDogToys(scene: Phaser.Scene): void {
+        for (const id of DOG_TOY_IDS) {
+            GameState.unlockPlanetItem(scene, id);
+        }
+    }
+
+    static collectDogToy(scene: Phaser.Scene, uniqueId: string): void {
+        const state = GameState.get(scene);
+        if (!state.collectedDogToys.includes(uniqueId)) {
+            GameState.update(scene, {
+                collectedDogToys: [...state.collectedDogToys, uniqueId],
+            });
+        }
+    }
+
     static unlockExoticPlants(scene: Phaser.Scene): void {
         for (const id of EXOTIC_PLANT_IDS) {
             GameState.unlockPlanetItem(scene, id);
@@ -211,7 +233,10 @@ export class GameState {
         const state = GameState.get(scene);
         if (!state.collectedExoticPlants.includes(uniqueId)) {
             GameState.update(scene, {
-                collectedExoticPlants: [...state.collectedExoticPlants, uniqueId],
+                collectedExoticPlants: [
+                    ...state.collectedExoticPlants,
+                    uniqueId,
+                ],
             });
         }
     }
@@ -263,7 +288,7 @@ export class GameState {
             });
         }
 
-        // First planet always gets the dog toy (locked until dog is found)
+        // First planet always gets the rubber ball; others get a random remaining dog toy
         if (isFirstPlanet) {
             items.push({
                 type: "unique",
@@ -272,15 +297,54 @@ export class GameState {
                 collected: false,
                 locked: true,
             });
+        } else {
+            const usedToys = new Set(
+                state.planets.flatMap((p) =>
+                    p.items
+                        .filter(
+                            (i) =>
+                                i.uniqueId && DOG_TOY_IDS.includes(i.uniqueId),
+                        )
+                        .map((i) => i.uniqueId),
+                ),
+            );
+            // rubber_ball is always on planet 1
+            usedToys.add("rubber_ball");
+            const availableToys = DOG_TOY_IDS.filter((id) => !usedToys.has(id));
+            if (availableToys.length > 0) {
+                const toyId =
+                    availableToys[
+                        Math.floor(Math.random() * availableToys.length)
+                    ];
+                items.push({
+                    type: "unique",
+                    uniqueId: toyId,
+                    x: 0.15 + Math.random() * 0.7,
+                    collected: false,
+                    locked: true,
+                });
+            }
         }
 
         // Each planet gets a random exotic plant (locked until human companion)
         const usedPlants = new Set(
-            state.planets.flatMap(p => p.items.filter(i => i.uniqueId && EXOTIC_PLANT_IDS.includes(i.uniqueId)).map(i => i.uniqueId))
+            state.planets.flatMap((p) =>
+                p.items
+                    .filter(
+                        (i) =>
+                            i.uniqueId && EXOTIC_PLANT_IDS.includes(i.uniqueId),
+                    )
+                    .map((i) => i.uniqueId),
+            ),
         );
-        const availablePlants = EXOTIC_PLANT_IDS.filter(id => !usedPlants.has(id));
+        const availablePlants = EXOTIC_PLANT_IDS.filter(
+            (id) => !usedPlants.has(id),
+        );
         if (availablePlants.length > 0) {
-            const plantId = availablePlants[Math.floor(Math.random() * availablePlants.length)];
+            const plantId =
+                availablePlants[
+                    Math.floor(Math.random() * availablePlants.length)
+                ];
             items.push({
                 type: "unique",
                 uniqueId: plantId,
