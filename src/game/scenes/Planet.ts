@@ -92,7 +92,6 @@ export class Planet extends Scene {
     private promptText!: Phaser.GameObjects.Text;
     private planetId!: string;
     private currentPickup: PickupSprite | null = null;
-    private collecting = false;
 
     constructor() {
         super('Planet');
@@ -103,7 +102,6 @@ export class Planet extends Scene {
         this.planetId = data.planetId;
         this.pickups = [];
         this.currentPickup = null;
-        this.collecting = false;
 
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
@@ -284,8 +282,6 @@ export class Planet extends Scene {
     }
 
     private collectItem(pickup: PickupSprite) {
-        this.collecting = true;
-
         // Mark collected in GameState
         GameState.collectPlanetItem(this, this.planetId, pickup.itemIndex);
 
@@ -335,14 +331,9 @@ export class Planet extends Scene {
         this.statusText.setText(`Items remaining: ${remaining}`);
         this.promptText.setAlpha(0);
         this.currentPickup = null;
-
-        this.time.delayedCall(300, () => {
-            this.collecting = false;
-        });
     }
 
     update() {
-        if (this.collecting) return;
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
