@@ -76,34 +76,6 @@ export class Engine extends RoomScene {
         // --- Companions ---
         const state = GameState.get(this);
 
-        if (GameState.hasCompanion(this, 'dog')) {
-            const dogX = this.rx(0.85);
-            const dogGfx = this.add.graphics();
-            this.drawDog(dogGfx, dogX, this.floorY - 10);
-
-            this.interactPoints.push({
-                x: dogX,
-                label: 'Talk to dog',
-                action: () => this.showMessage(
-                    'The dog lies in the warm corner by the vents.\nIt seems comfortable here.'
-                ),
-            });
-        }
-
-        if (GameState.hasCompanion(this, 'human')) {
-            const botX = this.rx(0.2);
-            const botGfx = this.add.graphics();
-            this.drawCompanionHuman(botGfx, botX, this.floorY - 25);
-
-            this.interactPoints.push({
-                x: botX,
-                label: 'Talk to botanist',
-                action: () => this.showMessage(
-                    'The botanist points at a filter near the pipes.\n"That needs replacing. You hadn\'t noticed, had you?"'
-                ),
-            });
-        }
-
         if (GameState.hasCompanion(this, 'cavediver')) {
             const cdX = this.rx(0.7);
             const cdGfx = this.add.graphics();

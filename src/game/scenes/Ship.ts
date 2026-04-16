@@ -178,6 +178,19 @@ export class Ship extends Scene {
             this.drawCavediver(cavediverGfx, cx, cy);
         }
 
+        // --- Cave trophies brought back to the corridor ---
+        const collectedCave = state.collectedCaveItems;
+        const trophyGfx = this.add.graphics();
+        if (collectedCave.includes('old_photograph')) {
+            this.drawOldPhotograph(trophyGfx, width * 0.20, height * 0.42);
+        }
+        if (collectedCave.includes('music_box')) {
+            this.drawMusicBox(trophyGfx, width * 0.42, height * 0.47);
+        }
+        if (collectedCave.includes('lantern')) {
+            this.drawHangingLantern(trophyGfx, width * 0.89, height * 0.25, height * 0.42);
+        }
+
         // --- HUD ---
         this.add.text(16, 16, `Day ${state.currentDay}`, {
             fontFamily: 'Georgia, serif',
@@ -677,6 +690,71 @@ export class Ship extends Scene {
         // Snout
         gfx.fillStyle(0xbb9977, 1);
         gfx.fillCircle(x + 17, y - 4, 2);
+    }
+
+    private drawOldPhotograph(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
+        // Outer frame
+        gfx.fillStyle(0x443322, 1);
+        gfx.fillRect(x - 16, y - 12, 32, 24);
+        // Inner photo — sepia
+        gfx.fillStyle(0x998866, 1);
+        gfx.fillRect(x - 13, y - 9, 26, 18);
+        // Two small figures
+        gfx.fillStyle(0x554433, 0.75);
+        gfx.fillCircle(x - 5, y - 2, 2);
+        gfx.fillCircle(x + 5, y - 2, 2);
+        gfx.fillRect(x - 7, y, 4, 7);
+        gfx.fillRect(x + 3, y, 4, 7);
+        // Subtle highlight on frame
+        gfx.lineStyle(1, 0x665544, 0.6);
+        gfx.strokeRect(x - 16, y - 12, 32, 24);
+    }
+
+    private drawMusicBox(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
+        // Shelf under box
+        gfx.fillStyle(0x3a3428, 1);
+        gfx.fillRect(x - 20, y + 8, 40, 3);
+        // Box body
+        gfx.fillStyle(0x664422, 1);
+        gfx.fillRect(x - 12, y - 4, 24, 12);
+        // Lid trim
+        gfx.fillStyle(0xaa8844, 1);
+        gfx.fillRect(x - 12, y - 6, 24, 2);
+        // Decorative inlay on front
+        gfx.fillStyle(0x886633, 1);
+        gfx.fillRect(x - 8, y - 1, 16, 5);
+        gfx.lineStyle(1, 0xccaa66, 0.7);
+        gfx.strokeRect(x - 8, y - 1, 16, 5);
+        // Crank
+        gfx.fillStyle(0x998855, 1);
+        gfx.fillCircle(x + 14, y + 2, 2);
+        gfx.lineStyle(1, 0x998855, 0.9);
+        gfx.lineBetween(x + 12, y + 2, x + 17, y + 2);
+    }
+
+    private drawHangingLantern(gfx: Phaser.GameObjects.Graphics, x: number, ceilingY: number, lanternY: number) {
+        // Chain from ceiling to lantern top
+        gfx.lineStyle(1, 0x555555, 0.9);
+        gfx.lineBetween(x, ceilingY, x, lanternY - 8);
+        // Top cap
+        gfx.fillStyle(0x443322, 1);
+        gfx.fillRect(x - 6, lanternY - 8, 12, 4);
+        // Glass / warm glow
+        gfx.fillStyle(0xffcc66, 0.35);
+        gfx.fillRect(x - 5, lanternY - 4, 10, 12);
+        // Soft halo
+        gfx.fillStyle(0xffcc66, 0.12);
+        gfx.fillCircle(x, lanternY + 2, 16);
+        // Flame
+        gfx.fillStyle(0xffe8a8, 0.9);
+        gfx.fillCircle(x, lanternY + 3, 2);
+        // Frame bars
+        gfx.lineStyle(1, 0x443322, 1);
+        gfx.strokeRect(x - 5, lanternY - 4, 10, 12);
+        gfx.lineBetween(x, lanternY - 4, x, lanternY + 8);
+        // Bottom
+        gfx.fillStyle(0x443322, 1);
+        gfx.fillRect(x - 6, lanternY + 8, 12, 2);
     }
 
     private drawDogToys(dogX: number, dogY: number, toys: string[]) {

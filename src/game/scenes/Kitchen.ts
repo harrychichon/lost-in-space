@@ -55,6 +55,11 @@ export class Kitchen extends RoomScene {
         gfx.fillStyle(0x777766, 1);
         gfx.fillCircle(tableX + 20, height * 0.52, 5);
 
+        // Coffee maker on counter (once found in a cave)
+        if (GameState.get(this).collectedCaveItems.includes('coffee_maker')) {
+            this.drawCoffeeMaker(gfx, this.rx(0.35), height * 0.5);
+        }
+
         // Exit door
         this.addExitDoor(gfx, this.roomLeft + 25);
 
@@ -163,5 +168,27 @@ export class Kitchen extends RoomScene {
 
     update() {
         this.updateRoom();
+    }
+
+    private drawCoffeeMaker(gfx: Phaser.GameObjects.Graphics, x: number, topY: number) {
+        // Main body sits on the counter (topY is the counter surface)
+        gfx.fillStyle(0x2f2f2f, 1);
+        gfx.fillRect(x - 9, topY - 20, 18, 20);
+        // Reservoir / top cap
+        gfx.fillStyle(0x444444, 1);
+        gfx.fillRect(x - 10, topY - 24, 20, 4);
+        // Carafe recess
+        gfx.fillStyle(0x1a1a1a, 1);
+        gfx.fillRect(x - 6, topY - 14, 12, 14);
+        // Dark liquid
+        gfx.fillStyle(0x241208, 1);
+        gfx.fillRect(x - 5, topY - 9, 10, 6);
+        // Carafe handle
+        gfx.lineStyle(1, 0x555555, 0.9);
+        gfx.strokeRect(x + 6, topY - 11, 3, 7);
+        // Steam
+        gfx.fillStyle(0xbbbbbb, 0.3);
+        gfx.fillCircle(x - 1, topY - 28, 2);
+        gfx.fillCircle(x + 2, topY - 32, 1.5);
     }
 }
