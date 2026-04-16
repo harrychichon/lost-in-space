@@ -29,7 +29,7 @@ MainMenu → DayIntro → Ship → DayIntro → Ship → ... (every 2nd day: Day
 - **Comms**: Room scene. Press [E] to listen. Static when alone, voices with companions. Marks chore done, returns to Ship.
 - **Navigation**: Star map showing discovered planets. Click or press [1-9] to visit a planet. [ESC] to return to Ship. NOT a chore — optional.
 - **Planet**: Explorable surface with persistent resource pickups. Player moves with A/D or arrows, walks near items to see description, [E] to collect, [L] to leave back to Ship. Items left behind persist for revisits.
-- **CompanionEvent**: Triggered on day 7. DayIntro announces "Sensors detect a faint life sign...", routes to a special planet with a wrecked ship. Player finds a dog. Story text plays, dog follows you back. Adds companion, unlocks rubber ball on first planet.
+- **CompanionEvent**: Triggered on day 5. DayIntro announces "Sensors detect a faint life sign...", routes to a special planet with a wrecked ship. Player finds a dog. Story text plays, dog follows you back. Adds companion, unlocks rubber ball on first planet.
 
 ## Planet System
 
@@ -43,30 +43,31 @@ Key design decisions:
 
 ## Companion System
 
-### Companion 1: Dog (Day 7)
+### Companion 1: Dog (Day 5)
 Found shipwrecked on a planet.
 
-**Trigger:** Day 7, DayIntro announces a faint life sign → `CompanionEvent` scene (wrecked ship, find dog) → dog joins ship.
+**Trigger:** Day 5, DayIntro announces a faint life sign → `CompanionEvent` scene (wrecked ship, find dog) → dog joins ship.
 
 **Effects:**
 - Ship corridor: Dog sits near doors, proximity prompt hints at wanting a toy
-- All chore rooms have dog-specific flavor text
+- Kitchen and Comms have dog-specific flavor text
+- **Dog auto-completes the Comms chore** each day — it "listens" for you (except on day 7, when it barks at a real signal and the player must check comms themselves)
 - `rubber_ball` unique item on first planet unlocked — revisit to collect
 - Once ball collected, corridor prompt: "The dog plays happily with its ball."
 - Resources start depleting (companion count = 1)
 - Grayscale shifts toward color (+0.3 saturation)
 
-### Companion 2: Botanist (Day 11+)
+### Companion 2: Botanist (Day 7)
 A human rescued via comms distress signal.
 
-**Trigger:** Day 11+, when doing Comms chore, you hear a distress signal instead of static → `RescueEvent` scene (escape pod, botanist joins) → companion count becomes 2.
+**Trigger:** Day 7, when doing Comms chore, you hear a distress signal instead of static → `RescueEvent` scene (escape pod, botanist joins) → companion count becomes 2.
 
 **Effects:**
 - Ship corridor: Botanist NPC standing near Collection room
 - **Collection room unlocked** — new door on ship corridor for viewing exotic plants
 - All exotic plants on all planets unlocked (voidbloom, sweetmoss, starspice)
-- Chore rooms update with botanist-specific text (Greenhouse: botanist takes over, Kitchen: botanist cooks, etc.)
-- Kitchen text changes further if Starspice is collected ("Food has flavor now. Actual flavor.")
+- **Botanist auto-completes the Greenhouse chore** each day — she tends the plants herself
+- Kitchen and Greenhouse have botanist-specific flavor text; Kitchen text changes further if Starspice is collected ("Food has flavor now. Actual flavor.")
 - Resources deplete faster (companion count = 2)
 - More color (+0.6 saturation total)
 
@@ -80,9 +81,9 @@ A human cave explorer, Mira, found living inside a cave on the 6th discovered pl
 - **All caves on all planets become enterable** — each cave is its own mini exploration scene (`Cave`)
 - Cave resource items unlock; each grants +20 (vs. +10 on the surface), rebalancing resource drain for 3 companions
 - One unique cave artifact per planet (pool: `coffee_maker`, `music_box`, `old_photograph`, `lantern`)
-- Kitchen text changes when `coffee_maker` is collected
-- Comms text changes when `music_box` is collected
-- Chore rooms gain cavediver-aware flavor tiers
+- **Mira auto-completes the Engine chore** each day — she handles diagnostics and patches
+- Collected cave uniques appear in the ship: `coffee_maker` on the Kitchen counter; `music_box`, `old_photograph`, `lantern` in the corridor
+- Kitchen flavor changes when `coffee_maker` is collected
 - Resources deplete faster (companion count = 3)
 - More color (+0.9 saturation total)
 
@@ -140,8 +141,8 @@ src/
 │   │   ├── Comms.ts           # Comms room — listen chore
 │   │   ├── Navigation.ts     # Star map — select discovered planets to visit
 │   │   ├── Planet.ts          # Planet surface — loads items from saved planet data
-│   │   ├── CompanionEvent.ts   # Day 7 — find the dog on a wrecked ship
-│   │   ├── RescueEvent.ts     # Day 11+ — rescue botanist via comms distress signal
+│   │   ├── CompanionEvent.ts   # Day 5 — find the dog on a wrecked ship
+│   │   ├── RescueEvent.ts     # Day 7 — rescue botanist via comms distress signal
 │   │   ├── CavediverEvent.ts  # 6th planet — meet Mira in the lit cave
 │   │   ├── Cave.ts            # Cave interior — high-yield resources + unique artifacts
 │   │   ├── Collection.ts      # Exotic plant collection room (after botanist joins)
@@ -170,15 +171,16 @@ Static helper class for reading/writing global state via Phaser's Registry. Key 
 - `GameState.isPlanetDiscoveryDay(scene)` — True every 2nd day (even-numbered days)
 - `GameState.getSaturation(scene)` — Returns 0-1 based on companion count (0.3 per companion)
 - `GameState.completeChore(scene, choreKey)` — Marks a chore as done for the day
+- `GameState.applyCompanionChores(scene)` — Auto-completes chores handled by companions (Greenhouse: botanist, Engine: Mira, Comms: dog except on rescue day). Called at the end of `advanceDay`.
 - `GameState.allChoresDone(scene)` — Returns true if all 4 chores are complete
 - `GameState.discoverPlanet(scene)` — Generates and adds a new planet with random name, biome, and items
 - `GameState.getPlanet(scene, planetId)` — Returns a specific planet's data
 - `GameState.collectPlanetItem(scene, planetId, itemIndex)` — Marks an item as collected
 - `GameState.hasUncollectedItems(planet)` — Checks if a planet has items left to collect
-- `GameState.isCompanionEventDay(scene)` — True on day 7 if no companions yet
+- `GameState.isCompanionEventDay(scene)` — True on day 5 if no companions yet
 - `GameState.addCompanion(scene, companion)` — Adds a companion, increments count
 - `GameState.hasCompanion(scene, id)` — Checks if a specific companion exists
-- `GameState.isRescueEventReady(scene)` — True on day 11+ with 1 companion and no human yet
+- `GameState.isRescueEventReady(scene)` — True on day 7 when the dog is aboard and no human has joined yet
 - `GameState.isCavediverEventPlanet(scene, planetId)` — True if this planet is the lit one and cavediver hasn't joined yet
 - `GameState.unlockExoticPlants(scene)` — Unlocks all exotic plants on all planets
 - `GameState.collectExoticPlant(scene, uniqueId)` — Marks an exotic plant as collected
@@ -244,6 +246,8 @@ Players must complete all 4 chores each day before the Bed becomes usable:
 4. **Comms** — Enter room, press [E] to listen
 
 Each room shows different flavor text depending on companion count (solo = bleak, companions = warmer). Chores reset when `advanceDay()` is called. Ship corridor shows a checklist HUD and doors show a checkmark when that chore is done.
+
+**Companions take over their chores:** Once the botanist joins, Greenhouse is done for you each day — starting the day she arrives. Once Mira joins, Engine is done for you. The dog "listens" for you on Comms from day 5 onwards — except on day 7, when a real signal comes through and you must check Comms yourself. Auto-completion runs via `applyCompanionChores`, called both at the end of `advanceDay` and whenever a new companion is added.
 
 ### Ship Corridor Layout
 | Element | Position | Leads to | Type |
@@ -386,12 +390,12 @@ this.tweens.add({
 - [x] Item interaction system (walk near → see description → E to collect, locked items for future)
 
 ### Phase 2 — Companion & Resources (Week 2) ✅ DONE
-- [x] CompanionEvent scene — find dog on wrecked ship on day 7
+- [x] CompanionEvent scene — find dog on wrecked ship on day 5
 - [x] DayIntro triggers companion event ("Sensors detect a faint life sign...")
 - [x] Dog companion in GameState (companionList, companion count)
 - [x] Dog on Ship corridor with proximity prompts and toy hint
 - [x] Rubber ball unique item on first planet (locked → unlocked after finding dog)
-- [x] RescueEvent scene — rescue botanist via comms distress signal on day 11+
+- [x] RescueEvent scene — rescue botanist via comms distress signal on day 7
 - [x] Comms chore triggers rescue when ready (distress signal replaces static)
 - [x] Botanist companion unlocks exotic plants on all planets
 - [x] Exotic plants on planets (Voidbloom, Sweetmoss, Starspice) — locked until botanist

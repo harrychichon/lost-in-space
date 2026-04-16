@@ -156,6 +156,28 @@ export class GameState {
                 comms: false,
             },
         });
+        GameState.applyCompanionChores(scene);
+    }
+
+    // Companions auto-complete their assigned chore. Runs at the start of each
+    // day (via advanceDay) and again whenever a new companion joins, so arrival
+    // day is covered too. Comms is skipped on rescue day (day 7) so the dog's
+    // bark leads the player to the distress signal themselves.
+    static applyCompanionChores(scene: Phaser.Scene): void {
+        const auto: Partial<Chores> = {};
+        if (GameState.hasCompanion(scene, "human")) auto.greenhouse = true;
+        if (GameState.hasCompanion(scene, "cavediver")) auto.engine = true;
+        if (
+            GameState.hasCompanion(scene, "dog") &&
+            !GameState.isRescueEventReady(scene)
+        ) {
+            auto.comms = true;
+        }
+        if (Object.keys(auto).length === 0) return;
+        const current = GameState.get(scene);
+        GameState.update(scene, {
+            chores: { ...current.chores, ...auto },
+        });
     }
 
     static completeChore(scene: Phaser.Scene, chore: keyof Chores): void {
@@ -200,7 +222,11 @@ export class GameState {
 
     static isRescueEventReady(scene: Phaser.Scene): boolean {
         const state = GameState.get(scene);
-        return state.currentDay >= 9 && !GameState.hasCompanion(scene, "human");
+        return (
+            state.currentDay === 7 &&
+            GameState.hasCompanion(scene, "dog") &&
+            !GameState.hasCompanion(scene, "human")
+        );
     }
 
     static isCavediverEventPlanet(
@@ -225,6 +251,7 @@ export class GameState {
             companions: state.companions + 1,
             companionList: [...state.companionList, companion],
         });
+        GameState.applyCompanionChores(scene);
     }
 
     static hasCompanion(scene: Phaser.Scene, id: string): boolean {

@@ -83,7 +83,7 @@ export class Comms extends RoomScene {
                 x: dogX,
                 label: 'Talk to dog',
                 action: () => this.showMessage(
-                    'The dog tilts its head at the static.\nAt least someone is listening with you.'
+                    'The dog listens intently.\nYou know he will bark if he hears anything on the comms.'
                 ),
             });
         }
