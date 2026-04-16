@@ -102,6 +102,22 @@ export class Comms extends RoomScene {
             });
         }
 
+        if (GameState.hasCompanion(this, 'cavediver')) {
+            const cdX = this.rx(0.88);
+            const cdGfx = this.add.graphics();
+            this.drawCavediver(cdGfx, cdX, this.floorY - 25);
+
+            const hasMusic = state.collectedCaveItems.includes('music_box');
+            const msg = hasMusic
+                ? 'Mira winds the music box. A small, old tune fills the room.\n"Nicer than static, isn\'t it?"'
+                : '"Down in the caves there\'s no signal," Mira says.\n"But the quiet, it feels different. Earned."';
+            this.interactPoints.push({
+                x: cdX,
+                label: 'Talk to Mira',
+                action: () => this.showMessage(msg),
+            });
+        }
+
         // --- Chore station (console) ---
         const choreX = this.rx(0.5);
         if (!state.chores.comms) {

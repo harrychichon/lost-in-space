@@ -11,6 +11,8 @@ import { Navigation } from "./scenes/Navigation";
 import { Planet } from "./scenes/Planet";
 import { CompanionEvent } from "./scenes/CompanionEvent";
 import { RescueEvent } from "./scenes/RescueEvent";
+import { CavediverEvent } from "./scenes/CavediverEvent";
+import { Cave } from "./scenes/Cave";
 import { Collection } from "./scenes/Collection";
 import { DevPanel } from "./scenes/DevPanel";
 import { AUTO, Game } from "phaser";
@@ -43,6 +45,8 @@ const config: Phaser.Types.Core.GameConfig = {
         Planet,
         CompanionEvent,
         RescueEvent,
+        CavediverEvent,
+        Cave,
         Collection,
         GameOver,
         DevPanel,

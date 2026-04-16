@@ -120,6 +120,20 @@ export class Greenhouse extends RoomScene {
             });
         }
 
+        if (GameState.hasCompanion(this, 'cavediver')) {
+            const cdX = this.rx(0.6);
+            const cdGfx = this.add.graphics();
+            this.drawCavediver(cdGfx, cdX, this.floorY - 25);
+
+            this.interactPoints.push({
+                x: cdX,
+                label: 'Talk to Mira',
+                action: () => this.showMessage(
+                    'Mira hauls in a sack of mineral-rich cave soil.\n"The plants will love this."'
+                ),
+            });
+        }
+
         // --- Chore station (center / watering can area) ---
         const choreX = this.rx(0.5);
         if (!state.chores.greenhouse) {
