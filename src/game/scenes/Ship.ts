@@ -1,5 +1,7 @@
 import { Scene } from 'phaser';
 import { GameState, Chores } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 interface Door {
     x: number;
@@ -26,6 +28,7 @@ export class Ship extends Scene {
     private dogX = 0;
     private playerSpeed = 200;
     private dayComplete = false;
+    private portholeSpace!: SpaceBackground;
 
     constructor() {
         super('Ship');
@@ -43,6 +46,13 @@ export class Ship extends Scene {
         const saturation = GameState.getSaturation(this);
         if (saturation < 1) {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
+        }
+
+        // Ambient music: low ambient only while alone on the ship
+        if (GameState.get(this).companions === 0) {
+            AudioManager.play(this, 'low_ambient');
+        } else {
+            AudioManager.stop(this);
         }
 
         // --- Draw the ship corridor ---
@@ -66,24 +76,51 @@ export class Ship extends Scene {
         interior.fillStyle(0x1a1a1a, 1);
         interior.fillRect(0, height * 0.2, width, height * 0.05);
 
-        // Ceiling lights
-        interior.fillStyle(0x444444, 0.3);
+        // Ceiling lights — soft pulsing strips
         for (let i = 0; i < 5; i++) {
             const lx = width * 0.1 + i * (width * 0.2);
-            interior.fillRect(lx - 15, height * 0.2, 30, 5);
+            const light = this.add.rectangle(lx, height * 0.2 + 2, 30, 5, 0xbbbbaa, 0.35);
+            this.tweens.add({
+                targets: light,
+                alpha: 0.15,
+                duration: Phaser.Math.Between(1800, 2600),
+                yoyo: true,
+                repeat: -1,
+                delay: i * 300,
+                ease: 'Sine.easeInOut',
+            });
+            // Subtle glow halo below each light
+            const halo = this.add.circle(lx, height * 0.22, 22, 0xffeecc, 0.08);
+            this.tweens.add({
+                targets: halo,
+                alpha: 0.03,
+                duration: Phaser.Math.Between(1800, 2600),
+                yoyo: true,
+                repeat: -1,
+                delay: i * 300,
+                ease: 'Sine.easeInOut',
+            });
         }
 
-        // Windows
+        // Windows — parallax space shown through circular masks, with metal ring stroke on top
+        const portholeCenters: Array<{ x: number; y: number }> = [];
         for (let i = 0; i < 3; i++) {
             const wx = width * 0.3 + i * (width * 0.2);
             const wy = height * 0.32;
-            interior.fillStyle(0x000022, 1);
-            interior.fillCircle(wx, wy, 18);
+            portholeCenters.push({ x: wx, y: wy });
+        }
+        // Masked space background — slow drift since we're looking out of a stationary ship
+        this.portholeSpace = new SpaceBackground(this, { bgSpeed: 2, fl1Speed: 6, fl2Speed: 12 });
+        const maskShape = this.make.graphics({ x: 0, y: 0 });
+        maskShape.fillStyle(0xffffff);
+        for (const c of portholeCenters) {
+            maskShape.fillCircle(c.x, c.y, 18);
+        }
+        this.portholeSpace.setMask(maskShape.createGeometryMask());
+        // Ring stroke on top
+        for (const c of portholeCenters) {
             interior.lineStyle(2, 0x444444, 1);
-            interior.strokeCircle(wx, wy, 18);
-            interior.fillStyle(0xffffff, 0.5);
-            interior.fillCircle(wx - 4, wy - 4, 1);
-            interior.fillCircle(wx + 6, wy + 2, 1.2);
+            interior.strokeCircle(c.x, c.y, 18);
         }
 
         // --- Doors ---
@@ -732,6 +769,19 @@ export class Ship extends Scene {
         gfx.fillCircle(x + 14, y + 2, 2);
         gfx.lineStyle(1, 0x998855, 0.9);
         gfx.lineBetween(x + 12, y + 2, x + 17, y + 2);
+
+        // Glint that slides across the lid trim
+        const glint = this.add.rectangle(x - 12, y - 5, 3, 1, 0xffe8a8, 0.0);
+        this.tweens.add({
+            targets: glint,
+            x: x + 12,
+            alpha: { from: 0, to: 0.8 },
+            duration: 900,
+            repeat: -1,
+            repeatDelay: 5200,
+            ease: 'Quad.easeOut',
+            onRepeat: () => { glint.setAlpha(0); glint.x = x - 12; },
+        });
     }
 
     private drawHangingLantern(gfx: Phaser.GameObjects.Graphics, x: number, ceilingY: number, lanternY: number) {
@@ -741,15 +791,9 @@ export class Ship extends Scene {
         // Top cap
         gfx.fillStyle(0x443322, 1);
         gfx.fillRect(x - 6, lanternY - 8, 12, 4);
-        // Glass / warm glow
+        // Glass / warm glow backing
         gfx.fillStyle(0xffcc66, 0.35);
         gfx.fillRect(x - 5, lanternY - 4, 10, 12);
-        // Soft halo
-        gfx.fillStyle(0xffcc66, 0.12);
-        gfx.fillCircle(x, lanternY + 2, 16);
-        // Flame
-        gfx.fillStyle(0xffe8a8, 0.9);
-        gfx.fillCircle(x, lanternY + 3, 2);
         // Frame bars
         gfx.lineStyle(1, 0x443322, 1);
         gfx.strokeRect(x - 5, lanternY - 4, 10, 12);
@@ -757,6 +801,29 @@ export class Ship extends Scene {
         // Bottom
         gfx.fillStyle(0x443322, 1);
         gfx.fillRect(x - 6, lanternY + 8, 12, 2);
+
+        // Flickering halo
+        const halo = this.add.circle(x, lanternY + 2, 20, 0xffcc66, 0.14);
+        this.tweens.add({
+            targets: halo,
+            alpha: 0.06,
+            scale: 0.85,
+            duration: 1200,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+        });
+        // Flickering flame
+        const flame = this.add.circle(x, lanternY + 3, 2, 0xffe8a8, 0.95);
+        this.tweens.add({
+            targets: flame,
+            alpha: 0.6,
+            scale: 1.3,
+            duration: 180,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+        });
     }
 
     private drawDogToys(dogX: number, dogY: number, toys: string[]) {
@@ -801,7 +868,9 @@ export class Ship extends Scene {
         }
     }
 
-    update() {
+    update(_time: number, delta: number) {
+        this.portholeSpace.update(delta);
+
         if (this.dayComplete) return;
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;

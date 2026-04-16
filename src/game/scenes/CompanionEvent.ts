@@ -1,7 +1,10 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class CompanionEvent extends Scene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('CompanionEvent');
     }
@@ -14,19 +17,7 @@ export class CompanionEvent extends Scene {
         // Grayscale (still solo at this point)
         this.cameras.main.postFX.addColorMatrix().grayscale(1);
 
-        // Starfield
-        const gfx = this.add.graphics();
-        for (let i = 0; i < 200; i++) {
-            const x = Phaser.Math.Between(0, width);
-            const y = Phaser.Math.Between(0, height);
-            const brightness = Phaser.Math.FloatBetween(0.3, 1);
-            gfx.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness)
-            ), 1);
-            gfx.fillCircle(x, y, Phaser.Math.FloatBetween(0.5, 2));
-        }
+        this.space = new SpaceBackground(this);
 
         // Ground — barren rocky surface
         const ground = this.add.graphics();
@@ -167,5 +158,9 @@ export class CompanionEvent extends Scene {
 
         // Start sequence after a brief pause
         this.time.delayedCall(1000, showNextLine);
+    }
+
+    update(_time: number, delta: number) {
+        this.space.update(delta);
     }
 }

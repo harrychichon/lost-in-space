@@ -1,5 +1,7 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData } from '../systems/GameState';
+import { SpaceBackground } from '../objects/SpaceBackground';
+import { AudioManager } from '../systems/AudioManager';
 
 const BIOME_COLORS: Record<PlanetData['biome'], number> = {
     rocky: 0x888877,
@@ -8,7 +10,20 @@ const BIOME_COLORS: Record<PlanetData['biome'], number> = {
     desert: 0xaa8855,
 };
 
+const PLANET_TEXTURES = [
+    'planet1', 'planet2', 'planet3', 'planet4', 'planet5', 'planet6', 'planet7',
+    'planet10', 'planet11', 'planet12', 'planet13', 'planet14', 'planet15',
+    'planet16', 'planet17', 'planet18', 'planet19', 'planet20',
+];
+
+function planetTextureFor(planet: PlanetData): string {
+    const n = parseInt(planet.id.replace(/\D+/g, ''), 10) || 0;
+    return PLANET_TEXTURES[(n - 1 + PLANET_TEXTURES.length) % PLANET_TEXTURES.length];
+}
+
 export class Navigation extends Scene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('Navigation');
     }
@@ -27,19 +42,13 @@ export class Navigation extends Scene {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
         }
 
-        // Dense starfield (matching DayIntro)
-        const gfx = this.add.graphics();
-        for (let i = 0; i < 200; i++) {
-            const x = Phaser.Math.Between(0, width);
-            const y = Phaser.Math.Between(0, height);
-            const brightness = Phaser.Math.FloatBetween(0.3, 1);
-            const size = Phaser.Math.FloatBetween(0.5, 2);
-            gfx.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness)
-            ), 1);
-            gfx.fillCircle(x, y, size);
+        this.space = new SpaceBackground(this);
+
+        // Navigation is still "on the ship" — keep ship ambience
+        if (state.companions === 0) {
+            AudioManager.play(this, 'low_ambient');
+        } else {
+            AudioManager.stop(this);
         }
 
         // Title
@@ -110,14 +119,14 @@ export class Navigation extends Scene {
                     lines.fillCircle(dx, dy, 1.5);
                 }
 
-                // Planet body
-                const planetCircle = this.add.circle(px, py, 22, color, 0.7);
-                planetCircle.setStrokeStyle(2, color, 1);
+                // Planet body (sprite)
+                const planetSprite = this.add.image(px, py, planetTextureFor(planet));
+                planetSprite.setDisplaySize(54, 54);
 
-                // Subtle orbit ring
+                // Subtle orbit ring, biome-tinted
                 const orbitRing = this.add.graphics();
-                orbitRing.lineStyle(1, color, 0.1);
-                orbitRing.strokeCircle(px, py, 28);
+                orbitRing.lineStyle(1, color, 0.15);
+                orbitRing.strokeCircle(px, py, 34);
 
                 // Planet name
                 this.add.text(px, py + 32, planet.name, {
@@ -154,16 +163,17 @@ export class Navigation extends Scene {
                 }
 
                 // Interactive hover/click
-                planetCircle.setInteractive({ useHandCursor: true });
-                planetCircle.on('pointerover', () => {
-                    planetCircle.setStrokeStyle(2, 0xffffff, 0.8);
-                    planetCircle.setScale(1.1);
+                planetSprite.setInteractive({ useHandCursor: true });
+                const baseScale = planetSprite.scale;
+                planetSprite.on('pointerover', () => {
+                    planetSprite.setScale(baseScale * 1.15);
+                    orbitRing.setAlpha(0.6);
                 });
-                planetCircle.on('pointerout', () => {
-                    planetCircle.setStrokeStyle(2, color, 1);
-                    planetCircle.setScale(1);
+                planetSprite.on('pointerout', () => {
+                    planetSprite.setScale(baseScale);
+                    orbitRing.setAlpha(1);
                 });
-                planetCircle.on('pointerdown', () => {
+                planetSprite.on('pointerdown', () => {
                     this.scene.start('Planet', { planetId: planet.id });
                 });
             });
@@ -179,5 +189,9 @@ export class Navigation extends Scene {
         this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
             this.scene.start('Ship');
         });
+    }
+
+    update(_time: number, delta: number) {
+        this.space.update(delta);
     }
 }

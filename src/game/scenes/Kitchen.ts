@@ -186,9 +186,33 @@ export class Kitchen extends RoomScene {
         // Carafe handle
         gfx.lineStyle(1, 0x555555, 0.9);
         gfx.strokeRect(x + 6, topY - 11, 3, 7);
-        // Steam
-        gfx.fillStyle(0xbbbbbb, 0.3);
-        gfx.fillCircle(x - 1, topY - 28, 2);
-        gfx.fillCircle(x + 2, topY - 32, 1.5);
+
+        // Steam wisps rising from the top cap
+        const spawnSteam = () => {
+            const wisp = this.add.circle(
+                x + Phaser.Math.Between(-3, 3),
+                topY - 24,
+                1.5 + Math.random() * 1.2,
+                0xccccbb,
+                0.5,
+            );
+            this.tweens.add({
+                targets: wisp,
+                y: wisp.y - 40 - Math.random() * 15,
+                x: wisp.x + (Math.random() - 0.5) * 10,
+                alpha: 0,
+                scale: 2,
+                duration: 1800 + Math.random() * 700,
+                ease: 'Sine.easeOut',
+                onComplete: () => wisp.destroy(),
+            });
+        };
+        // Initial puff so it's visible on entry
+        for (let i = 0; i < 2; i++) spawnSteam();
+        this.time.addEvent({
+            delay: 900,
+            loop: true,
+            callback: spawnSteam,
+        });
     }
 }

@@ -1,7 +1,10 @@
 import { GameState } from '../systems/GameState';
 import { RoomScene, InteractPoint } from './RoomScene';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class Greenhouse extends RoomScene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('Greenhouse');
     }
@@ -21,20 +24,23 @@ export class Greenhouse extends RoomScene {
         gfx.fillStyle(0x1a2218, 1);
         gfx.fillRect(0, height * 0.2, width, height * 0.5);
 
-        // Glass ceiling (showing stars)
-        gfx.fillStyle(0x000008, 1);
-        gfx.fillRect(this.roomLeft, height * 0.15, this.roomWidth, height * 0.05);
-        gfx.lineStyle(1, 0x334433, 0.5);
-        for (let px = this.roomLeft; px < this.roomRight; px += 60) {
-            gfx.lineBetween(px, height * 0.15, px, height * 0.2);
+        // Glass ceiling — parallax space, framed behind bars
+        const ceilX = this.roomLeft;
+        const ceilY = height * 0.15;
+        const ceilW = this.roomWidth;
+        const ceilH = height * 0.05;
+        this.space = new SpaceBackground(this, {
+            x: ceilX, y: ceilY, width: ceilW, height: ceilH,
+            bgSpeed: 1, fl1Speed: 3, fl2Speed: 7,
+        });
+        // Frame bars across the glass
+        const frame = this.add.graphics();
+        frame.lineStyle(1, 0x334433, 0.7);
+        for (let px = this.roomLeft; px <= this.roomRight; px += 60) {
+            frame.lineBetween(px, ceilY, px, ceilY + ceilH);
         }
-        // Stars through glass
-        for (let i = 0; i < 20; i++) {
-            const sx = Phaser.Math.Between(this.roomLeft, this.roomRight);
-            const sy = Phaser.Math.Between(height * 0.15, height * 0.2);
-            gfx.fillStyle(0xffffff, Phaser.Math.FloatBetween(0.2, 0.5));
-            gfx.fillCircle(sx, sy, 1);
-        }
+        frame.lineStyle(1, 0x334433, 0.5);
+        frame.strokeRect(ceilX, ceilY, ceilW, ceilH);
 
         // Grow beds — two planters
         const bedY = height * 0.58;
@@ -136,7 +142,8 @@ export class Greenhouse extends RoomScene {
         this.setupPlayerAndUI();
     }
 
-    update() {
+    update(_time: number, delta: number) {
+        this.space.update(delta);
         this.updateRoom();
     }
 }
