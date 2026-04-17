@@ -4,10 +4,16 @@ import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
-    sprite: Phaser.GameObjects.Arc;
+    sprite: Phaser.GameObjects.Arc | Phaser.GameObjects.Image;
     itemIndex: number;
     item: PlanetItem;
 }
+
+const EXOTIC_PLANT_SPRITES: Record<string, string> = {
+    voidbloom: 'plant_voidbloom',
+    sweetmoss: 'plant_sweetmoss',
+    starspice: 'plant_starspice',
+};
 
 const RESOURCE_COLORS: Record<string, number> = {
     oxygen: 0x4488aa,
@@ -217,10 +223,18 @@ export class Planet extends Scene {
             const px = item.x * width;
             const py = height * 0.75 - Phaser.Math.Between(5, 25);
             const colorKey = item.type === 'unique' ? (item.uniqueId ?? 'unique') : item.type;
-            const color = RESOURCE_COLORS[colorKey] ?? 0xcc88cc;
 
-            const sprite = this.add.circle(px, py - 8, 8, color);
-            sprite.setStrokeStyle(1, 0xffffff, 0.3);
+            // Exotic plants render as flower sprites rooted in the ground; other items are circles.
+            const plantSprite = item.uniqueId && EXOTIC_PLANT_SPRITES[item.uniqueId];
+            let sprite: Phaser.GameObjects.Arc | Phaser.GameObjects.Image;
+            if (plantSprite) {
+                sprite = this.add.image(px, height * 0.75, plantSprite, 6).setOrigin(0.5, 1);
+            } else {
+                const color = RESOURCE_COLORS[colorKey] ?? 0xcc88cc;
+                const circle = this.add.circle(px, py - 8, 8, color);
+                circle.setStrokeStyle(1, 0xffffff, 0.3);
+                sprite = circle;
+            }
 
             // Gentle bob
             this.tweens.add({

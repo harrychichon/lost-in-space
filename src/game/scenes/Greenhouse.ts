@@ -42,11 +42,11 @@ export class Greenhouse extends RoomScene {
         frame.lineStyle(1, 0x334433, 0.5);
         frame.strokeRect(ceilX, ceilY, ceilW, ceilH);
 
-        // Grow beds — two planters
+        // Grow beds — two planters, one blue variety, one yellow
         const bedY = height * 0.58;
         const beds = [
-            { x: this.rx(0.3), w: 130 },
-            { x: this.rx(0.7), w: 130 },
+            { x: this.rx(0.3), w: 130, sprite: 'plant_basicblue' },
+            { x: this.rx(0.7), w: 130, sprite: 'plant_basicyellow' },
         ];
 
         beds.forEach(bed => {
@@ -57,16 +57,10 @@ export class Greenhouse extends RoomScene {
             gfx.fillStyle(0x2a2015, 1);
             gfx.fillRect(bed.x - bed.w / 2 + 4, bedY + 2, bed.w - 8, 8);
 
-            const numPlants = Math.floor(bed.w / 20);
+            const numPlants = Math.floor(bed.w / 24);
             for (let p = 0; p < numPlants; p++) {
-                const plantX = bed.x - bed.w / 2 + 14 + p * 20;
-                const plantH = 12 + Math.random() * 18;
-                gfx.lineStyle(2, 0x446633, 0.8);
-                gfx.lineBetween(plantX, bedY, plantX, bedY - plantH);
-                gfx.fillStyle(0x447744, 0.7);
-                gfx.fillCircle(plantX - 4, bedY - plantH + 4, 4);
-                gfx.fillCircle(plantX + 4, bedY - plantH + 2, 5);
-                gfx.fillCircle(plantX, bedY - plantH - 2, 4);
+                const plantX = bed.x - bed.w / 2 + 16 + p * 24;
+                this.add.image(plantX, bedY + 10, bed.sprite, 6).setOrigin(0.5, 1);
             }
         });
 
