@@ -1,5 +1,6 @@
 import { GameState } from '../systems/GameState';
 import { RoomScene, InteractPoint } from './RoomScene';
+import { createDogSprite } from '../objects/Dog';
 
 export class Kitchen extends RoomScene {
     constructor() {
@@ -75,8 +76,7 @@ export class Kitchen extends RoomScene {
 
         if (GameState.hasCompanion(this, 'dog')) {
             const dogX = this.rx(0.3);
-            const dogGfx = this.add.graphics();
-            this.drawDog(dogGfx, dogX, this.floorY - 10);
+            createDogSprite(this, dogX, this.floorY);
             // Food bowl
             gfx.fillStyle(0x666666, 1);
             gfx.fillRect(dogX + 20, this.floorY - 4, 14, 4);

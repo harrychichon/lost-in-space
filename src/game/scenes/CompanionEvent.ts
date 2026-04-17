@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
 import { SpaceBackground } from '../objects/SpaceBackground';
+import { createDogSprite } from '../objects/Dog';
 
 export class CompanionEvent extends Scene {
     private space!: SpaceBackground;
@@ -51,50 +52,8 @@ export class CompanionEvent extends Scene {
 
         // Dog — small figure near the wreck
         const dogX = width * 0.55;
-        const dogY = height * 0.60;
-        const dog = this.add.graphics();
-        // Body
-        dog.fillStyle(0x997755, 1);
-        dog.fillEllipse(dogX, dogY, 28, 16);
-        // Legs
-        dog.fillStyle(0x886644, 1);
-        dog.fillRect(dogX - 8, dogY + 6, 3, 8);
-        dog.fillRect(dogX - 3, dogY + 6, 3, 8);
-        dog.fillRect(dogX + 3, dogY + 6, 3, 8);
-        dog.fillRect(dogX + 8, dogY + 6, 3, 8);
-        // Tail (wagging via tween)
-        const tail = this.add.graphics();
-        tail.lineStyle(2, 0x886644, 1);
-        tail.lineBetween(-2, 0, -2, -10);
-        tail.setPosition(dogX - 14, dogY - 2);
-
-        this.tweens.add({
-            targets: tail,
-            angle: { from: -20, to: 20 },
-            duration: 300,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut',
-        });
-
-        // Head
-        dog.fillStyle(0xaa8866, 1);
-        dog.fillCircle(dogX + 14, dogY - 6, 8);
-        // Ears poking out
-        dog.fillStyle(0x886644, 1);
-        dog.fillTriangle(dogX + 8, dogY - 15, dogX + 13, dogY - 15, dogX + 10, dogY - 9);
-        dog.fillTriangle(dogX + 15, dogY - 15, dogX + 20, dogY - 15, dogX + 17, dogY - 9);
-        // Space helmet
-        dog.lineStyle(2, 0x8899aa, 0.7);
-        dog.strokeCircle(dogX + 14, dogY - 6, 11);
-        dog.fillStyle(0xaabbcc, 0.15);
-        dog.fillCircle(dogX + 11, dogY - 9, 4);
-        // Eye through helmet
-        dog.fillStyle(0x222222, 1);
-        dog.fillCircle(dogX + 17, dogY - 8, 2);
-        // Snout
-        dog.fillStyle(0xbb9977, 1);
-        dog.fillCircle(dogX + 20, dogY - 5, 2.5);
+        const dogGroundY = height * 0.66;
+        createDogSprite(this, dogX, dogGroundY);
 
         // --- Story text sequence ---
         const textStyle = {

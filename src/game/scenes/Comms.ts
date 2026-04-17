@@ -1,6 +1,7 @@
 import { GameState } from '../systems/GameState';
 import { RoomScene, InteractPoint } from './RoomScene';
 import { SpaceBackground } from '../objects/SpaceBackground';
+import { createDogSprite } from '../objects/Dog';
 
 export class Comms extends RoomScene {
     private space!: SpaceBackground;
@@ -77,8 +78,7 @@ export class Comms extends RoomScene {
 
         if (GameState.hasCompanion(this, 'dog')) {
             const dogX = this.rx(0.75);
-            const dogGfx = this.add.graphics();
-            this.drawDog(dogGfx, dogX, this.floorY - 10);
+            createDogSprite(this, dogX, this.floorY);
 
             this.interactPoints.push({
                 x: dogX,

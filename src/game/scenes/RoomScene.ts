@@ -143,7 +143,7 @@ export abstract class RoomScene extends Scene {
             action: () => {
                 if (this.transitioning) return;
                 this.transitioning = true;
-                this.scene.start('Ship');
+                this.scene.start('Ship', { fromRoom: this.scene.key });
             },
         });
     }
@@ -207,46 +207,12 @@ export abstract class RoomScene extends Scene {
         if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
             if (!this.transitioning) {
                 this.transitioning = true;
-                this.scene.start('Ship');
+                this.scene.start('Ship', { fromRoom: this.scene.key });
             }
         }
     }
 
     // --- Shared drawing methods (same visuals as Ship/Planet) ---
-
-    protected drawDog(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
-        // Body
-        gfx.fillStyle(0x997755, 1);
-        gfx.fillEllipse(x, y, 24, 12);
-        // Legs
-        gfx.fillStyle(0x886644, 1);
-        gfx.fillRect(x - 8, y + 4, 3, 8);
-        gfx.fillRect(x - 3, y + 4, 3, 8);
-        gfx.fillRect(x + 3, y + 4, 3, 8);
-        gfx.fillRect(x + 8, y + 4, 3, 8);
-        // Tail
-        gfx.lineStyle(2, 0x886644, 1);
-        gfx.lineBetween(x - 12, y - 2, x - 16, y - 8);
-        // Head
-        gfx.fillStyle(0xaa8866, 1);
-        gfx.fillCircle(x + 12, y - 5, 6);
-        // Ears
-        gfx.fillStyle(0x886644, 1);
-        gfx.fillTriangle(x + 7, y - 13, x + 11, y - 13, x + 9, y - 8);
-        gfx.fillTriangle(x + 14, y - 13, x + 18, y - 13, x + 16, y - 8);
-        // Space helmet
-        gfx.lineStyle(2, 0x8899aa, 0.7);
-        gfx.strokeCircle(x + 12, y - 5, 9);
-        // Helmet reflection
-        gfx.fillStyle(0xaabbcc, 0.15);
-        gfx.fillCircle(x + 10, y - 7, 4);
-        // Eye
-        gfx.fillStyle(0x222222, 1);
-        gfx.fillCircle(x + 14, y - 6, 1.5);
-        // Snout
-        gfx.fillStyle(0xbb9977, 1);
-        gfx.fillCircle(x + 17, y - 4, 2);
-    }
 
     protected drawCavediver(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         // Legs

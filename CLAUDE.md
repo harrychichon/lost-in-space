@@ -71,10 +71,10 @@ A human rescued via comms distress signal.
 - Resources deplete faster (companion count = 2)
 - More color (+0.6 saturation total)
 
-### Companion 3: Cavediver (6th planet)
-A human cave explorer, Mira, found living inside a cave on the 6th discovered planet.
+### Companion 3: Cavediver (5th planet)
+A human cave explorer, Mira, found living inside a cave on the 5th discovered planet.
 
-**Trigger:** Every planet has a cave entrance. Before meeting Mira, the cave prompt reads *"A dark cave. Wouldn't go in there."* The 6th discovered planet (`caveLit: true`) has a warm light flickering from its cave. Pressing [E] there launches `CavediverEvent` → Mira joins the crew.
+**Trigger:** Every planet has a cave entrance. Before meeting Mira, the cave prompt reads *"A dark cave. Wouldn't go in there."* The 5th discovered planet (`caveLit: true`) has a warm light flickering from its cave. Pressing [E] there launches `CavediverEvent` → Mira joins the crew.
 
 **Effects:**
 - Ship corridor: Cavediver NPC between the chore doors and Collection
@@ -90,7 +90,7 @@ A human cave explorer, Mira, found living inside a cave on the 6th discovered pl
 ### Cave System
 Every planet has a cave entrance drawn at `x ≈ 0.9` on the surface.
 
-**Before cavediver joins:** prompt is *"A dark cave. Wouldn't go in there."* with no action. On the 6th planet only, the cave is lit and *"A warm light flickers from deep within... [E] Enter"* → `CavediverEvent`.
+**Before cavediver joins:** prompt is *"A dark cave. Wouldn't go in there."* with no action. On the 5th planet only, the cave is lit and *"A warm light flickers from deep within... [E] Enter"* → `CavediverEvent`.
 
 **After cavediver joins:** prompt becomes *"Cave [E] Enter"* → `Cave` scene. Cave mirrors Planet's loop: A/D or arrows to move, [E] to collect, [L] to return to the planet surface (Planet → Cave → Planet; does NOT go straight to Ship). Each cave holds 3-5 high-yield resource items (+20 each) plus one unique artifact. Uncollected items persist on revisit.
 
@@ -143,7 +143,7 @@ src/
 │   │   ├── Planet.ts          # Planet surface — loads items from saved planet data
 │   │   ├── CompanionEvent.ts   # Day 5 — find the dog on a wrecked ship
 │   │   ├── RescueEvent.ts     # Day 7 — rescue botanist via comms distress signal
-│   │   ├── CavediverEvent.ts  # 6th planet — meet Mira in the lit cave
+│   │   ├── CavediverEvent.ts  # 5th planet — meet Mira in the lit cave
 │   │   ├── Cave.ts            # Cave interior — high-yield resources + unique artifacts
 │   │   ├── Collection.ts      # Exotic plant collection room (after botanist joins)
 │   │   ├── DevPanel.ts        # Dev tool overlay — toggle with M key
@@ -224,7 +224,7 @@ Static helper class for reading/writing global state via Phaser's Registry. Key 
             caveItems: [        // Same shape as items; locked until cavediver joins. Resources grant +20.
                 { type: ResourceType | 'unique', uniqueId?: string, x: number, collected: boolean, locked?: boolean }
             ],
-            caveLit: boolean    // True on the 6th discovered planet only — triggers CavediverEvent
+            caveLit: boolean    // True on the 5th discovered planet only — triggers CavediverEvent
         }
     ],
     collectedCaveItems: string[], // coffee_maker, music_box, old_photograph, lantern
@@ -289,7 +289,7 @@ Each room shows different flavor text depending on companion count (solo = bleak
 | L | Cave | Leave cave (return to Planet surface) |
 | M | Any scene | Toggle dev panel overlay |
 | C | Dev panel | Add cavediver companion |
-| V | Dev panel | Fast-forward to 6 discovered planets (cavediver-ready) |
+| V | Dev panel | Fast-forward to 5 discovered planets (cavediver-ready) |
 | Click | MainMenu | Start game |
 | Click | Navigation | Select planet to visit |
 
@@ -409,7 +409,7 @@ this.tweens.add({
 - [ ] Resource depletion consequences (what happens at 0?)
 
 ### Phase 2b — Cavediver & Caves ✅ DONE
-- [x] CavediverEvent scene — meet Mira in the lit cave on 6th planet
+- [x] CavediverEvent scene — meet Mira in the lit cave on 5th planet
 - [x] Cave scene — per-planet cave exploration mirroring Planet's loop (E to collect, L to leave)
 - [x] Cave entrances drawn on every planet, with three prompt states (locked / lit / enter)
 - [x] `caveItems` and `caveLit` fields on PlanetData, generated at discovery

@@ -112,9 +112,9 @@ export class DevPanel extends Scene {
         });
         y += gap;
 
-        this.addButton(16, y, "[V] Setup cavediver planet (6 discovered)", () => {
+        this.addButton(16, y, "[V] Setup cavediver planet (5 discovered)", () => {
             const state = GameState.get(this);
-            const toDiscover = Math.max(0, 6 - state.planets.length);
+            const toDiscover = Math.max(0, 5 - state.planets.length);
             for (let i = 0; i < toDiscover; i++) {
                 GameState.discoverPlanet(this);
             }

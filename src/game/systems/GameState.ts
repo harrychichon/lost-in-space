@@ -66,7 +66,7 @@ const CAVE_UNIQUE_IDS = [
     "old_photograph",
     "lantern",
 ];
-const CAVEDIVER_PLANET_INDEX = 5; // 6th discovered planet (0-indexed)
+const CAVEDIVER_PLANET_INDEX = 4; // 5th discovered planet (0-indexed)
 
 const PLANET_NAMES = [
     "Kara-7",
