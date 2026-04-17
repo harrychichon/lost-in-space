@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetItem, ResourceType } from '../systems/GameState';
+import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
     sprite: Phaser.GameObjects.Arc;
@@ -52,7 +53,8 @@ export class Cave extends Scene {
     private interactKey!: Phaser.Input.Keyboard.Key;
     private leaveKey!: Phaser.Input.Keyboard.Key;
     private pickups: PickupSprite[] = [];
-    private playerGfx!: Phaser.GameObjects.Graphics;
+    private playerSprite!: Phaser.GameObjects.Sprite;
+    private groundY = 0;
     private statusText!: Phaser.GameObjects.Text;
     private promptText!: Phaser.GameObjects.Text;
     private planetId!: string;
@@ -147,12 +149,12 @@ export class Cave extends Scene {
         });
 
         // --- Player ---
-        this.player = this.add.rectangle(60, height * 0.75 - 25, 20, 50, 0xaaaaaa, 0);
+        this.groundY = height * 0.75;
+        this.player = this.add.rectangle(60, this.groundY - 25, 20, 50, 0xaaaaaa, 0);
         this.physics.add.existing(this.player);
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         body.setCollideWorldBounds(true);
-        this.playerGfx = this.add.graphics();
-        this.drawPlayer(this.playerGfx, this.player.x, this.player.y);
+        this.playerSprite = createPlayerSprite(this, this.player.x, this.groundY);
 
         // --- HUD ---
         this.add.text(width * 0.5, 20, `${planet.name} — Cave`, {
@@ -187,40 +189,6 @@ export class Cave extends Scene {
         this.keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
         this.leaveKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L);
-    }
-
-    private drawPlayer(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
-        gfx.clear();
-        gfx.fillStyle(0x666666, 1);
-        gfx.fillRect(x - 5, y + 10, 4, 14);
-        gfx.fillRect(x + 1, y + 10, 4, 14);
-        gfx.fillStyle(0x555555, 1);
-        gfx.fillRect(x - 6, y + 22, 6, 3);
-        gfx.fillRect(x, y + 22, 6, 3);
-        gfx.fillStyle(0x777777, 1);
-        gfx.fillRect(x - 7, y - 6, 14, 18);
-        gfx.fillStyle(0x555555, 1);
-        gfx.fillRect(x - 7, y + 6, 14, 3);
-        gfx.fillStyle(0x777777, 1);
-        gfx.fillRect(x - 10, y - 4, 4, 12);
-        gfx.fillRect(x + 6, y - 4, 4, 12);
-        gfx.fillStyle(0x888888, 1);
-        gfx.fillRect(x - 10, y + 6, 4, 3);
-        gfx.fillRect(x + 6, y + 6, 4, 3);
-        gfx.fillStyle(0xbb9988, 1);
-        gfx.fillRect(x - 3, y - 10, 6, 5);
-        gfx.fillStyle(0x8899aa, 0.5);
-        gfx.fillCircle(x, y - 16, 9);
-        gfx.lineStyle(2, 0x999999, 0.8);
-        gfx.strokeCircle(x, y - 16, 9);
-        gfx.fillStyle(0xbb9988, 1);
-        gfx.fillCircle(x, y - 16, 6);
-        gfx.fillStyle(0x222222, 1);
-        gfx.fillCircle(x - 2, y - 17, 1.2);
-        gfx.fillCircle(x + 2, y - 17, 1.2);
-        // Headlamp (player has a light too in caves)
-        gfx.fillStyle(0xffe8a8, 1);
-        gfx.fillCircle(x + 7, y - 18, 1.8);
     }
 
     private getItemInfo(item: PlanetItem) {
@@ -273,7 +241,6 @@ export class Cave extends Scene {
 
     update() {
         const body = this.player.body as Phaser.Physics.Arcade.Body;
-        this.drawPlayer(this.playerGfx, this.player.x, this.player.y);
 
         if (this.cursors.left.isDown || this.keyA.isDown) {
             body.setVelocityX(-200);
@@ -282,6 +249,8 @@ export class Cave extends Scene {
         } else {
             body.setVelocityX(0);
         }
+
+        updatePlayerSprite(this.playerSprite, this.player.x, this.groundY, body.velocity.x);
 
         this.currentPickup = null;
         let closestDist = Infinity;
