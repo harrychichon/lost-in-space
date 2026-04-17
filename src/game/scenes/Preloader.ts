@@ -33,6 +33,8 @@ export class Preloader extends Scene {
         // Audio tracks
         this.load.audio("low_ambient", "audio/freesound_community-low-ambient-01-61547.mp3");
         this.load.audio("spooky_wind", "audio/dragon-studio-spooky-wind-429221.mp3");
+        this.load.audio("creepy_static", "audio/creepy_static.wav");
+        this.load.audio("beep_sequence", "audio/beep_sequence_02.wav");
 
         // Planet art (round-robin by discovery index in Navigation)
         const planetNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20];
@@ -51,11 +53,18 @@ export class Preloader extends Scene {
 
         // Dog idle spritesheet (4 frames)
         loadDogAssets(this);
+
+        // Door tileset (5 cols × 3 rows, 24×32 per frame)
+        this.load.spritesheet("doors", "door.png", {
+            frameWidth: 24,
+            frameHeight: 32,
+        });
     }
 
     create() {
         createPlayerAnimations(this);
         createDogAnimations(this);
+        this.textures.get("doors").setFilter(Phaser.Textures.FilterMode.NEAREST);
         this.scene.start("MainMenu");
     }
 }

@@ -8,7 +8,7 @@ import { createDogSprite } from '../objects/Dog';
 interface Door {
     x: number;
     label: Phaser.GameObjects.Text;
-    icon: Phaser.GameObjects.Graphics;
+    icon: Phaser.GameObjects.GameObject;
     name: string;
     choreKey: keyof Chores | null;
     sceneName: string | null;
@@ -270,28 +270,15 @@ export class Ship extends Scene {
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
 
-    private createDoor(x: number, y: number, w: number, h: number, name: string, color: number, choreKey: keyof Chores, sceneName: string) {
+    private createDoor(x: number, y: number, _w: number, h: number, name: string, _color: number, choreKey: keyof Chores, sceneName: string) {
         const state = GameState.get(this);
         const done = state.chores[choreKey];
 
-        const icon = this.add.graphics();
-
-        // Door frame
-        icon.fillStyle(0x2a2a2a, 1);
-        icon.fillRect(x - w / 2 - 4, y - 4, w + 8, h + 4);
-
-        // Door itself
-        icon.fillStyle(done ? 0x1a1a1a : color, 1);
-        icon.fillRect(x - w / 2, y, w, h);
-
-        // Door handle
-        icon.fillStyle(0x999999, 1);
-        icon.fillCircle(x + w / 2 - 8, y + h / 2, 3);
-
-        // Subtle glow if not done
-        if (!done) {
-            icon.lineStyle(1, color, 0.4);
-            icon.strokeRect(x - w / 2, y, w, h);
+        // Metal door sprite at 2× scale (48×64), anchored at bottom
+        const floorY = y + h;
+        const icon = this.add.image(x, floorY, 'doors', 13).setOrigin(0.5, 1).setScale(2);
+        if (done) {
+            icon.setTint(0x555555);
         }
 
         // Label above door
@@ -325,28 +312,22 @@ export class Ship extends Scene {
 
     private createCollectionDoor(x: number, floorY: number) {
         const doorH = 70;
-        const doorW = 45;
         const doorY = floorY - doorH;
         const hasHuman = GameState.hasCompanion(this, 'human');
-        const color = hasHuman ? 0x556644 : 0x2a2a2a;
 
-        const icon = this.add.graphics();
-        icon.fillStyle(0x2a2a2a, 1);
-        icon.fillRect(x - doorW / 2 - 4, doorY - 4, doorW + 8, doorH + 4);
-        icon.fillStyle(color, 1);
-        icon.fillRect(x - doorW / 2, doorY, doorW, doorH);
-        icon.fillStyle(0x999999, 1);
-        icon.fillCircle(x + doorW / 2 - 8, doorY + doorH / 2, 3);
+        // Metal door sprite at 2× scale
+        const icon = this.add.image(x, floorY, 'doors', 13).setOrigin(0.5, 1).setScale(2);
+        if (!hasHuman) {
+            icon.setTint(0x444444);
+        }
 
         if (hasHuman) {
-            icon.lineStyle(1, 0x556644, 0.4);
-            icon.strokeRect(x - doorW / 2, doorY, doorW, doorH);
-
             // Small plant icon on door
-            icon.fillStyle(0x447744, 0.6);
-            icon.fillCircle(x, doorY + 20, 6);
-            icon.fillCircle(x - 5, doorY + 18, 5);
-            icon.fillCircle(x + 5, doorY + 18, 5);
+            const plant = this.add.graphics();
+            plant.fillStyle(0x447744, 0.6);
+            plant.fillCircle(x, doorY + 20, 6);
+            plant.fillCircle(x - 5, doorY + 18, 5);
+            plant.fillCircle(x + 5, doorY + 18, 5);
 
             const label = this.add.text(x, doorY - 12, 'Collection', {
                 fontFamily: 'Georgia, serif',

@@ -124,18 +124,11 @@ export abstract class RoomScene extends Scene {
     }
 
     /** Draw an exit door and register its interact point. */
-    protected addExitDoor(gfx: Phaser.GameObjects.Graphics, x: number) {
-        const doorH = 70;
-        const doorW = 45;
-        // Frame
-        gfx.fillStyle(0x2a2a2a, 1);
-        gfx.fillRect(x - doorW / 2 - 4, this.floorY - doorH - 4, doorW + 8, doorH + 4);
-        // Door
-        gfx.fillStyle(0x444444, 1);
-        gfx.fillRect(x - doorW / 2, this.floorY - doorH, doorW, doorH);
-        // Handle
-        gfx.fillStyle(0x999999, 1);
-        gfx.fillCircle(x + doorW / 2 - 8, this.floorY - doorH / 2, 3);
+    protected addExitDoor(_gfx: Phaser.GameObjects.Graphics, x: number) {
+        // Metal door sprite (frame 13: col 3, row 2) at 2× scale = 48×64
+        const door = this.add.image(x, this.floorY, 'doors', 13);
+        door.setOrigin(0.5, 1);
+        door.setScale(2);
 
         this.interactPoints.push({
             x,
