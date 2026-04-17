@@ -1,7 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData, PlanetItem, ResourceType } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
-import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
@@ -75,11 +74,25 @@ const ITEM_INFO: Record<string, { name: string; desc: string; resource?: Resourc
     },
 };
 
-const BIOME_GROUND: Record<PlanetData['biome'], { ground: number; hills: number; mountains: number }> = {
-    rocky:  { ground: 0x2a2a1a, hills: 0x333322, mountains: 0x1a1a12 },
-    lush:   { ground: 0x1a2a1a, hills: 0x223322, mountains: 0x122a12 },
-    frozen: { ground: 0x2a2a33, hills: 0x333344, mountains: 0x1a1a2a },
-    desert: { ground: 0x332a1a, hills: 0x443322, mountains: 0x2a1a0a },
+const BIOME_BG: Record<PlanetData['biome'], string> = {
+    rocky:  'bg_rock',
+    lush:   'bg_grass',
+    frozen: 'bg_snow',
+    desert: 'bg_rock',
+};
+
+const BIOME_TILE_FAMILY: Record<PlanetData['biome'], string> = {
+    rocky:  'stone',
+    lush:   'grass',
+    frozen: 'snow',
+    desert: 'sand',
+};
+
+const BIOME_RIM: Record<PlanetData['biome'], number> = {
+    rocky:  0x5a4a38,
+    lush:   0x3a4a33,
+    frozen: 0x556677,
+    desert: 0x6a4a30,
 };
 
 export class Planet extends Scene {
@@ -100,7 +113,6 @@ export class Planet extends Scene {
     private caveY = 0;
     private caveRadius = 55;
     private nearCave = false;
-    private space!: SpaceBackground;
 
     constructor() {
         super('Planet');
@@ -120,9 +132,6 @@ export class Planet extends Scene {
             return;
         }
 
-        const colors = BIOME_GROUND[planet.biome];
-
-        // Sky
         this.cameras.main.setBackgroundColor(0x000000);
 
         // Apply grayscale
@@ -131,28 +140,31 @@ export class Planet extends Scene {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
         }
 
-        // Parallax space sky (behind terrain). Slow drift — we're standing on the surface, not flying.
-        this.space = new SpaceBackground(this, { bgSpeed: 1, fl1Speed: 3, fl2Speed: 7 });
+        // Ground line — above this is sky/backdrop, below is walkable ground
+        const groundLine = height * 0.75;
 
-        // --- Draw planet surface (on top of stars) ---
-        const ground = this.add.graphics();
+        // Biome backdrop — sits behind the ground, only fills the sky portion
+        const bg = this.add.image(width / 2, 0, BIOME_BG[planet.biome]);
+        bg.setOrigin(0.5, 0);
+        bg.setDisplaySize(width, groundLine);
+        bg.setDepth(-10);
 
-        // Mountains
-        ground.fillStyle(colors.mountains, 1);
-        ground.fillTriangle(0, height * 0.5, width * 0.15, height * 0.3, width * 0.3, height * 0.5);
-        ground.fillTriangle(width * 0.25, height * 0.5, width * 0.45, height * 0.25, width * 0.65, height * 0.5);
-        ground.fillTriangle(width * 0.55, height * 0.5, width * 0.75, height * 0.35, width * 0.95, height * 0.5);
-        ground.fillRect(0, height * 0.5, width, height * 0.25);
+        // Tiled ground strip — surface row + fill rows down to canvas bottom
+        const tileSize = 64;
+        const family = BIOME_TILE_FAMILY[planet.biome];
+        const cols = Math.ceil(width / tileSize);
+        const rows = Math.ceil((height - groundLine) / tileSize);
+        for (let r = 0; r < rows; r++) {
+            const suffix = r === 0 ? 'top' : 'center';
+            const frame = `terrain_${family}_block_${suffix}`;
+            for (let c = 0; c < cols; c++) {
+                this.add.image(c * tileSize, groundLine + r * tileSize, 'tiles', frame)
+                    .setOrigin(0, 0)
+                    .setDepth(-5);
+            }
+        }
 
-        // Hills
-        ground.fillStyle(colors.hills, 1);
-        ground.fillCircle(width * 0.2, height * 0.75, 60);
-        ground.fillCircle(width * 0.7, height * 0.75, 80);
-        ground.fillCircle(width * 0.5, height * 0.75, 40);
-
-        // Terrain floor
-        ground.fillStyle(colors.ground, 1);
-        ground.fillRect(0, height * 0.75, width, height * 0.25);
+        const rimColor = BIOME_RIM[planet.biome];
 
         // --- Cave entrance ---
         // Position at the far side of the planet, nestled into a hill
@@ -175,7 +187,7 @@ export class Planet extends Scene {
         caveGfx.fillPath();
         caveGfx.fillRect(this.caveX - 28, this.caveY, 56, 24);
         // Rim stones
-        caveGfx.fillStyle(colors.mountains, 1);
+        caveGfx.fillStyle(rimColor, 1);
         caveGfx.fillCircle(this.caveX - 30, this.caveY + 6, 6);
         caveGfx.fillCircle(this.caveX + 30, this.caveY + 8, 5);
         caveGfx.fillCircle(this.caveX - 24, this.caveY - 14, 4);
@@ -330,9 +342,7 @@ export class Planet extends Scene {
         this.currentPickup = null;
     }
 
-    update(_time: number, delta: number) {
-        this.space.update(delta);
-
+    update() {
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
         // Movement
