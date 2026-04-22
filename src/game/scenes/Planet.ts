@@ -81,21 +81,18 @@ const ITEM_INFO: Record<string, { name: string; desc: string; resource?: Resourc
 };
 
 const BIOME_BG: Record<PlanetData['biome'], string> = {
-    rocky:  'bg_rock',
     lush:   'bg_grass',
     frozen: 'bg_snow',
     desert: 'bg_rock',
 };
 
 const BIOME_TILE_FAMILY: Record<PlanetData['biome'], string> = {
-    rocky:  'stone',
     lush:   'grass',
     frozen: 'snow',
     desert: 'sand',
 };
 
 const BIOME_RIM: Record<PlanetData['biome'], number> = {
-    rocky:  0x5a4a38,
     lush:   0x3a4a33,
     frozen: 0x556677,
     desert: 0x6a4a30,
