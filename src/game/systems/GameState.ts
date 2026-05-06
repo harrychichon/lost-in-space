@@ -51,6 +51,7 @@ export interface GameStateData {
     collectedExoticPlants: string[]; // uniqueIds of collected exotic plants
     collectedCaveItems: string[]; // uniqueIds of collected cave items
     caveUnlocked: boolean; // true once cavediver joins
+    moodOverride: number | null; // null = auto-calculate, 0-1 = DevPanel override
 }
 
 const EXOTIC_PLANT_IDS = ["voidbloom", "sweetmoss", "starspice"];
@@ -105,6 +106,7 @@ const DEFAULT_STATE: GameStateData = {
     collectedExoticPlants: [],
     collectedCaveItems: [],
     caveUnlocked: false,
+    moodOverride: null,
 };
 
 const REGISTRY_KEY = "gameState";
@@ -125,6 +127,7 @@ export class GameState {
             collectedExoticPlants: [],
             collectedCaveItems: [],
             caveUnlocked: false,
+            moodOverride: null,
         });
     }
 
@@ -238,9 +241,32 @@ export class GameState {
         return !!planet && planet.caveLit;
     }
 
+    // Returns 0-1: 1 = full resources + all chores done, 0 = depleted + nothing done.
+    // Resources carry 75% weight (long-run threat); chores 25% (daily signal).
+    static getSecondaryScale(scene: Phaser.Scene): number {
+        const state = GameState.get(scene);
+        const r = state.resources;
+        const resourceScore = (r.oxygen + r.food + r.fuel + r.parts) / 4 / 100;
+        const choresCompleted = Object.values(state.chores).filter(Boolean).length;
+        const choreScore = choresCompleted / 4;
+        return resourceScore * 0.75 + choreScore * 0.25;
+    }
+
+    // Returns the mood modifier used for audio and saturation fine-tuning.
+    // Respects DevPanel override when set; otherwise auto-calculates from resources/chores.
+    static getMoodModifier(scene: Phaser.Scene): number {
+        const state = GameState.get(scene);
+        return state.moodOverride !== null ? state.moodOverride : GameState.getSecondaryScale(scene);
+    }
+
+    // Base saturation from companion tier, nudged ±0.06 by mood modifier.
+    // Max nudge is 20% of one companion step — can never cross a tier boundary.
     static getSaturation(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
-        return Math.min(1, state.companions * 0.3);
+        const base = Math.min(1, state.companions * 0.3);
+        const mood = GameState.getMoodModifier(scene);
+        const nudge = (mood - 0.5) * 0.12;
+        return Math.max(0, Math.min(1, base + nudge));
     }
 
     // --- Companion methods ---

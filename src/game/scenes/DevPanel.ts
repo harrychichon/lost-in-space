@@ -5,8 +5,11 @@ import { GameState } from "../systems/GameState";
  * Dev panel overlay — toggled with M from any scene.
  * Runs as a parallel scene on top of the active gameplay scene.
  */
+const MOOD_PRESETS: (number | null)[] = [null, 0.0, 0.25, 0.5, 0.75, 1.0];
+
 export class DevPanel extends Scene {
     private texts: Phaser.GameObjects.Text[] = [];
+    private moodBtn!: Phaser.GameObjects.Text;
 
     constructor() {
         super("DevPanel");
@@ -120,6 +123,11 @@ export class DevPanel extends Scene {
             }
             this.refreshState();
         });
+        y += gap;
+
+        this.moodBtn = this.addButton(16, y, this.getMoodLabel(), () => {
+            this.cycleMoodOverride();
+        });
 
         // Keyboard shortcuts
         this.input.keyboard!.on("keydown-M", () => {
@@ -193,6 +201,9 @@ export class DevPanel extends Scene {
             }
             this.refreshState();
         });
+        this.input.keyboard!.on("keydown-T", () => {
+            this.cycleMoodOverride();
+        });
 
         this.refreshState();
     }
@@ -239,10 +250,13 @@ export class DevPanel extends Scene {
             }
             const r = state.resources;
             const c = state.chores;
+            const moodVal = GameState.getMoodModifier(this);
+            const moodTag = state.moodOverride !== null ? " (override)" : "";
             const lines = [
                 `Day: ${state.currentDay}`,
                 `Companions: ${state.companions}`,
-                `Saturation: ${GameState.getSaturation(this).toFixed(1)}`,
+                `Saturation: ${GameState.getSaturation(this).toFixed(2)}`,
+                `Mood modifier: ${moodVal.toFixed(2)}${moodTag}`,
                 ``,
                 `O2: ${r.oxygen}  Food: ${r.food}`,
                 `Fuel: ${r.fuel}  Parts: ${r.parts}`,
@@ -255,9 +269,35 @@ export class DevPanel extends Scene {
                 }),
             ];
             this.texts[1].setText(lines.join("\n"));
+            if (this.moodBtn) this.moodBtn.setText(this.getMoodLabel());
         } catch {
             this.texts[1].setText("No game state (start a game first)");
         }
+    }
+
+    private getMoodLabel(): string {
+        try {
+            const state = GameState.get(this);
+            if (!state) return "[T] Mood: AUTO";
+            return state.moodOverride !== null
+                ? `[T] Mood: ${state.moodOverride.toFixed(2)} (override)`
+                : "[T] Mood: AUTO";
+        } catch {
+            return "[T] Mood: AUTO";
+        }
+    }
+
+    private cycleMoodOverride(): void {
+        try {
+            const state = GameState.get(this);
+            const current = state?.moodOverride ?? null;
+            const idx = MOOD_PRESETS.findIndex((v) => v === current);
+            const next = MOOD_PRESETS[(idx + 1) % MOOD_PRESETS.length];
+            GameState.update(this, { moodOverride: next });
+        } catch {
+            // no state yet
+        }
+        this.restartActiveScene();
     }
 
     private getActiveGameScene(): string | null {

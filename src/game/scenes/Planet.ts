@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData, PlanetItem, ResourceType } from '../systems/GameState';
-import { AudioManager } from '../systems/AudioManager';
+import { AudioManager, MusicTier } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
@@ -127,13 +127,18 @@ export class Planet extends Scene {
         this.pickups = [];
         this.currentPickup = null;
 
-        AudioManager.play(this, 'spooky_wind');
-
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
             this.scene.start('Ship');
             return;
         }
+
+        AudioManager.update(this, {
+            tier: Math.min(3, GameState.get(this).companions) as MusicTier,
+            location: 'planet',
+            moodModifier: GameState.getMoodModifier(this),
+            biome: planet.biome,
+        });
 
         this.cameras.main.setBackgroundColor(0x000000);
 
