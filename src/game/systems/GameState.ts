@@ -269,16 +269,12 @@ export class GameState {
         return Math.max(0, Math.min(1, base + nudge));
     }
 
-    // Apply grayscale postFX to the scene's main camera.
-    // Clears any existing FX first to prevent stacking across scene restarts.
+    // Apply grayscale by setting a CSS filter on the canvas element.
+    // Works in both WebGL and Canvas renderer modes.
     static applyGrayscale(scene: Phaser.Scene): void {
         const saturation = GameState.getSaturation(scene);
-        const cam = scene.cameras.main;
-        cam.postFX.clear();
-        if (saturation < 1) {
-            cam.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
-        console.log(`[mood] ${scene.scene.key} companions=${GameState.get(scene).companions} sat=${saturation.toFixed(3)} gray=${saturation < 1 ? (1 - saturation).toFixed(3) : 'OFF'}`);
+        scene.game.canvas.style.filter = `grayscale(${((1 - saturation) * 100).toFixed(1)}%)`;
+        console.log(`[mood] ${scene.scene.key} companions=${GameState.get(scene).companions} sat=${saturation.toFixed(3)}`);
     }
 
     // --- Companion methods ---
