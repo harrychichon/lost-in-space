@@ -259,13 +259,13 @@ export class GameState {
         return state.moodOverride !== null ? state.moodOverride : GameState.getSecondaryScale(scene);
     }
 
-    // Base saturation from companion tier, nudged ±0.06 by mood modifier.
-    // Max nudge is 20% of one companion step — can never cross a tier boundary.
+    // Base saturation from companion tier, nudged ±0.15 by mood modifier.
+    // Max nudge is 50% of one companion step — visible but can never cross a tier boundary.
     static getSaturation(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
         const base = Math.min(1, state.companions * 0.3);
         const mood = GameState.getMoodModifier(scene);
-        const nudge = (mood - 0.5) * 0.12;
+        const nudge = (mood - 0.5) * 0.3;
         return Math.max(0, Math.min(1, base + nudge));
     }
 
