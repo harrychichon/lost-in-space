@@ -62,7 +62,7 @@ export class Ship extends Scene {
         AudioManager.update(this, {
             tier: Math.min(3, GameState.get(this).companions) as MusicTier,
             location: 'ship',
-            moodModifier: GameState.getMoodModifier(this),
+            wellbeing: GameState.getWellbeing(this),
         });
 
         // --- Draw the ship corridor ---

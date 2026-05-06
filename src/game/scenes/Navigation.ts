@@ -42,7 +42,7 @@ export class Navigation extends Scene {
         AudioManager.update(this, {
             tier: Math.min(3, state.companions) as MusicTier,
             location: 'navigation',
-            moodModifier: GameState.getMoodModifier(this),
+            wellbeing: GameState.getWellbeing(this),
         });
 
         // Title

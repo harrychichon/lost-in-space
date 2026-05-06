@@ -6,7 +6,7 @@ export type LocationKey = 'ship' | 'room' | 'planet' | 'cave' | 'navigation';
 export interface AudioCtx {
     tier: MusicTier;
     location: LocationKey;
-    moodModifier: number;
+    wellbeing: number;
     biome?: string;
 }
 
@@ -42,7 +42,7 @@ const MUSIC_VOLUME = 0.4;
 const ENV_VOLUME   = 0.2;
 const FADE_MS      = 1200;
 
-// Tension layer (spooky_wind) fades in when moodModifier drops below threshold.
+// Tension layer (spooky_wind) fades in when wellbeing drops below threshold.
 const TENSION_CONFIG: Record<MusicTier, { threshold: number | null; maxVolume: number }> = {
     0: { threshold: 0.45, maxVolume: 0.25 },
     1: { threshold: 0.35, maxVolume: 0.18 },
@@ -72,7 +72,7 @@ export class AudioManager {
         const envKey   = AudioManager.resolveEnv(ctx.location, ctx.biome);
         AudioManager.updateMusic(scene, musicKey);
         AudioManager.updateEnv(scene, envKey);
-        AudioManager.updateTension(scene, ctx.tier, ctx.moodModifier);
+        AudioManager.updateTension(scene, ctx.tier, ctx.wellbeing);
     }
 
     /** Fade out all layers. Use for cutscenes that want silence. */
@@ -126,14 +126,14 @@ export class AudioManager {
         AudioManager.envSound = sound;
     }
 
-    private static updateTension(scene: Scene, tier: MusicTier, moodModifier: number): void {
+    private static updateTension(scene: Scene, tier: MusicTier, wellbeing: number): void {
         const config = TENSION_CONFIG[tier];
         if (config.threshold === null) {
             AudioManager.fadeOutTension(scene);
             return;
         }
-        if (moodModifier <= config.threshold) {
-            const intensity  = (config.threshold - moodModifier) / config.threshold;
+        if (wellbeing <= config.threshold) {
+            const intensity  = (config.threshold - wellbeing) / config.threshold;
             const targetVol  = config.maxVolume * intensity;
             if (AudioManager.tensionActive && AudioManager.tensionSound) {
                 scene.tweens.add({ targets: AudioManager.tensionSound, volume: targetVol, duration: FADE_MS, ease: 'Sine.easeOut' });

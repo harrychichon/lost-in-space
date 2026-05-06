@@ -80,7 +80,7 @@ export class Cave extends Scene {
         AudioManager.update(this, {
             tier: Math.min(3, GameState.get(this).companions) as MusicTier,
             location: 'cave',
-            moodModifier: GameState.getMoodModifier(this),
+            wellbeing: GameState.getWellbeing(this),
         });
 
         this.cameras.main.setBackgroundColor(0x07060a);

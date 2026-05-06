@@ -52,7 +52,7 @@ export abstract class RoomScene extends Scene {
         AudioManager.update(this, {
             tier: Math.min(3, GameState.get(this).companions) as MusicTier,
             location: 'room',
-            moodModifier: GameState.getMoodModifier(this),
+            wellbeing: GameState.getWellbeing(this),
         });
 
         // Input
