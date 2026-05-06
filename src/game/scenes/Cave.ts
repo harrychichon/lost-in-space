@@ -85,11 +85,7 @@ export class Cave extends Scene {
 
         this.cameras.main.setBackgroundColor(0x07060a);
 
-        // Grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         // --- Cave walls ---
         const walls = this.add.graphics();

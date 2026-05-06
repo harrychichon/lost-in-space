@@ -47,11 +47,7 @@ export abstract class RoomScene extends Scene {
         this.roomLeft = (width - this.roomWidth) / 2;
         this.roomRight = this.roomLeft + this.roomWidth;
 
-        // Apply grayscale based on companion count
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         AudioManager.update(this, {
             tier: Math.min(3, GameState.get(this).companions) as MusicTier,
