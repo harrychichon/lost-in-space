@@ -60,6 +60,16 @@ export class Preloader extends Scene {
             "tiles/spritesheet-tiles-default.xml",
         );
 
+        // Plant sprites (2×4 grid of 32×32 frames; frame 6 = bottom-left fully grown)
+        const plantSheet = (key: string, file: string) => {
+            this.load.spritesheet(key, `plants/${file}`, { frameWidth: 32, frameHeight: 32 });
+        };
+        plantSheet("plant_basicblue", "basicblue.png");
+        plantSheet("plant_basicyellow", "basicyellow.png");
+        plantSheet("plant_voidbloom", "purplebulb.png");
+        plantSheet("plant_sweetmoss", "blueflower.png");
+        plantSheet("plant_starspice", "orangeflower.png");
+
         // Player spritesheet (15 frames: 3 rows × 5 cols)
         loadPlayerAssets(this);
 
@@ -78,6 +88,9 @@ export class Preloader extends Scene {
         createDogAnimations(this);
         this.textures.get("doors").setFilter(Phaser.Textures.FilterMode.NEAREST);
         this.textures.get("tiles").setFilter(Phaser.Textures.FilterMode.NEAREST);
+        for (const key of ["plant_basicblue", "plant_basicyellow", "plant_voidbloom", "plant_sweetmoss", "plant_starspice"]) {
+            this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        }
         this.scene.start("MainMenu");
     }
 }

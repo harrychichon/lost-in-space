@@ -6,6 +6,7 @@ interface PlantDisplay {
     name: string;
     desc: string;
     color: number;
+    sprite: string;
 }
 
 const PLANT_DISPLAYS: PlantDisplay[] = [
@@ -14,18 +15,21 @@ const PLANT_DISPLAYS: PlantDisplay[] = [
         name: 'Voidbloom',
         desc: 'Dark, iridescent petals that seem to absorb light.\nThe botanist says its sap is lethal in small doses.\nBeautiful. Dangerous. Alive.',
         color: 0x663366,
+        sprite: 'plant_voidbloom',
     },
     {
         id: 'sweetmoss',
         name: 'Sweetmoss',
         desc: 'A soft, luminous moss that fills the room\nwith a gentle, sweet fragrance.\nThe ship smells like something other than metal now.',
         color: 0x55aa77,
+        sprite: 'plant_sweetmoss',
     },
     {
         id: 'starspice',
         name: 'Starspice',
         desc: 'A spiny herb with an intense aroma.\nThe botanist grinds it into meals.\nFood has flavor now. Actual flavor.',
         color: 0xbbaa44,
+        sprite: 'plant_starspice',
     },
 ];
 
@@ -90,7 +94,8 @@ export class Collection extends RoomScene {
             gfx.strokeRect(px - 35, py - 40, 70, 80);
 
             if (isCollected) {
-                this.drawPlant(gfx, px, py, plant);
+                // Fully-grown plant sprite (frame 6 of 2×4 grid) on a small podium
+                this.add.image(px, py + 24, plant.sprite, 6).setOrigin(0.5, 1).setScale(1.5);
 
                 // Name plate below case
                 this.add.text(px, py + 50, plant.name, {
@@ -156,43 +161,4 @@ export class Collection extends RoomScene {
         this.updateRoom();
     }
 
-    private drawPlant(gfx: Phaser.GameObjects.Graphics, x: number, y: number, plant: PlantDisplay) {
-        // Pot
-        gfx.fillStyle(0x554433, 1);
-        gfx.fillRect(x - 10, y + 10, 20, 15);
-        gfx.fillRect(x - 12, y + 8, 24, 4);
-
-        // Stem
-        gfx.lineStyle(2, 0x446633, 0.8);
-        gfx.lineBetween(x, y + 10, x, y - 10);
-
-        if (plant.id === 'voidbloom') {
-            for (let a = 0; a < 6; a++) {
-                const angle = (a / 6) * Math.PI * 2 - Math.PI / 2;
-                const px2 = x + Math.cos(angle) * 12;
-                const py2 = y - 10 + Math.sin(angle) * 10;
-                gfx.fillStyle(plant.color, 0.8);
-                gfx.fillCircle(px2, py2, 5);
-            }
-            gfx.fillStyle(0x220022, 1);
-            gfx.fillCircle(x, y - 10, 4);
-        } else if (plant.id === 'sweetmoss') {
-            gfx.fillStyle(plant.color, 0.6);
-            gfx.fillCircle(x - 6, y - 5, 8);
-            gfx.fillCircle(x + 6, y - 8, 7);
-            gfx.fillCircle(x, y - 14, 6);
-            gfx.fillStyle(0x66bb88, 0.4);
-            gfx.fillCircle(x - 2, y - 10, 4);
-        } else if (plant.id === 'starspice') {
-            for (let s = 0; s < 5; s++) {
-                const angle = (s / 5) * Math.PI - Math.PI / 2;
-                const sx = x + Math.cos(angle) * 3;
-                const sy = y - 5 + s * -4;
-                gfx.fillStyle(plant.color, 0.7);
-                gfx.fillTriangle(sx - 8, sy + 3, sx, sy - 5, sx + 8, sy + 3);
-            }
-            gfx.lineStyle(1, 0x998833, 0.5);
-            gfx.lineBetween(x, y + 10, x, y - 25);
-        }
-    }
 }
