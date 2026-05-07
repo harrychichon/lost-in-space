@@ -1,13 +1,13 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
 
-const BAR_W       = 300;
-const ZONE_START  = 105;  // green zone left edge (bar-relative px)
-const ZONE_END    = 195;  // green zone right edge (bar-relative px)
-const CURSOR_SPEED = 200; // px / sec
-const PLANTS      = 3;
+const BAR_W        = 300;
+const ZONE_START   = 128;  // highlighted zone left edge (bar-relative px) — 45 px wide
+const ZONE_END     = 173;  // highlighted zone right edge (bar-relative px)
+const CURSOR_SPEED = 200;  // px / sec
 
 export class GreenhouseModal extends Scene {
+    private plantCount = 1;  // set in create() from GameState
     private barLeft  = 0;
     private barTop   = 0;
     private cursorX  = 0;
@@ -36,6 +36,10 @@ export class GreenhouseModal extends Scene {
         const mh = 320;
         const mt = cy - mh / 2;
 
+        // Plant count: 1 base + 1 per oxygen plant brought aboard
+        const state = GameState.get(this);
+        this.plantCount = 1 + (state.collectedOxygenPlants?.length ?? 0);
+
         // ── Overlay ────────────────────────────────────────────────────────
         this.add.rectangle(cx, cy, width, height, 0x000000, 0.72);
 
@@ -53,7 +57,6 @@ export class GreenhouseModal extends Scene {
         }).setOrigin(0.5);
 
         // ── Flavor text ────────────────────────────────────────────────────
-        const state = GameState.get(this);
         const flavor = state.companions === 0
             ? 'Water each plant. They grow whether you care or not.'
             : 'Time to tend the plants.';
@@ -66,10 +69,11 @@ export class GreenhouseModal extends Scene {
 
         // ── Plant progress indicators ──────────────────────────────────────
         const plantY = mt + 118;
-        const plantSpacing = 80;
+        const plantSpacing = Math.min(80, 460 / Math.max(1, this.plantCount));
+        const plantsWidth = plantSpacing * (this.plantCount - 1);
         this.plantIcons = [];
-        for (let i = 0; i < PLANTS; i++) {
-            const px = cx + (i - 1) * plantSpacing;
+        for (let i = 0; i < this.plantCount; i++) {
+            const px = cx - plantsWidth / 2 + i * plantSpacing;
             // Leaf glyph background
             this.add.text(px, plantY, '🌿', {
                 fontSize: '20px',
@@ -117,7 +121,7 @@ export class GreenhouseModal extends Scene {
         );
 
         // ── Instructions ───────────────────────────────────────────────────
-        this.add.text(cx, this.barTop + barH + 18, 'Press  [E]  when the cursor is in the green zone', {
+        this.add.text(cx, this.barTop + barH + 18, 'Press  [E]  when the cursor is in the highlighted zone', {
             fontFamily: 'Georgia, serif',
             fontSize: '12px',
             color: '#556655',
@@ -192,16 +196,11 @@ export class GreenhouseModal extends Scene {
             onComplete: () => this.zoneRect.setAlpha(1),
         });
 
-        if (this.currentPlant >= PLANTS) {
+        if (this.currentPlant >= this.plantCount) {
             this.onComplete();
         } else {
-            this.statusText.setText(`Plant ${this.currentPlant} of ${PLANTS} done.`);
-            // Reset cursor to left edge for next plant
-            this.time.delayedCall(300, () => {
-                this.cursorX   = 0;
-                this.cursorDir = 1;
-                this.canPress  = true;
-            });
+            this.statusText.setText(`Plant ${this.currentPlant} of ${this.plantCount} done.`);
+            this.time.delayedCall(300, () => { this.canPress = true; });
         }
     }
 
@@ -218,10 +217,10 @@ export class GreenhouseModal extends Scene {
     private onComplete() {
         this.finished = true;
 
-        const state = GameState.get(this);
         GameState.completeChore(this, 'greenhouse');
 
-        const msg = state.companions === 0
+        const companions = GameState.get(this).companions;
+        const msg = companions === 0
             ? 'You water the plants in silence.\nThey grow. You don\'t.'
             : 'You tend the plants together.';
 

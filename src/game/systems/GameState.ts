@@ -50,6 +50,7 @@ export interface GameStateData {
     collectedDogToys: string[]; // uniqueIds of collected dog toys
     collectedExoticPlants: string[]; // uniqueIds of collected exotic plants
     collectedCaveItems: string[]; // uniqueIds of collected cave items
+    collectedOxygenPlants: string[]; // uniqueIds of oxygen-producing plants brought aboard
     caveUnlocked: boolean; // true once cavediver joins
     wellbeingOverride: number | null; // null = auto-calculate, 0-1 = DevPanel override
     warmthOverride: number | null;    // null = auto-calculate, 0-1 = DevPanel override
@@ -106,6 +107,7 @@ const DEFAULT_STATE: GameStateData = {
     collectedDogToys: [],
     collectedExoticPlants: [],
     collectedCaveItems: [],
+    collectedOxygenPlants: [],
     caveUnlocked: false,
     wellbeingOverride: null,
     warmthOverride: null,
@@ -128,6 +130,7 @@ export class GameState {
             collectedDogToys: [],
             collectedExoticPlants: [],
             collectedCaveItems: [],
+            collectedOxygenPlants: [],
             caveUnlocked: false,
             wellbeingOverride: null,
             warmthOverride: null,
@@ -383,6 +386,15 @@ export class GameState {
         }
     }
 
+    static collectOxygenPlant(scene: Phaser.Scene, uniqueId: string): void {
+        const state = GameState.get(scene);
+        if (!state.collectedOxygenPlants.includes(uniqueId)) {
+            GameState.update(scene, {
+                collectedOxygenPlants: [...state.collectedOxygenPlants, uniqueId],
+            });
+        }
+    }
+
     static unlockPlanetItem(scene: Phaser.Scene, uniqueId: string): void {
         const state = GameState.get(scene);
         const planets = state.planets.map((p) => ({
@@ -495,6 +507,16 @@ export class GameState {
                 locked: true,
             });
         }
+
+        // Each planet has one oxygen-producing plant (collectable immediately, no companion needed)
+        const planetIndex = state.planets.length + 1;
+        items.push({
+            type: "unique",
+            uniqueId: `oxygen_plant_${planetIndex}`,
+            x: 0.1 + Math.random() * 0.6,
+            collected: false,
+            locked: false,
+        });
 
         // --- Cave items ---
         const numCaveResources = 3 + Math.floor(Math.random() * 3);
