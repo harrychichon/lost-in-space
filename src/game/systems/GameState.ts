@@ -32,7 +32,7 @@ export interface CompanionData {
 export interface PlanetData {
     id: string;
     name: string;
-    biome: "rocky" | "lush" | "frozen" | "desert";
+    biome: "lush" | "frozen" | "desert";
     discoveredDay: number;
     items: PlanetItem[];
     caveItems: PlanetItem[];
@@ -86,7 +86,7 @@ const PLANET_NAMES = [
     "Nimith",
 ];
 
-const BIOMES: PlanetData["biome"][] = ["rocky", "lush", "frozen", "desert"];
+const BIOMES: PlanetData["biome"][] = ["lush", "frozen", "desert"];
 
 const DEFAULT_STATE: GameStateData = {
     currentDay: 1,

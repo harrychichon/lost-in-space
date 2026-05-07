@@ -4,7 +4,6 @@ import { SpaceBackground } from '../objects/SpaceBackground';
 import { AudioManager } from '../systems/AudioManager';
 
 const BIOME_COLORS: Record<PlanetData['biome'], number> = {
-    rocky: 0x888877,
     lush: 0x558855,
     frozen: 0x7799aa,
     desert: 0xaa8855,
