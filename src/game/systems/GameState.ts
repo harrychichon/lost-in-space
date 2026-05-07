@@ -269,6 +269,18 @@ export class GameState {
         return Math.max(0, Math.min(1, base + nudge));
     }
 
+    // Apply grayscale postFX to the scene's main camera.
+    // Clears any existing FX first to prevent stacking across scene restarts.
+    static applyGrayscale(scene: Phaser.Scene): void {
+        const saturation = GameState.getSaturation(scene);
+        const cam = scene.cameras.main;
+        cam.postFX.clear();
+        if (saturation < 1) {
+            cam.postFX.addColorMatrix().grayscale(1 - saturation);
+        }
+        console.log(`[mood] ${scene.scene.key} companions=${GameState.get(scene).companions} sat=${saturation.toFixed(3)} gray=${saturation < 1 ? (1 - saturation).toFixed(3) : 'OFF'}`);
+    }
+
     // --- Companion methods ---
 
     static addCompanion(scene: Phaser.Scene, companion: CompanionData): void {

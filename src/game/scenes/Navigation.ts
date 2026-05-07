@@ -35,11 +35,7 @@ export class Navigation extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Apply grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         this.space = new SpaceBackground(this);
 

@@ -59,7 +59,7 @@ export class MainMenu extends Scene {
             },
         });
 
-        // Grayscale
+        this.cameras.main.postFX.clear();
         this.cameras.main.postFX.addColorMatrix().grayscale(1);
 
         // Click to start

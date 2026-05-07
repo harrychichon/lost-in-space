@@ -88,11 +88,7 @@ export class DayIntro extends Scene {
             });
         }
 
-        // Apply grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         // Advance to next scene
         this.time.delayedCall(3500, () => {

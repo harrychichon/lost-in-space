@@ -14,9 +14,7 @@ export class RescueEvent extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Still mostly grayscale but slightly shifting
-        const saturation = GameState.getSaturation(this);
-        this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
+        GameState.applyGrayscale(this);
 
         this.space = new SpaceBackground(this);
 

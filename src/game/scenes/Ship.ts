@@ -57,11 +57,7 @@ export class Ship extends Scene {
 
         this.cameras.main.setBackgroundColor(0x111111);
 
-        // Apply grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         AudioManager.update(this, {
             tier: Math.min(3, GameState.get(this).companions) as MusicTier,
