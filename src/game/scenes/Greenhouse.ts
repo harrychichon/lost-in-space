@@ -92,20 +92,6 @@ export class Greenhouse extends RoomScene {
         // --- Companions ---
         const state = GameState.get(this);
 
-        if (GameState.hasCompanion(this, 'dog')) {
-            const dogX = this.rx(0.2);
-            const dogGfx = this.add.graphics();
-            this.drawDog(dogGfx, dogX, this.floorY - 10);
-
-            this.interactPoints.push({
-                x: dogX,
-                label: 'Talk to dog',
-                action: () => this.showMessage(
-                    'The dog sniffs the plants curiously.\nYou water them around it.'
-                ),
-            });
-        }
-
         if (GameState.hasCompanion(this, 'human')) {
             const botX = this.rx(0.78);
             const botGfx = this.add.graphics();
@@ -116,20 +102,6 @@ export class Greenhouse extends RoomScene {
                 label: 'Talk to botanist',
                 action: () => this.showMessage(
                     '"These remind me of home," the botanist says quietly.\nTheir hands move with purpose among the leaves.'
-                ),
-            });
-        }
-
-        if (GameState.hasCompanion(this, 'cavediver')) {
-            const cdX = this.rx(0.6);
-            const cdGfx = this.add.graphics();
-            this.drawCavediver(cdGfx, cdX, this.floorY - 25);
-
-            this.interactPoints.push({
-                x: cdX,
-                label: 'Talk to Mira',
-                action: () => this.showMessage(
-                    'Mira hauls in a sack of mineral-rich cave soil.\n"The plants will love this."'
                 ),
             });
         }
