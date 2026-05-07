@@ -104,6 +104,20 @@ export class Engine extends RoomScene {
             });
         }
 
+        if (GameState.hasCompanion(this, 'cavediver')) {
+            const cdX = this.rx(0.7);
+            const cdGfx = this.add.graphics();
+            this.drawCavediver(cdGfx, cdX, this.floorY - 25);
+
+            this.interactPoints.push({
+                x: cdX,
+                label: 'Talk to Mira',
+                action: () => this.showMessage(
+                    'Mira is elbow-deep in the engine, swapping in cave-forged parts.\n"This old rig\'s going to last us a while longer."'
+                ),
+            });
+        }
+
         // --- Chore station (engine gauges) ---
         const choreX = this.rx(0.5);
         if (!state.chores.engine) {
@@ -115,9 +129,15 @@ export class Engine extends RoomScene {
                     GameState.completeChore(this, 'engine');
                     const idx = this.interactPoints.indexOf(chorePoint);
                     if (idx !== -1) this.interactPoints.splice(idx, 1);
-                    const msg = state.companions === 0
-                        ? 'Everything reads normal. It always does.'
-                        : 'Gauges read normal. Running a bit hotter with more life support online.';
+                    const hasCavediver = GameState.hasCompanion(this, 'cavediver');
+                    let msg: string;
+                    if (state.companions === 0) {
+                        msg = 'Everything reads normal. It always does.';
+                    } else if (hasCavediver) {
+                        msg = 'Mira\'s patchwork holds. The gauges settle into the green.';
+                    } else {
+                        msg = 'Gauges read normal. Running a bit hotter with more life support online.';
+                    }
                     this.showMessage(msg);
                     this.add.text(choreX, this.floorY - 85, '✓', {
                         fontFamily: 'Arial', fontSize: '22px', color: '#556655',

@@ -92,6 +92,10 @@ export class Planet extends Scene {
     private promptText!: Phaser.GameObjects.Text;
     private planetId!: string;
     private currentPickup: PickupSprite | null = null;
+    private caveX = 0;
+    private caveY = 0;
+    private caveRadius = 55;
+    private nearCave = false;
 
     constructor() {
         super('Planet');
@@ -154,6 +158,48 @@ export class Planet extends Scene {
         // Terrain floor
         ground.fillStyle(colors.ground, 1);
         ground.fillRect(0, height * 0.75, width, height * 0.25);
+
+        // --- Cave entrance ---
+        // Position at the far side of the planet, nestled into a hill
+        this.caveX = width * 0.9;
+        this.caveY = height * 0.75 - 2;
+        const caveGfx = this.add.graphics();
+        // Dark hillside behind the mouth
+        caveGfx.fillStyle(0x111111, 1);
+        caveGfx.fillEllipse(this.caveX, this.caveY + 4, 70, 56);
+        // Inner cave (arched opening)
+        caveGfx.fillStyle(0x000000, 1);
+        caveGfx.slice(
+            this.caveX,
+            this.caveY,
+            28,
+            Phaser.Math.DegToRad(180),
+            Phaser.Math.DegToRad(360),
+            false,
+        );
+        caveGfx.fillPath();
+        caveGfx.fillRect(this.caveX - 28, this.caveY, 56, 24);
+        // Rim stones
+        caveGfx.fillStyle(colors.mountains, 1);
+        caveGfx.fillCircle(this.caveX - 30, this.caveY + 6, 6);
+        caveGfx.fillCircle(this.caveX + 30, this.caveY + 8, 5);
+        caveGfx.fillCircle(this.caveX - 24, this.caveY - 14, 4);
+        caveGfx.fillCircle(this.caveX + 22, this.caveY - 16, 5);
+
+        // Warm light flickering from inside — only on the cavediver-event planet,
+        // and only before she's joined
+        if (planet.caveLit && !GameState.hasCompanion(this, 'cavediver')) {
+            const glow = this.add.circle(this.caveX, this.caveY + 2, 18, 0xffcc66, 0.45);
+            this.tweens.add({
+                targets: glow,
+                alpha: 0.2,
+                scale: 1.25,
+                duration: 1100,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+            });
+        }
 
         // --- Resource pickups from planet data ---
         const uncollectedItems = planet.items
@@ -362,6 +408,40 @@ export class Planet extends Scene {
                 closestDist = dist;
                 this.currentPickup = pickup;
             }
+        }
+
+        // Cave proximity (only shown when not hovering an item)
+        const caveDist = Phaser.Math.Distance.Between(
+            this.player.x, this.player.y,
+            this.caveX, this.caveY,
+        );
+        this.nearCave = !this.currentPickup && caveDist < this.caveRadius;
+
+        if (this.nearCave) {
+            const planet = GameState.getPlanet(this, this.planetId);
+            const hasCavediver = GameState.hasCompanion(this, 'cavediver');
+            if (hasCavediver) {
+                this.promptText.setText('Cave\n[E] Enter');
+                this.promptText.setColor('#aaaaaa');
+            } else if (planet?.caveLit) {
+                this.promptText.setText('A warm light flickers from deep within...\n[E] Enter');
+                this.promptText.setColor('#ccaa77');
+            } else {
+                this.promptText.setText('A dark cave.\nWouldn\'t go in there.');
+                this.promptText.setColor('#666666');
+            }
+            this.promptText.setAlpha(1);
+
+            if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+                if (hasCavediver) {
+                    this.scene.start('Cave', { planetId: this.planetId });
+                    return;
+                } else if (planet?.caveLit) {
+                    this.scene.start('CavediverEvent', { planetId: this.planetId });
+                    return;
+                }
+            }
+            return;
         }
 
         // Show/hide prompt

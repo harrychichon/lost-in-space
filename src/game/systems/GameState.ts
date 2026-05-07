@@ -22,19 +22,21 @@ export interface PlanetItem {
     locked?: boolean; // true = can't pick up yet (needs companion unlock)
 }
 
+export interface CompanionData {
+    id: string;
+    name: string;
+    type: "dog" | "human" | "cavediver";
+    foundDay: number;
+}
+
 export interface PlanetData {
     id: string;
     name: string;
     biome: "rocky" | "lush" | "frozen" | "desert";
     discoveredDay: number;
     items: PlanetItem[];
-}
-
-export interface CompanionData {
-    id: string;
-    name: string;
-    type: "dog" | "human";
-    foundDay: number;
+    caveItems: PlanetItem[];
+    caveLit: boolean;
 }
 
 export interface GameStateData {
@@ -47,6 +49,8 @@ export interface GameStateData {
     planets: PlanetData[];
     collectedDogToys: string[]; // uniqueIds of collected dog toys
     collectedExoticPlants: string[]; // uniqueIds of collected exotic plants
+    collectedCaveItems: string[]; // uniqueIds of collected cave items
+    caveUnlocked: boolean; // true once cavediver joins
 }
 
 const EXOTIC_PLANT_IDS = ["voidbloom", "sweetmoss", "starspice"];
@@ -56,6 +60,13 @@ const DOG_TOY_IDS = [
     "chew_rope",
     "cozy_blanket",
 ];
+const CAVE_UNIQUE_IDS = [
+    "coffee_maker",
+    "music_box",
+    "old_photograph",
+    "lantern",
+];
+const CAVEDIVER_PLANET_INDEX = 5; // 6th discovered planet (0-indexed)
 
 const PLANET_NAMES = [
     "Kara-7",
@@ -92,6 +103,8 @@ const DEFAULT_STATE: GameStateData = {
     planets: [],
     collectedDogToys: [],
     collectedExoticPlants: [],
+    collectedCaveItems: [],
+    caveUnlocked: false,
 };
 
 const REGISTRY_KEY = "gameState";
@@ -110,6 +123,8 @@ export class GameState {
             planets: [],
             collectedDogToys: [],
             collectedExoticPlants: [],
+            collectedCaveItems: [],
+            caveUnlocked: false,
         });
     }
 
@@ -188,6 +203,15 @@ export class GameState {
         return state.currentDay >= 9 && !GameState.hasCompanion(scene, "human");
     }
 
+    static isCavediverEventPlanet(
+        scene: Phaser.Scene,
+        planetId: string,
+    ): boolean {
+        if (GameState.hasCompanion(scene, "cavediver")) return false;
+        const planet = GameState.getPlanet(scene, planetId);
+        return !!planet && planet.caveLit;
+    }
+
     static getSaturation(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
         return Math.min(1, state.companions * 0.3);
@@ -227,6 +251,59 @@ export class GameState {
         for (const id of EXOTIC_PLANT_IDS) {
             GameState.unlockPlanetItem(scene, id);
         }
+    }
+
+    static unlockCaves(scene: Phaser.Scene): void {
+        GameState.update(scene, { caveUnlocked: true });
+        GameState.unlockAllCaveItems(scene);
+    }
+
+    static addCavediverCompanion(scene: Phaser.Scene): void {
+        const state = GameState.get(scene);
+        GameState.addCompanion(scene, {
+            id: "cavediver",
+            name: "Mira",
+            type: "cavediver",
+            foundDay: state.currentDay,
+        });
+        GameState.unlockCaves(scene);
+    }
+
+    static collectCaveItem(
+        scene: Phaser.Scene,
+        planetId: string,
+        itemIndex: number,
+    ): void {
+        const state = GameState.get(scene);
+        const planets = state.planets.map((p) => {
+            if (p.id !== planetId) return p;
+            const caveItems = p.caveItems.map((item, i) => {
+                if (i !== itemIndex) return item;
+                return { ...item, collected: true };
+            });
+            return { ...p, caveItems };
+        });
+        GameState.update(scene, { planets });
+    }
+
+    static recordCaveUniqueCollected(
+        scene: Phaser.Scene,
+        uniqueId: string,
+    ): void {
+        const state = GameState.get(scene);
+        if (!state.collectedCaveItems.includes(uniqueId)) {
+            GameState.update(scene, {
+                collectedCaveItems: [...state.collectedCaveItems, uniqueId],
+            });
+        }
+    }
+
+    static hasUncollectedCaveItems(planet: PlanetData): boolean {
+        return planet.caveItems.some((item) => !item.collected);
+    }
+
+    static isCaveUniqueId(uniqueId: string): boolean {
+        return CAVE_UNIQUE_IDS.includes(uniqueId);
     }
 
     static collectExoticPlant(scene: Phaser.Scene, uniqueId: string): void {
@@ -354,16 +431,69 @@ export class GameState {
             });
         }
 
+        // --- Cave items ---
+        const numCaveResources = 3 + Math.floor(Math.random() * 3);
+        const caveItems: PlanetItem[] = [];
+        for (let i = 0; i < numCaveResources; i++) {
+            caveItems.push({
+                type: resourceTypes[
+                    Math.floor(Math.random() * resourceTypes.length)
+                ],
+                x: 0.1 + Math.random() * 0.8,
+                collected: false,
+                locked: true,
+            });
+        }
+
+        // Distribute a unique cave item (one per planet, from pool)
+        const usedCaveUniques = new Set(
+            state.planets.flatMap((p) =>
+                p.caveItems
+                    .filter(
+                        (i) =>
+                            i.uniqueId && CAVE_UNIQUE_IDS.includes(i.uniqueId),
+                    )
+                    .map((i) => i.uniqueId),
+            ),
+        );
+        const availableCaveUniques = CAVE_UNIQUE_IDS.filter(
+            (id) => !usedCaveUniques.has(id),
+        );
+        if (availableCaveUniques.length > 0) {
+            const uniqueId =
+                availableCaveUniques[
+                    Math.floor(Math.random() * availableCaveUniques.length)
+                ];
+            caveItems.push({
+                type: "unique",
+                uniqueId,
+                x: 0.2 + Math.random() * 0.6,
+                collected: false,
+                locked: true,
+            });
+        }
+
         const planet: PlanetData = {
             id: `planet_${state.planets.length + 1}`,
             name,
             biome,
             discoveredDay: state.currentDay,
             items,
+            caveItems,
+            caveLit: state.planets.length === CAVEDIVER_PLANET_INDEX,
         };
 
         GameState.update(scene, { planets: [...state.planets, planet] });
         return planet;
+    }
+
+    static unlockAllCaveItems(scene: Phaser.Scene): void {
+        const state = GameState.get(scene);
+        const planets = state.planets.map((p) => ({
+            ...p,
+            caveItems: p.caveItems.map((item) => ({ ...item, locked: false })),
+        }));
+        GameState.update(scene, { planets });
     }
 
     static getPlanet(

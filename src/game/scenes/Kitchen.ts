@@ -103,6 +103,22 @@ export class Kitchen extends RoomScene {
             });
         }
 
+        if (GameState.hasCompanion(this, 'cavediver')) {
+            const cdX = this.rx(0.68);
+            const cdGfx = this.add.graphics();
+            this.drawCavediver(cdGfx, cdX, this.floorY - 25);
+
+            const hasCoffee = state.collectedCaveItems.includes('coffee_maker');
+            const msg = hasCoffee
+                ? 'Mira is cleaning out the coffee maker.\n"Takes work, but you\'ll thank me in the morning."'
+                : '"Kitchen\'s better stocked now. I know where to dig."';
+            this.interactPoints.push({
+                x: cdX,
+                label: 'Talk to Mira',
+                action: () => this.showMessage(msg),
+            });
+        }
+
         // --- Chore station (table) ---
         const choreX = tableX + 20;
         if (!state.chores.kitchen) {
@@ -114,9 +130,20 @@ export class Kitchen extends RoomScene {
                     GameState.completeChore(this, 'kitchen');
                     const idx = this.interactPoints.indexOf(chorePoint);
                     if (idx !== -1) this.interactPoints.splice(idx, 1);
-                    const msg = state.companions === 0
-                        ? 'You eat alone. The food has no taste.'
-                        : 'You sit down to eat.';
+                    const hasCoffee = state.collectedCaveItems.includes('coffee_maker');
+                    const hasSpice = state.collectedExoticPlants.includes('starspice');
+                    let msg: string;
+                    if (state.companions === 0) {
+                        msg = 'You eat alone. The food has no taste.';
+                    } else if (hasCoffee && hasSpice) {
+                        msg = 'Starspice in the pot, coffee in the cup.\nThe crew eats together. Laughter carries down the corridor.';
+                    } else if (hasCoffee) {
+                        msg = 'Mira hands you a steaming mug. Real coffee.\nYou sit. You eat. You stay a while.';
+                    } else if (hasSpice) {
+                        msg = 'The botanist added Starspice to the meal.\nYou\'d forgotten food could taste like this.';
+                    } else {
+                        msg = 'You sit down to eat.';
+                    }
                     this.showMessage(msg);
                     this.add.text(choreX, this.floorY - 85, '✓', {
                         fontFamily: 'Arial', fontSize: '22px', color: '#556655',

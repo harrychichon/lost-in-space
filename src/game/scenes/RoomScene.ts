@@ -282,6 +282,58 @@ export abstract class RoomScene extends Scene {
         gfx.fillCircle(x + 17, y - 4, 2);
     }
 
+    protected drawCavediver(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
+        // Legs
+        gfx.fillStyle(0x554433, 1);
+        gfx.fillRect(x - 5, y + 10, 4, 14);
+        gfx.fillRect(x + 1, y + 10, 4, 14);
+        // Heavy boots
+        gfx.fillStyle(0x332a20, 1);
+        gfx.fillRect(x - 7, y + 22, 7, 4);
+        gfx.fillRect(x, y + 22, 7, 4);
+        // Body — rugged mining suit
+        gfx.fillStyle(0x775544, 1);
+        gfx.fillRect(x - 8, y - 6, 16, 18);
+        // Tool belt
+        gfx.fillStyle(0x332a20, 1);
+        gfx.fillRect(x - 8, y + 6, 16, 4);
+        gfx.fillStyle(0x888877, 1);
+        gfx.fillRect(x - 6, y + 7, 3, 3);
+        gfx.fillRect(x + 3, y + 7, 3, 3);
+        // Arms
+        gfx.fillStyle(0x775544, 1);
+        gfx.fillRect(x - 11, y - 4, 4, 12);
+        gfx.fillRect(x + 7, y - 4, 4, 12);
+        // Gloves
+        gfx.fillStyle(0x553322, 1);
+        gfx.fillRect(x - 11, y + 6, 4, 3);
+        gfx.fillRect(x + 7, y + 6, 4, 3);
+        // Neck
+        gfx.fillStyle(0xbb9977, 1);
+        gfx.fillRect(x - 3, y - 10, 6, 5);
+        // Helmet — hardhat style
+        gfx.fillStyle(0x997744, 1);
+        gfx.fillCircle(x, y - 16, 9);
+        gfx.fillRect(x - 9, y - 16, 18, 3);
+        // Helmet lamp
+        gfx.fillStyle(0xffe8a8, 1);
+        gfx.fillCircle(x, y - 20, 3);
+        gfx.fillStyle(0xffcc66, 0.4);
+        gfx.fillCircle(x, y - 20, 5);
+        // Face
+        gfx.fillStyle(0xbb9977, 1);
+        gfx.fillCircle(x, y - 15, 5);
+        // Eyes
+        gfx.fillStyle(0x222222, 1);
+        gfx.fillCircle(x - 2, y - 15, 1.2);
+        gfx.fillCircle(x + 2, y - 15, 1.2);
+        // Smirk
+        gfx.lineStyle(1, 0x222222, 0.7);
+        gfx.beginPath();
+        gfx.arc(x + 1, y - 13, 3, 0.1, Math.PI - 0.5);
+        gfx.strokePath();
+    }
+
     protected drawCompanionHuman(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         // Legs
         gfx.fillStyle(0x555566, 1);

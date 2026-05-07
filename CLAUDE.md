@@ -70,6 +70,29 @@ A human rescued via comms distress signal.
 - Resources deplete faster (companion count = 2)
 - More color (+0.6 saturation total)
 
+### Companion 3: Cavediver (6th planet)
+A human cave explorer, Mira, found living inside a cave on the 6th discovered planet.
+
+**Trigger:** Every planet has a cave entrance. Before meeting Mira, the cave prompt reads *"A dark cave. Wouldn't go in there."* The 6th discovered planet (`caveLit: true`) has a warm light flickering from its cave. Pressing [E] there launches `CavediverEvent` → Mira joins the crew.
+
+**Effects:**
+- Ship corridor: Cavediver NPC between the chore doors and Collection
+- **All caves on all planets become enterable** — each cave is its own mini exploration scene (`Cave`)
+- Cave resource items unlock; each grants +20 (vs. +10 on the surface), rebalancing resource drain for 3 companions
+- One unique cave artifact per planet (pool: `coffee_maker`, `music_box`, `old_photograph`, `lantern`)
+- Kitchen text changes when `coffee_maker` is collected
+- Comms text changes when `music_box` is collected
+- Chore rooms gain cavediver-aware flavor tiers
+- Resources deplete faster (companion count = 3)
+- More color (+0.9 saturation total)
+
+### Cave System
+Every planet has a cave entrance drawn at `x ≈ 0.9` on the surface.
+
+**Before cavediver joins:** prompt is *"A dark cave. Wouldn't go in there."* with no action. On the 6th planet only, the cave is lit and *"A warm light flickers from deep within... [E] Enter"* → `CavediverEvent`.
+
+**After cavediver joins:** prompt becomes *"Cave [E] Enter"* → `Cave` scene. Cave mirrors Planet's loop: A/D or arrows to move, [E] to collect, [L] to return to the planet surface (Planet → Cave → Planet; does NOT go straight to Ship). Each cave holds 3-5 high-yield resource items (+20 each) plus one unique artifact. Uncollected items persist on revisit.
+
 ### Exotic Plant Collection
 Three exotic plants found on planets (one per planet, locked until botanist joins):
 
@@ -84,9 +107,11 @@ After botanist: unlocked for collection. Viewable in the Collection room with de
 
 ### GameState companion fields
 - `companions: number` — count (affects resources/saturation)
-- `companionList: CompanionData[]` — detailed data (id, name, type: 'dog'|'human', foundDay)
+- `companionList: CompanionData[]` — detailed data (id, name, type: 'dog'|'human'|'cavediver', foundDay)
 - `dogHasToy: boolean` — whether the rubber ball has been collected
 - `collectedExoticPlants: string[]` — uniqueIds of collected exotic plants
+- `collectedCaveItems: string[]` — uniqueIds of collected cave artifacts
+- `caveUnlocked: boolean` — true once cavediver joins; gates cave entry on all planets
 
 ## Tech Stack
 
@@ -117,6 +142,8 @@ src/
 │   │   ├── Planet.ts          # Planet surface — loads items from saved planet data
 │   │   ├── CompanionEvent.ts   # Day 7 — find the dog on a wrecked ship
 │   │   ├── RescueEvent.ts     # Day 11+ — rescue botanist via comms distress signal
+│   │   ├── CavediverEvent.ts  # 6th planet — meet Mira in the lit cave
+│   │   ├── Cave.ts            # Cave interior — high-yield resources + unique artifacts
 │   │   ├── Collection.ts      # Exotic plant collection room (after botanist joins)
 │   │   ├── DevPanel.ts        # Dev tool overlay — toggle with M key
 │   │   └── GameOver.ts        # End screen (template, not yet integrated)
@@ -152,9 +179,16 @@ Static helper class for reading/writing global state via Phaser's Registry. Key 
 - `GameState.addCompanion(scene, companion)` — Adds a companion, increments count
 - `GameState.hasCompanion(scene, id)` — Checks if a specific companion exists
 - `GameState.isRescueEventReady(scene)` — True on day 11+ with 1 companion and no human yet
+- `GameState.isCavediverEventPlanet(scene, planetId)` — True if this planet is the lit one and cavediver hasn't joined yet
 - `GameState.unlockExoticPlants(scene)` — Unlocks all exotic plants on all planets
 - `GameState.collectExoticPlant(scene, uniqueId)` — Marks an exotic plant as collected
 - `GameState.unlockPlanetItem(scene, uniqueId)` — Unlocks a locked item across all planets
+- `GameState.addCavediverCompanion(scene)` — Adds Mira and calls `unlockCaves`
+- `GameState.unlockCaves(scene)` — Sets `caveUnlocked` and unlocks every cave item across all planets
+- `GameState.collectCaveItem(scene, planetId, itemIndex)` — Marks a cave item as collected (separate array from surface `items`)
+- `GameState.recordCaveUniqueCollected(scene, uniqueId)` — Tracks unique artifacts for Kitchen/Comms flavor branches
+- `GameState.hasUncollectedCaveItems(planet)` — Checks if a cave has items left
+- `GameState.isCaveUniqueId(uniqueId)` — True for `coffee_maker`, `music_box`, `old_photograph`, `lantern`
 
 ### Game State Schema
 ```typescript
@@ -184,9 +218,15 @@ Static helper class for reading/writing global state via Phaser's Registry. Key 
             discoveredDay: number,
             items: [
                 { type: ResourceType | 'unique', uniqueId?: string, x: number, collected: boolean, locked?: boolean }
-            ]
+            ],
+            caveItems: [        // Same shape as items; locked until cavediver joins. Resources grant +20.
+                { type: ResourceType | 'unique', uniqueId?: string, x: number, collected: boolean, locked?: boolean }
+            ],
+            caveLit: boolean    // True on the 6th discovered planet only — triggers CavediverEvent
         }
-    ]
+    ],
+    collectedCaveItems: string[], // coffee_maker, music_box, old_photograph, lantern
+    caveUnlocked: boolean         // true after meeting Mira
 }
 ```
 
@@ -221,7 +261,14 @@ Each room shows different flavor text depending on companion count (solo = bleak
 - Each pickup grants +10 to its resource
 - **Interaction-based collection:** Walk near an item → see its name, description, and resource effect → press [E] to collect
 - Uncollected items persist — revisit to pick them up later
-- **Locked items** (future): Unique items like Exotic Flower, Coffee Maker, Music Box. Player sees them but can't pick up — description explains why ("Beautiful, but pointless"). Companions unlock these items by hinting at wanting them. Item info is defined in `ITEM_INFO` in `Planet.ts`.
+- **Locked items**: Unique items like dog toys, exotic plants (botanist), cave artifacts (cavediver). Player sees them but can't pick up — description explains why ("Beautiful, but pointless"). Companions unlock these items. Item info is defined in `ITEM_INFO` in `Planet.ts` and `Cave.ts`.
+
+### Cave Pickups
+- 3-5 cave resource items per planet (generated on discovery, stored in `caveItems`)
+- Each grants +20 — compensates for the 3-companion drain rate
+- One unique artifact per planet from the pool: `coffee_maker`, `music_box`, `old_photograph`, `lantern`
+- All cave items start `locked: true`. `GameState.unlockCaves()` clears the flag once Mira joins.
+- Cave-specific `ITEM_INFO` lives in `Cave.ts` — uses different names (Oxygen Geode, Cave Fungus, Ore Vein, Mineral Slab).
 
 ## Controls
 
@@ -230,11 +277,15 @@ Each room shows different flavor text depending on companion count (solo = bleak
 | A/D or Left/Right arrows | Ship, Planet | Move player |
 | E | Ship corridor | Enter room door / use nav console |
 | E | Room scenes | Do the chore |
-| E | Planet | Collect nearby item |
+| E | Planet | Collect nearby item, or enter cave |
+| E | Cave | Collect nearby cave item |
 | 1-9 | Navigation | Visit planet by number |
 | ESC | Navigation | Return to Ship |
 | L | Planet | Leave planet (return to Ship) |
+| L | Cave | Leave cave (return to Planet surface) |
 | M | Any scene | Toggle dev panel overlay |
+| C | Dev panel | Add cavediver companion |
+| V | Dev panel | Fast-forward to 6 discovered planets (cavediver-ready) |
 | Click | MainMenu | Start game |
 | Click | Navigation | Select planet to visit |
 
@@ -352,6 +403,18 @@ this.tweens.add({
 - [x] Grayscale shifts toward color with companions
 - [ ] Test and balance resource consumption rates
 - [ ] Resource depletion consequences (what happens at 0?)
+
+### Phase 2b — Cavediver & Caves ✅ DONE
+- [x] CavediverEvent scene — meet Mira in the lit cave on 6th planet
+- [x] Cave scene — per-planet cave exploration mirroring Planet's loop (E to collect, L to leave)
+- [x] Cave entrances drawn on every planet, with three prompt states (locked / lit / enter)
+- [x] `caveItems` and `caveLit` fields on PlanetData, generated at discovery
+- [x] Cave resource items grant +20 to rebalance 3-companion drain
+- [x] Unique cave artifacts pool: coffee_maker, music_box, old_photograph, lantern
+- [x] Cavediver NPC on Ship corridor and in chore rooms
+- [x] Kitchen flavor branch when coffee_maker collected; Comms when music_box collected
+- [x] Chore rooms gain cavediver-aware flavor tiers
+- [x] Dev panel shortcuts: [C] add cavediver, [V] fast-forward to 6 planets
 
 ### Phase 3 — Polish (Week 3)
 - [ ] Music system (melancholy track for solo, warmer track for companion phase)

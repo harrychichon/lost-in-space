@@ -102,6 +102,24 @@ export class DevPanel extends Scene {
             GameState.init(this);
             this.goToScene("MainMenu");
         });
+        y += gap;
+
+        this.addButton(16, y, "[C] Add cavediver companion", () => {
+            if (!GameState.hasCompanion(this, "cavediver")) {
+                GameState.addCavediverCompanion(this);
+            }
+            this.restartActiveScene();
+        });
+        y += gap;
+
+        this.addButton(16, y, "[V] Setup cavediver planet (6 discovered)", () => {
+            const state = GameState.get(this);
+            const toDiscover = Math.max(0, 6 - state.planets.length);
+            for (let i = 0; i < toDiscover; i++) {
+                GameState.discoverPlanet(this);
+            }
+            this.refreshState();
+        });
 
         // Keyboard shortcuts
         this.input.keyboard!.on("keydown-M", () => {
@@ -160,6 +178,20 @@ export class DevPanel extends Scene {
         this.input.keyboard!.on("keydown-R", () => {
             GameState.init(this);
             this.goToScene("MainMenu");
+        });
+        this.input.keyboard!.on("keydown-C", () => {
+            if (!GameState.hasCompanion(this, "cavediver")) {
+                GameState.addCavediverCompanion(this);
+            }
+            this.restartActiveScene();
+        });
+        this.input.keyboard!.on("keydown-V", () => {
+            const state = GameState.get(this);
+            const toDiscover = Math.max(0, 6 - state.planets.length);
+            for (let i = 0; i < toDiscover; i++) {
+                GameState.discoverPlanet(this);
+            }
+            this.refreshState();
         });
 
         this.refreshState();
@@ -241,6 +273,8 @@ export class DevPanel extends Scene {
             "Planet",
             "CompanionEvent",
             "RescueEvent",
+            "CavediverEvent",
+            "Cave",
             "Collection",
             "GameOver",
         ];
