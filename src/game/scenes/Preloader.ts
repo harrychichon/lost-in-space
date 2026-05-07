@@ -1,4 +1,5 @@
 import { Scene } from "phaser";
+import { loadPlayerAssets, createPlayerAnimations } from "../objects/Player";
 
 export class Preloader extends Scene {
     constructor() {
@@ -43,9 +44,13 @@ export class Preloader extends Scene {
         this.load.image("bg_space", "bg_space_seamless.png");
         this.load.image("bg_space_fl1", "bd_space_seamless_fl1.png");
         this.load.image("bg_space_fl2", "bg_space_seamless_fl2.png");
+
+        // Player spritesheet (15 frames: 3 rows × 5 cols)
+        loadPlayerAssets(this);
     }
 
     create() {
+        createPlayerAnimations(this);
         this.scene.start("MainMenu");
     }
 }

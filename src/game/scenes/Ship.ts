@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { GameState, Chores } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
+import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface Door {
     x: number;
@@ -23,7 +24,7 @@ export class Ship extends Scene {
     private currentDoor: Door | null = null;
     private promptText!: Phaser.GameObjects.Text;
     private dogPromptText!: Phaser.GameObjects.Text;
-    private playerGfx!: Phaser.GameObjects.Graphics;
+    private playerSprite!: Phaser.GameObjects.Sprite;
     private dogGraphics: Phaser.GameObjects.Graphics | null = null;
     private dogX = 0;
     private playerSpeed = 200;
@@ -153,8 +154,7 @@ export class Ship extends Scene {
         this.physics.add.existing(this.player);
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         body.setCollideWorldBounds(true);
-        this.playerGfx = this.add.graphics();
-        this.drawPlayer(this.playerGfx, this.player.x, this.player.y);
+        this.playerSprite = createPlayerSprite(this, this.player.x, floorY);
 
         // --- Dog companion ---
         this.dogGraphics = null;
@@ -551,51 +551,6 @@ export class Ship extends Scene {
         });
     }
 
-    private drawPlayer(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
-        gfx.clear();
-        // Legs
-        gfx.fillStyle(0x666666, 1);
-        gfx.fillRect(x - 5, y + 10, 4, 14);
-        gfx.fillRect(x + 1, y + 10, 4, 14);
-        // Boots
-        gfx.fillStyle(0x555555, 1);
-        gfx.fillRect(x - 6, y + 22, 6, 3);
-        gfx.fillRect(x, y + 22, 6, 3);
-        // Body / suit
-        gfx.fillStyle(0x777777, 1);
-        gfx.fillRect(x - 7, y - 6, 14, 18);
-        // Suit details — belt
-        gfx.fillStyle(0x555555, 1);
-        gfx.fillRect(x - 7, y + 6, 14, 3);
-        // Arms
-        gfx.fillStyle(0x777777, 1);
-        gfx.fillRect(x - 10, y - 4, 4, 12);
-        gfx.fillRect(x + 6, y - 4, 4, 12);
-        // Gloves
-        gfx.fillStyle(0x888888, 1);
-        gfx.fillRect(x - 10, y + 6, 4, 3);
-        gfx.fillRect(x + 6, y + 6, 4, 3);
-        // Neck
-        gfx.fillStyle(0xbb9988, 1);
-        gfx.fillRect(x - 3, y - 10, 6, 5);
-        // Helmet
-        gfx.fillStyle(0x8899aa, 0.5);
-        gfx.fillCircle(x, y - 16, 9);
-        // Helmet rim
-        gfx.lineStyle(2, 0x999999, 0.8);
-        gfx.strokeCircle(x, y - 16, 9);
-        // Face behind visor
-        gfx.fillStyle(0xbb9988, 1);
-        gfx.fillCircle(x, y - 16, 6);
-        // Eyes
-        gfx.fillStyle(0x222222, 1);
-        gfx.fillCircle(x - 2, y - 17, 1.2);
-        gfx.fillCircle(x + 2, y - 17, 1.2);
-        // Visor reflection
-        gfx.fillStyle(0xaabbcc, 0.2);
-        gfx.fillCircle(x - 3, y - 19, 3);
-    }
-
     private drawCavediver(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         // Legs
         gfx.fillStyle(0x554433, 1);
@@ -875,9 +830,6 @@ export class Ship extends Scene {
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
-        // Redraw player at current position
-        this.drawPlayer(this.playerGfx, this.player.x, this.player.y);
-
         // Movement (arrows or WASD)
         if (this.cursors.left.isDown || this.keyA.isDown) {
             body.setVelocityX(-this.playerSpeed);
@@ -886,6 +838,9 @@ export class Ship extends Scene {
         } else {
             body.setVelocityX(0);
         }
+
+        const { height } = this.scale;
+        updatePlayerSprite(this.playerSprite, this.player.x, height * 0.7, body.velocity.x);
 
         // Check proximity to doors
         this.currentDoor = null;
