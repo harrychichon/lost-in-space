@@ -7,7 +7,8 @@ import { createDogSprite } from '../objects/Dog';
 import { drawDayIndicator } from '../objects/DayIndicator';
 import { drawResourceBars } from '../objects/ResourceBars';
 import { drawChoreChecklist } from '../objects/ChoreChecklist';
-//test
+import { GlobalNavBar } from '../objects/GlobalNavBar';
+
 interface Door {
     x: number;
     label: Phaser.GameObjects.Text;
@@ -285,6 +286,8 @@ export class Ship extends Scene {
         this.keyA = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+        this.add.existing(new GlobalNavBar(this));
     }
 
     private createDoor(
