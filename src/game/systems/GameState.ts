@@ -37,6 +37,7 @@ export interface PlanetData {
     items: PlanetItem[];
     caveItems: PlanetItem[];
     caveLit: boolean;
+    mountainCave: boolean;
 }
 
 export interface GameStateData {
@@ -546,6 +547,7 @@ export class GameState {
             items,
             caveItems,
             caveLit: state.planets.length === CAVEDIVER_PLANET_INDEX,
+            mountainCave: state.planets.length % 2 === 1,
         };
 
         GameState.update(scene, { planets: [...state.planets, planet] });
