@@ -5,6 +5,8 @@ import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
 import { drawDayIndicator } from '../objects/DayIndicator';
+import { drawResourceBars } from '../objects/ResourceBars';
+import { drawChoreChecklist } from '../objects/ChoreChecklist';
 //test
 interface Door {
     x: number;
@@ -266,10 +268,10 @@ export class Ship extends Scene {
         drawDayIndicator(this, state);
 
         // Resource bars
-        this.drawResourceBars(state);
+        drawResourceBars(this, state);
 
         // Chore checklist
-        this.drawChoreChecklist(state);
+        drawChoreChecklist(this, state);
 
         // Interaction prompt
         this.promptText = this.add.text(width * 0.5, height * 0.88, '', {
@@ -518,54 +520,7 @@ export class Ship extends Scene {
         });
     }
 
-    private drawResourceBars(state: ReturnType<typeof GameState.get>) {
-        const { width } = this.scale;
-        const resources = [
-            { key: 'O2', value: state.resources.oxygen, color: 0x4488aa },
-            { key: 'Food', value: state.resources.food, color: 0x88aa44 },
-            { key: 'Fuel', value: state.resources.fuel, color: 0xaa8844 },
-            { key: 'Parts', value: state.resources.parts, color: 0x888888 },
-        ];
 
-        resources.forEach((res, i) => {
-            const bx = width - 130;
-            const by = 16 + i * 22;
-            this.add.text(bx, by, res.key, {
-                fontFamily: 'Georgia, serif',
-                fontSize: '12px',
-                color: '#666666',
-            });
-            this.add.rectangle(bx + 45 + 40, by + 7, 80, 10, 0x222222).setOrigin(0.5);
-            const barW = (res.value / 100) * 78;
-            this.add.rectangle(bx + 45 + 1 + barW / 2, by + 7, barW, 8, res.color).setOrigin(0.5);
-        });
-    }
-
-    private drawChoreChecklist(state: ReturnType<typeof GameState.get>) {
-        const choreList: { key: keyof Chores; label: string }[] = [
-            { key: 'kitchen', label: 'Eat' },
-            { key: 'greenhouse', label: 'Tend plants' },
-            { key: 'engine', label: 'Engine check' },
-            { key: 'comms', label: 'Check comms' },
-        ];
-
-        this.add.text(16, 120, 'Chores:', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#777777',
-        });
-
-        choreList.forEach((chore, i) => {
-            const done = state.chores[chore.key];
-            const mark = done ? '✓' : '○';
-            const color = done ? '#556655' : '#888888';
-            this.add.text(16, 140 + i * 20, `${mark} ${chore.label}`, {
-                fontFamily: 'Georgia, serif',
-                fontSize: '13px',
-                color,
-            });
-        });
-    }
 
     private showMessage(text: string) {
         const { width, height } = this.scale;
