@@ -143,8 +143,8 @@ export class CompanionEvent extends Scene {
                         type: 'dog',
                         foundDay: GameState.get(this).currentDay,
                     });
-                    // Unlock the rubber ball on the first planet
-                    GameState.unlockPlanetItem(this, 'rubber_ball');
+                    // Unlock all dog toys on planets
+                    GameState.unlockDogToys(this);
                     this.scene.start('Ship');
                 });
                 return;

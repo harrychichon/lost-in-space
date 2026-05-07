@@ -1,27 +1,21 @@
-import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { RoomScene, InteractPoint } from './RoomScene';
 
-export class Comms extends Scene {
+export class Comms extends RoomScene {
     constructor() {
         super('Comms');
     }
 
     create() {
         const { width, height } = this.scale;
-
         this.cameras.main.setBackgroundColor(0x0f0f11);
-
-        // Apply grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        this.setupRoom();
 
         const gfx = this.add.graphics();
 
         // Floor
         gfx.fillStyle(0x2a2a2a, 1);
-        gfx.fillRect(0, height * 0.7, width, height * 0.3);
+        gfx.fillRect(0, this.floorY, width, height * 0.3);
 
         // Walls
         gfx.fillStyle(0x1a1a1e, 1);
@@ -29,20 +23,21 @@ export class Comms extends Scene {
 
         // Console desk
         gfx.fillStyle(0x333338, 1);
-        gfx.fillRect(width * 0.2, height * 0.55, width * 0.6, 15);
-        // Desk legs
-        gfx.fillRect(width * 0.22, height * 0.55 + 15, 8, 50);
-        gfx.fillRect(width * 0.2 + width * 0.6 - 10, height * 0.55 + 15, 8, 50);
+        gfx.fillRect(this.rx(0.25), height * 0.55, this.roomWidth * 0.5, 15);
+        gfx.fillRect(this.rx(0.27), height * 0.55 + 15, 8, 50);
+        gfx.fillRect(this.rx(0.73), height * 0.55 + 15, 8, 50);
 
         // Main screen
         gfx.fillStyle(0x111118, 1);
-        gfx.fillRect(width * 0.3, height * 0.3, width * 0.4, height * 0.22);
+        gfx.fillRect(this.rx(0.3), height * 0.3, this.roomWidth * 0.4, height * 0.22);
         gfx.lineStyle(2, 0x444455, 0.6);
-        gfx.strokeRect(width * 0.3, height * 0.3, width * 0.4, height * 0.22);
+        gfx.strokeRect(this.rx(0.3), height * 0.3, this.roomWidth * 0.4, height * 0.22);
 
         // Static/noise on screen
+        const screenLeft = this.rx(0.31);
+        const screenWidth = this.roomWidth * 0.38;
         for (let i = 0; i < 60; i++) {
-            const sx = width * 0.31 + Math.random() * (width * 0.38);
+            const sx = screenLeft + Math.random() * screenWidth;
             const sy = height * 0.31 + Math.random() * (height * 0.2);
             const bright = Math.random() * 0.2;
             gfx.fillStyle(Phaser.Display.Color.GetColor(
@@ -53,17 +48,20 @@ export class Comms extends Scene {
             gfx.fillRect(sx, sy, 2, 2);
         }
 
-        // Small indicator lights on desk
+        // Indicator lights on desk
         const lightColors = [0x335533, 0x553333, 0x333355, 0x335533];
         for (let i = 0; i < 4; i++) {
             gfx.fillStyle(lightColors[i], 0.8);
-            gfx.fillCircle(width * 0.35 + i * 40, height * 0.54, 3);
+            gfx.fillCircle(this.rx(0.35) + i * 35, height * 0.54, 3);
         }
 
         // Chair
         gfx.fillStyle(0x333333, 1);
-        gfx.fillRect(width * 0.47, height * 0.58, 24, 35);
-        gfx.fillRect(width * 0.47, height * 0.48, 24, 12);
+        gfx.fillRect(this.rx(0.48), height * 0.58, 24, 35);
+        gfx.fillRect(this.rx(0.48), height * 0.48, 24, 12);
+
+        // Exit door
+        this.addExitDoor(gfx, this.roomLeft + 25);
 
         // Room label
         this.add.text(width * 0.5, height * 0.15, 'Communications', {
@@ -72,69 +70,85 @@ export class Comms extends Scene {
             color: '#666666',
         }).setOrigin(0.5);
 
-        // Prompt
-        const prompt = this.add.text(width * 0.5, height * 0.82, '[E] Listen', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '18px',
-            color: '#888888',
-        }).setOrigin(0.5);
+        // --- Companions ---
+        const state = GameState.get(this);
+        const isRescue = GameState.isRescueEventReady(this);
 
-        this.tweens.add({
-            targets: prompt,
-            alpha: 0.4,
-            duration: 1000,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut',
-        });
+        if (GameState.hasCompanion(this, 'dog')) {
+            const dogX = this.rx(0.75);
+            const dogGfx = this.add.graphics();
+            this.drawDog(dogGfx, dogX, this.floorY - 10);
 
-        let listened = false;
-        this.input.keyboard!.on('keydown-E', () => {
-            if (listened) return;
-            listened = true;
-            prompt.destroy();
-
-            const isRescue = GameState.isRescueEventReady(this);
-            const hasDog = GameState.hasCompanion(this, 'dog');
-            const state = GameState.get(this);
-
-            const hasHuman = GameState.hasCompanion(this, 'human');
-            let msg: string;
-            if (isRescue) {
-                msg = '...not static. A voice. Faint, desperate.\n"Is anyone there? Please... I need help."';
-            } else if (state.companions === 0) {
-                msg = 'Static. Nothing but static.\nYou listen for a while anyway.';
-            } else if (hasHuman) {
-                msg = 'The botanist scans frequencies while you listen.\n"Nothing new. But at least we\'re listening together."';
-            } else if (hasDog && state.companions === 1) {
-                msg = 'Static. The dog tilts its head at the noise.\nAt least someone is listening with you.';
-            } else {
-                msg = 'Voices. Familiar now. Someone asks how you are.';
-            }
-
-            const text = this.add.text(width * 0.5, height * 0.82, msg, {
-                fontFamily: 'Georgia, serif',
-                fontSize: '16px',
-                color: isRescue ? '#bbaaaa' : '#999999',
-                wordWrap: { width: 500 },
-                align: 'center',
-            }).setOrigin(0.5).setAlpha(0);
-
-            this.tweens.add({
-                targets: text,
-                alpha: 1,
-                duration: 800,
-                ease: 'Power2',
+            this.interactPoints.push({
+                x: dogX,
+                label: 'Talk to dog',
+                action: () => this.showMessage(
+                    'The dog tilts its head at the static.\nAt least someone is listening with you.'
+                ),
             });
+        }
 
-            this.time.delayedCall(2500, () => {
-                GameState.completeChore(this, 'comms');
-                if (isRescue) {
-                    this.scene.start('RescueEvent');
-                } else {
-                    this.scene.start('Ship');
-                }
+        if (GameState.hasCompanion(this, 'human')) {
+            const botX = this.rx(0.18);
+            const botGfx = this.add.graphics();
+            this.drawCompanionHuman(botGfx, botX, this.floorY - 25);
+
+            this.interactPoints.push({
+                x: botX,
+                label: 'Talk to botanist',
+                action: () => this.showMessage(
+                    '"Nothing new," the botanist says, scanning frequencies.\n"But at least we\'re listening together."'
+                ),
             });
-        });
+        }
+
+        // --- Chore station (console) ---
+        const choreX = this.rx(0.5);
+        if (!state.chores.comms) {
+            const chorePoint: InteractPoint = {
+                x: choreX,
+                label: 'Listen',
+                action: () => {
+                    if (this.transitioning) return;
+                    GameState.completeChore(this, 'comms');
+                    const idx = this.interactPoints.indexOf(chorePoint);
+                    if (idx !== -1) this.interactPoints.splice(idx, 1);
+
+                    if (isRescue) {
+                        // Rescue event — special narrative transition
+                        this.showMessage(
+                            '...not static. A voice. Faint, desperate.\n"Is anyone there? Please... I need help."',
+                            '#bbaaaa'
+                        );
+                        this.transitioning = true;
+                        this.time.delayedCall(3000, () => {
+                            this.scene.start('RescueEvent');
+                        });
+                    } else {
+                        let msg: string;
+                        if (state.companions === 0) {
+                            msg = 'Static. Nothing but static.\nYou listen for a while anyway.';
+                        } else {
+                            msg = 'You scan the frequencies. Nothing new.';
+                        }
+                        this.showMessage(msg);
+                        this.add.text(choreX, this.floorY - 85, '✓', {
+                            fontFamily: 'Arial', fontSize: '22px', color: '#556655',
+                        }).setOrigin(0.5).setDepth(5);
+                    }
+                },
+            };
+            this.interactPoints.push(chorePoint);
+        } else {
+            this.add.text(choreX, this.floorY - 85, '✓', {
+                fontFamily: 'Arial', fontSize: '22px', color: '#556655',
+            }).setOrigin(0.5).setDepth(5);
+        }
+
+        this.setupPlayerAndUI();
+    }
+
+    update() {
+        this.updateRoom();
     }
 }

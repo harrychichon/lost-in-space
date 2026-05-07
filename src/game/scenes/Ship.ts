@@ -102,10 +102,8 @@ export class Ship extends Scene {
         // Comms door
         this.createDoor(width * 0.62, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms');
 
-        // Collection room (only after human companion joins)
-        if (GameState.hasCompanion(this, 'human')) {
-            this.createCollectionDoor(width * 0.74, floorY);
-        }
+        // Collection room — always visible, only usable after botanist joins
+        this.createCollectionDoor(width * 0.74, floorY);
 
         // Navigation console (not a chore)
         this.createNavConsole(width * 0.84, floorY);
@@ -129,13 +127,31 @@ export class Ship extends Scene {
             this.dogGraphics = this.add.graphics();
             this.drawDog(this.dogGraphics, this.dogX, dogY);
 
+            // Draw collected toys near the dog
+            const collectedToys = GameState.get(this).collectedDogToys;
+            this.drawDogToys(this.dogX, dogY, collectedToys);
+
+            // Toy counter
+            if (collectedToys.length > 0) {
+                this.add.text(this.dogX, floorY - 55, `Toys: ${collectedToys.length}/4`, {
+                    fontFamily: 'Georgia, serif',
+                    fontSize: '10px',
+                    color: '#666655',
+                }).setOrigin(0.5);
+            }
+
             // Dog prompt (separate from door prompt)
-            const hasToy = GameState.get(this).dogHasToy;
             let dogMsg: string;
-            if (hasToy) {
-                dogMsg = 'The dog plays happily with its ball.';
-            } else {
+            if (collectedToys.length === 0) {
                 dogMsg = 'The dog wags its tail as you pass by, but looks understimulated.\nMaybe there was something on that first planet...';
+            } else if (collectedToys.length === 1) {
+                dogMsg = 'The dog has a toy to play with, but still looks around for more.';
+            } else if (collectedToys.length === 2) {
+                dogMsg = 'The dog is getting quite the collection. It seems happier.';
+            } else if (collectedToys.length === 3) {
+                dogMsg = 'The dog bounces between its toys, full of energy.';
+            } else {
+                dogMsg = 'The dog is surrounded by its treasures. Pure contentment.';
             }
             this.dogPromptText = this.add.text(width * 0.5, height * 0.55, dogMsg, {
                 fontFamily: 'Georgia, serif',
@@ -229,11 +245,7 @@ export class Ship extends Scene {
             choreKey,
             sceneName,
             action: () => {
-                if (done) {
-                    this.showMessage(`Already done for today.`);
-                } else {
-                    this.scene.start(sceneName);
-                }
+                this.scene.start(sceneName);
             },
         });
     }
@@ -242,7 +254,8 @@ export class Ship extends Scene {
         const doorH = 70;
         const doorW = 45;
         const doorY = floorY - doorH;
-        const color = 0x556644;
+        const hasHuman = GameState.hasCompanion(this, 'human');
+        const color = hasHuman ? 0x556644 : 0x2a2a2a;
 
         const icon = this.add.graphics();
         icon.fillStyle(0x2a2a2a, 1);
@@ -251,41 +264,62 @@ export class Ship extends Scene {
         icon.fillRect(x - doorW / 2, doorY, doorW, doorH);
         icon.fillStyle(0x999999, 1);
         icon.fillCircle(x + doorW / 2 - 8, doorY + doorH / 2, 3);
-        icon.lineStyle(1, color, 0.4);
-        icon.strokeRect(x - doorW / 2, doorY, doorW, doorH);
 
-        // Small plant icon on door
-        icon.fillStyle(0x447744, 0.6);
-        icon.fillCircle(x, doorY + 20, 6);
-        icon.fillCircle(x - 5, doorY + 18, 5);
-        icon.fillCircle(x + 5, doorY + 18, 5);
+        if (hasHuman) {
+            icon.lineStyle(1, 0x556644, 0.4);
+            icon.strokeRect(x - doorW / 2, doorY, doorW, doorH);
 
-        const label = this.add.text(x, doorY - 12, 'Collection', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '12px',
-            color: '#999999',
-        }).setOrigin(0.5);
+            // Small plant icon on door
+            icon.fillStyle(0x447744, 0.6);
+            icon.fillCircle(x, doorY + 20, 6);
+            icon.fillCircle(x - 5, doorY + 18, 5);
+            icon.fillCircle(x + 5, doorY + 18, 5);
 
-        const collected = GameState.get(this).collectedExoticPlants;
-        if (collected.length > 0) {
-            this.add.text(x, doorY - 24, `${collected.length}/3`, {
+            const label = this.add.text(x, doorY - 12, 'Collection', {
                 fontFamily: 'Georgia, serif',
-                fontSize: '10px',
-                color: '#666655',
+                fontSize: '12px',
+                color: '#999999',
             }).setOrigin(0.5);
-        }
 
-        this.doors.push({
-            x,
-            label,
-            icon,
-            name: 'Collection',
-            choreKey: null,
-            sceneName: 'Collection',
-            action: () => {
-                this.scene.start('Collection');
-            },
-        });
+            const collected = GameState.get(this).collectedExoticPlants;
+            if (collected.length > 0) {
+                this.add.text(x, doorY - 24, `${collected.length}/3`, {
+                    fontFamily: 'Georgia, serif',
+                    fontSize: '10px',
+                    color: '#666655',
+                }).setOrigin(0.5);
+            }
+
+            this.doors.push({
+                x,
+                label,
+                icon,
+                name: 'Collection',
+                choreKey: null,
+                sceneName: 'Collection',
+                action: () => {
+                    this.scene.start('Collection');
+                },
+            });
+        } else {
+            const label = this.add.text(x, doorY - 12, '???', {
+                fontFamily: 'Georgia, serif',
+                fontSize: '12px',
+                color: '#444444',
+            }).setOrigin(0.5);
+
+            this.doors.push({
+                x,
+                label,
+                icon,
+                name: 'Empty space',
+                choreKey: null,
+                sceneName: null,
+                action: () => {
+                    this.showMessage('An empty room. No reason to go in.');
+                },
+            });
+        }
     }
 
     private createNavConsole(x: number, floorY: number) {
@@ -583,6 +617,48 @@ export class Ship extends Scene {
         // Snout
         gfx.fillStyle(0xbb9977, 1);
         gfx.fillCircle(x + 17, y - 4, 2);
+    }
+
+    private drawDogToys(dogX: number, dogY: number, toys: string[]) {
+        const gfx = this.add.graphics();
+        // Toys arranged around the dog on the floor
+        const toyPositions = [
+            { id: 'rubber_ball', ox: -25, oy: 10 },
+            { id: 'squeaky_bone', ox: 28, oy: 10 },
+            { id: 'chew_rope', ox: -20, oy: 16 },
+            { id: 'cozy_blanket', ox: 0, oy: 14 },
+        ];
+
+        for (const tp of toyPositions) {
+            if (!toys.includes(tp.id)) continue;
+            const tx = dogX + tp.ox;
+            const ty = dogY + tp.oy;
+
+            if (tp.id === 'rubber_ball') {
+                // Small red ball
+                gfx.fillStyle(0xcc5544, 1);
+                gfx.fillCircle(tx, ty, 3);
+                gfx.fillStyle(0xdd7766, 0.5);
+                gfx.fillCircle(tx - 1, ty - 1, 1);
+            } else if (tp.id === 'squeaky_bone') {
+                // Small bone shape
+                gfx.fillStyle(0xddcc88, 1);
+                gfx.fillRect(tx - 4, ty - 1, 8, 2);
+                gfx.fillCircle(tx - 4, ty, 2);
+                gfx.fillCircle(tx + 4, ty, 2);
+            } else if (tp.id === 'chew_rope') {
+                // Coiled rope
+                gfx.lineStyle(2, 0xaa7755, 1);
+                gfx.strokeCircle(tx, ty, 3);
+                gfx.lineBetween(tx + 3, ty, tx + 6, ty - 2);
+            } else if (tp.id === 'cozy_blanket') {
+                // Small folded blanket under/near the dog
+                gfx.fillStyle(0x7788aa, 0.7);
+                gfx.fillRect(tx - 6, ty, 12, 4);
+                gfx.fillStyle(0x8899bb, 0.5);
+                gfx.fillRect(tx - 5, ty, 4, 3);
+            }
+        }
     }
 
     update() {
