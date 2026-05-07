@@ -11,54 +11,119 @@ export class Kitchen extends RoomScene {
         const { width, height } = this.scale;
         this.cameras.main.setBackgroundColor(0x111111);
         this.setupRoom();
+        const state = GameState.get(this);
 
         const gfx = this.add.graphics();
 
-        // Floor
-        gfx.fillStyle(0x333333, 1);
+        // Ship hull backdrop
+        gfx.fillStyle(0x1b1f2b, 1);
+        gfx.fillRect(0, height * 0.18, width, height * 0.58);
+
+        // Back wall panel
+        gfx.fillStyle(0x242b3a, 1);
+        gfx.fillRect(this.roomLeft, height * 0.24, this.roomWidth, height * 0.42);
+
+        // Ceiling beam and light strips
+        gfx.fillStyle(0x2e3546, 1);
+        gfx.fillRect(this.roomLeft - 20, height * 0.21, this.roomWidth + 40, 12);
+        gfx.fillStyle(0x8ec7ff, 0.35);
+        gfx.fillRect(this.rx(0.08), height * 0.23, this.roomWidth * 0.26, 4);
+        gfx.fillRect(this.rx(0.66), height * 0.23, this.roomWidth * 0.26, 4);
+
+        // Vertical hull ribs
+        gfx.fillStyle(0x1d2432, 0.9);
+        for (let tx = this.roomLeft + 18; tx < this.roomRight; tx += 36) {
+            gfx.fillRect(tx, height * 0.24, 3, height * 0.42);
+        }
+
+        // Portholes
+        const portholeY = height * 0.33;
+        for (const x of [this.rx(0.22), this.rx(0.5), this.rx(0.78)]) {
+            gfx.fillStyle(0x131926, 1);
+            gfx.fillCircle(x, portholeY, 28);
+            gfx.lineStyle(4, 0x4f5f77, 1);
+            gfx.strokeCircle(x, portholeY, 28);
+            gfx.fillStyle(0xffffff, 0.35);
+            gfx.fillCircle(x - 8, portholeY - 10, 2);
+            gfx.fillCircle(x + 7, portholeY + 4, 1.5);
+        }
+
+        // Floor with subtle grid
+        gfx.fillStyle(0x2a303f, 1);
         gfx.fillRect(0, this.floorY, width, height * 0.3);
-
-        // Walls
-        gfx.fillStyle(0x222222, 1);
-        gfx.fillRect(0, height * 0.25, width, height * 0.45);
-
-        // Wall tiles
-        gfx.lineStyle(1, 0x2a2a2a, 0.4);
-        for (let tx = this.roomLeft; tx < this.roomRight; tx += 30) {
-            gfx.lineBetween(tx, height * 0.25, tx, this.floorY);
-        }
-        for (let ty = height * 0.25; ty < this.floorY; ty += 30) {
-            gfx.lineBetween(this.roomLeft, ty, this.roomRight, ty);
+        gfx.lineStyle(1, 0x3a4356, 0.35);
+        for (let x = 0; x < width; x += 32) {
+            gfx.lineBetween(x, this.floorY, x, height);
         }
 
-        // Counter/shelf
-        gfx.fillStyle(0x3a3a2a, 1);
-        gfx.fillRect(this.rx(0.15), height * 0.5, 150, 15);
-        gfx.fillStyle(0x555555, 1);
-        gfx.fillCircle(this.rx(0.2), height * 0.5 - 3, 10);
-        gfx.fillCircle(this.rx(0.28), height * 0.5 - 3, 10);
+        const furnitureBaseY = this.floorY + 2;
 
-        // Table
-        const tableX = this.rx(0.55);
-        gfx.fillStyle(0x444433, 1);
-        gfx.fillRect(tableX - 80, height * 0.55, 160, 12);
-        gfx.fillRect(tableX - 70, height * 0.55 + 12, 8, 50);
-        gfx.fillRect(tableX + 62, height * 0.55 + 12, 8, 50);
+        // Main galley counter with drawers
+        const counterX = this.rx(0.1);
+        const counterTotalH = 86;
+        const counterY = furnitureBaseY - counterTotalH;
+        const counterW = this.roomWidth * 0.36;
+        gfx.fillStyle(0x3f4658, 1);
+        gfx.fillRect(counterX, counterY, counterW, 18);
+        gfx.fillStyle(0x2f3647, 1);
+        gfx.fillRect(counterX, counterY + 18, counterW, 68);
+        gfx.lineStyle(2, 0x59627a, 0.7);
+        gfx.strokeRect(counterX, counterY + 18, counterW, 68);
+        for (let i = 1; i <= 2; i++) {
+            const y = counterY + 18 + i * 22;
+            gfx.lineStyle(1, 0x5f687f, 0.5);
+            gfx.lineBetween(counterX + 8, y, counterX + counterW - 8, y);
+        }
 
-        // Chair
-        gfx.fillStyle(0x3a3a3a, 1);
-        gfx.fillRect(tableX - 30, height * 0.55 + 15, 20, 40);
-        gfx.fillRect(tableX - 30, height * 0.45, 20, 15);
+        // Sink, stove and prep light on the counter
+        gfx.fillStyle(0x222937, 1);
+        gfx.fillRect(counterX + 14, counterY + 3, 34, 10);
+        gfx.lineStyle(1, 0x7ea7ca, 0.8);
+        gfx.strokeRect(counterX + 14, counterY + 3, 34, 10);
+        gfx.fillStyle(0x1a1a24, 1);
+        gfx.fillCircle(counterX + counterW - 34, counterY + 9, 6);
+        gfx.fillCircle(counterX + counterW - 20, counterY + 9, 6);
+        gfx.fillStyle(0x8ec7ff, 0.4);
+        gfx.fillRect(counterX + 8, counterY - 3, counterW - 16, 2);
 
-        // Food tray on table
-        gfx.fillStyle(0x666655, 1);
-        gfx.fillRect(tableX + 10, height * 0.53, 30, 6);
-        gfx.fillStyle(0x777766, 1);
-        gfx.fillCircle(tableX + 20, height * 0.52, 5);
+        // Storage cabinet/fridge module
+        const cabinetX = this.rx(0.86);
+        const cabinetH = 150;
+        const cabinetY = furnitureBaseY - cabinetH;
+        gfx.fillStyle(0x364055, 1);
+        gfx.fillRect(cabinetX - 34, cabinetY, 68, cabinetH);
+        gfx.lineStyle(2, 0x58637d, 0.75);
+        gfx.strokeRect(cabinetX - 34, cabinetY, 68, cabinetH);
+        gfx.lineStyle(1, 0x6f7b96, 0.6);
+        gfx.lineBetween(cabinetX - 34, cabinetY + 80, cabinetX + 34, cabinetY + 80);
+        gfx.fillStyle(0x7db6ff, 0.7);
+        gfx.fillRect(cabinetX - 6, cabinetY + 20, 12, 4);
+
+        // Central dining table and bench
+        const tableX = this.rx(0.56);
+        const tableY = furnitureBaseY - 64;
+        gfx.fillStyle(0x4a5367, 1);
+        gfx.fillRect(tableX - 95, tableY, 190, 14);
+        gfx.fillStyle(0x364055, 1);
+        gfx.fillRect(tableX - 80, tableY + 14, 10, 50);
+        gfx.fillRect(tableX + 70, tableY + 14, 10, 50);
+
+        gfx.fillStyle(0x2e3646, 1);
+        gfx.fillRect(tableX - 42, tableY + 27, 84, 12);
+        gfx.fillRect(tableX - 45, tableY + 39, 8, 25);
+        gfx.fillRect(tableX + 37, tableY + 39, 8, 25);
+
+        // Food tray + cup on table
+        gfx.fillStyle(0x6f7788, 1);
+        gfx.fillRect(tableX + 12, tableY - 2, 32, 7);
+        gfx.fillStyle(0xd0b87e, 1);
+        gfx.fillCircle(tableX + 24, tableY - 1, 5);
+        gfx.fillStyle(0xc6d0de, 1);
+        gfx.fillRect(tableX - 16, tableY - 3, 7, 8);
 
         // Coffee maker on counter (once found in a cave)
-        if (GameState.get(this).collectedCaveItems.includes('coffee_maker')) {
-            this.drawCoffeeMaker(gfx, this.rx(0.35), height * 0.5);
+        if (state.collectedCaveItems.includes('coffee_maker')) {
+            this.drawCoffeeMaker(gfx, counterX + counterW * 0.55, counterY);
         }
 
         // Exit door
@@ -72,7 +137,6 @@ export class Kitchen extends RoomScene {
         }).setOrigin(0.5);
 
         // --- Companions ---
-        const state = GameState.get(this);
 
         if (GameState.hasCompanion(this, 'dog')) {
             const dogX = this.rx(0.3);

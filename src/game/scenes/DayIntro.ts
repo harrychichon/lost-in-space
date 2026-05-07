@@ -19,15 +19,9 @@ export class DayIntro extends Scene {
 
         this.space = new SpaceBackground(this);
 
-        // Small spaceship shape
-        const ship = this.add.graphics();
-        ship.fillStyle(0x888888, 1);
-        ship.fillRect(-30, -8, 60, 16);
-        ship.fillStyle(0xaaaacc, 1);
-        ship.fillTriangle(30, -8, 30, 8, 45, 0);
-        ship.fillStyle(0x666666, 1);
-        ship.fillRect(-40, -6, 10, 12);
-        ship.setPosition(width * 0.5, height * 0.4);
+        // Spaceship sprite
+        const ship = this.add.image(width * 0.5, height * 0.4, 'ship_default').setOrigin(0.5);
+        ship.setScale(0.12); // spaceship scale
 
         // Gentle drift
         this.tweens.add({
