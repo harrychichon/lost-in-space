@@ -1,4 +1,4 @@
-import { GameState } from '../systems/GameState';
+import { GameState, Chores } from '../systems/GameState';
 import { RoomScene, InteractPoint } from './RoomScene';
 import { createDogSprite } from '../objects/Dog';
 
@@ -36,16 +36,17 @@ export class Kitchen extends RoomScene {
             gfx.fillRect(tx, height * 0.24, 3, height * 0.42);
         }
 
-        // Portholes
-        const portholeY = height * 0.33;
-        for (const x of [this.rx(0.22), this.rx(0.5), this.rx(0.78)]) {
+        // Portholes (40% larger, centered on wall)
+        const portholeY = height * 0.53;
+        const portholeRadius = 39.2;
+        for (const x of [this.rx(0.2), this.rx(0.5), this.rx(0.8)]) {
             gfx.fillStyle(0x0f141e, 1);
-            gfx.fillCircle(x, portholeY, 28);
+            gfx.fillCircle(x, portholeY, portholeRadius);
             gfx.lineStyle(4, 0x7a6550, 1);
-            gfx.strokeCircle(x, portholeY, 28);
+            gfx.strokeCircle(x, portholeY, portholeRadius);
             gfx.fillStyle(0xffffff, 0.35);
-            gfx.fillCircle(x - 8, portholeY - 10, 2);
-            gfx.fillCircle(x + 7, portholeY + 4, 1.5);
+            gfx.fillCircle(x - 11.2, portholeY - 14, 2.8);
+            gfx.fillCircle(x + 9.8, portholeY + 5.6, 2.1);
         }
 
         // Floor with subtle warm metal grid
@@ -156,7 +157,7 @@ export class Kitchen extends RoomScene {
         // Room label
         this.add.text(width * 0.5, height * 0.15, 'Kitchen', {
             fontFamily: 'Georgia, serif',
-            fontSize: '24px',
+            fontSize: '28px',
             color: '#666666',
         }).setOrigin(0.5);
 
@@ -252,6 +253,10 @@ export class Kitchen extends RoomScene {
 
         // Player and UI (on top of everything)
         this.setupPlayerAndUI();
+
+        // --- HUD (Resources and Chores) ---
+        this.drawResourceBars(state);
+        this.drawChoreChecklist(state);
     }
 
     update() {
@@ -301,6 +306,55 @@ export class Kitchen extends RoomScene {
             delay: 900,
             loop: true,
             callback: spawnSteam,
+        });
+    }
+
+    private drawResourceBars(state: ReturnType<typeof GameState.get>) {
+        const { width } = this.scale;
+        const resources = [
+            { key: 'O2', value: state.resources.oxygen, color: 0x4488aa },
+            { key: 'Food', value: state.resources.food, color: 0x88aa44 },
+            { key: 'Fuel', value: state.resources.fuel, color: 0xaa8844 },
+            { key: 'Parts', value: state.resources.parts, color: 0x888888 },
+        ];
+
+        resources.forEach((res, i) => {
+            const bx = width - 130;
+            const by = 16 + i * 22;
+            this.add.text(bx, by, res.key, {
+                fontFamily: 'Georgia, serif',
+                fontSize: '12px',
+                color: '#666666',
+            }).setDepth(25);
+            this.add.rectangle(bx + 45 + 40, by + 7, 80, 10, 0x222222).setOrigin(0.5).setDepth(25);
+            const barW = (res.value / 100) * 78;
+            this.add.rectangle(bx + 45 + 1 + barW / 2, by + 7, barW, 8, res.color).setOrigin(0.5).setDepth(25);
+        });
+    }
+
+    private drawChoreChecklist(state: ReturnType<typeof GameState.get>) {
+        const choreList: { key: keyof Chores; label: string }[] = [
+            { key: 'kitchen', label: 'Eat' },
+            { key: 'greenhouse', label: 'Tend plants' },
+            { key: 'engine', label: 'Engine check' },
+            { key: 'comms', label: 'Check comms' },
+        ];
+
+        this.add.text(16, 16, 'Chores:', {
+            fontFamily: 'Georgia, serif',
+            fontSize: '14px',
+            color: '#777777',
+        }).setDepth(25);
+
+        choreList.forEach((chore, i) => {
+            const done = state.chores[chore.key];
+            const mark = done ? '✓' : '○';
+            const color = done ? '#556655' : '#888888';
+            this.add.text(16, 36 + i * 20, `${mark} ${chore.label}`, {
+                fontFamily: 'Georgia, serif',
+                fontSize: '13px',
+                color,
+            }).setDepth(25);
         });
     }
 }
