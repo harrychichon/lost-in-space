@@ -79,7 +79,7 @@ export class DevPanel extends Scene {
             GameState.update(this, {
                 resources: { oxygen: 100, food: 100, fuel: 100, parts: 100 },
             });
-            this.refreshState();
+            this.restartActiveScene();
         });
         y += gap;
 
@@ -87,7 +87,7 @@ export class DevPanel extends Scene {
             GameState.update(this, {
                 resources: { oxygen: 10, food: 10, fuel: 10, parts: 10 },
             });
-            this.refreshState();
+            this.restartActiveScene();
         });
         y += gap;
 
@@ -169,13 +169,13 @@ export class DevPanel extends Scene {
             GameState.update(this, {
                 resources: { oxygen: 100, food: 100, fuel: 100, parts: 100 },
             });
-            this.refreshState();
+            this.restartActiveScene();
         });
         this.input.keyboard!.on("keydown-EIGHT", () => {
             GameState.update(this, {
                 resources: { oxygen: 10, food: 10, fuel: 10, parts: 10 },
             });
-            this.refreshState();
+            this.restartActiveScene();
         });
         this.input.keyboard!.on("keydown-NINE", () => {
             this.goToScene("DayIntro");
