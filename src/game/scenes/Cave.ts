@@ -2,6 +2,8 @@ import { Scene } from 'phaser';
 import { GameState, PlanetItem, ResourceType } from '../systems/GameState';
 import { AudioManager, MusicTier } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
+import { HudPanel } from '../objects/HudPanel';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
 
 interface PickupSprite {
     sprite: Phaser.GameObjects.Arc;
@@ -22,6 +24,23 @@ const RESOURCE_COLORS: Record<string, number> = {
 };
 
 const CAVE_RESOURCE_GAIN = 20;
+
+const CAVE_WIDTH = 2048;
+
+/**
+ * Draws an arch / doorway shape (flat bottom, vertical sides, semicircle top)
+ * onto the given Graphics object, anchored with its bottom on `baseY`.
+ */
+function drawArch(g: Phaser.GameObjects.Graphics, cx: number, baseY: number, halfW: number, height: number) {
+    const archCenterY = baseY - height + halfW;
+    g.beginPath();
+    g.moveTo(cx - halfW, baseY);
+    g.lineTo(cx - halfW, archCenterY);
+    g.arc(cx, archCenterY, halfW, Math.PI, 0, false);
+    g.lineTo(cx + halfW, baseY);
+    g.closePath();
+    g.fillPath();
+}
 
 const ITEM_INFO: Record<string, { name: string; desc: string; resource?: ResourceType; gain?: number }> = {
     oxygen: { name: 'Oxygen Geode', desc: 'A dense cluster of oxygen-rich crystals. (+20 O2)', resource: 'oxygen', gain: CAVE_RESOURCE_GAIN },
@@ -57,9 +76,13 @@ export class Cave extends Scene {
     private playerSprite!: Phaser.GameObjects.Sprite;
     private groundY = 0;
     private statusText!: Phaser.GameObjects.Text;
-    private promptText!: Phaser.GameObjects.Text;
+    private prompt!: HudPanel;
     private planetId!: string;
     private currentPickup: PickupSprite | null = null;
+    private exitX = 60;
+    private exitY = 0;
+    private nearExit = false;
+    private exitIndicator!: HudPanel;
 
     constructor() {
         super('Cave');
@@ -87,32 +110,37 @@ export class Cave extends Scene {
 
         GameState.applyGrayscale(this);
 
-        // --- Cave walls ---
+        this.physics.world.setBounds(0, 0, CAVE_WIDTH, height);
+
+        // --- Cave walls (cover full cave width) ---
         const walls = this.add.graphics();
         walls.fillStyle(0x141018, 1);
-        walls.fillRect(0, 0, width, height);
+        walls.fillRect(0, 0, CAVE_WIDTH, height);
         // Ceiling silhouette
         walls.fillStyle(0x080610, 1);
-        walls.fillRect(0, 0, width, height * 0.2);
-        for (let i = 0; i < 12; i++) {
-            const sx = (i + 0.5) * (width / 12);
+        walls.fillRect(0, 0, CAVE_WIDTH, height * 0.2);
+        const numSpikes = Math.ceil(CAVE_WIDTH / (width / 12));
+        for (let i = 0; i < numSpikes; i++) {
+            const sx = (i + 0.5) * (CAVE_WIDTH / numSpikes);
             const sh = Phaser.Math.Between(20, 70);
             walls.fillTriangle(sx - 10, height * 0.2, sx + 10, height * 0.2, sx, height * 0.2 + sh);
         }
         // Floor
         walls.fillStyle(0x1a1520, 1);
-        walls.fillRect(0, height * 0.75, width, height * 0.25);
+        walls.fillRect(0, height * 0.75, CAVE_WIDTH, height * 0.25);
         // Stalagmites
         walls.fillStyle(0x0e0a14, 1);
-        for (let i = 0; i < 6; i++) {
-            const sx = Phaser.Math.Between(40, width - 40);
+        const numStalagmites = Math.ceil(CAVE_WIDTH / (width / 6));
+        for (let i = 0; i < numStalagmites; i++) {
+            const sx = Phaser.Math.Between(40, CAVE_WIDTH - 40);
             const sh = Phaser.Math.Between(18, 40);
             walls.fillTriangle(sx - 8, height * 0.75, sx + 8, height * 0.75, sx, height * 0.75 - sh);
         }
 
         // Ambient glowing crystals scattered around (background light)
-        for (let i = 0; i < 5; i++) {
-            const cx = Phaser.Math.Between(60, width - 60);
+        const numCrystals = Math.ceil(CAVE_WIDTH / (width / 5));
+        for (let i = 0; i < numCrystals; i++) {
+            const cx = Phaser.Math.Between(60, CAVE_WIDTH - 60);
             const cy = Phaser.Math.Between(height * 0.35, height * 0.72);
             const glow = this.add.circle(cx, cy, 4, 0xaaccff, 0.6);
             this.tweens.add({
@@ -131,7 +159,7 @@ export class Cave extends Scene {
             .filter(item => !item.collected);
 
         uncollectedItems.forEach((item, i) => {
-            const px = item.x * width;
+            const px = item.x * CAVE_WIDTH;
             const py = height * 0.75 - Phaser.Math.Between(6, 22);
             const colorKey = item.type === 'unique' ? (item.uniqueId ?? 'unique') : item.type;
             const color = RESOURCE_COLORS[colorKey] ?? 0xcc88cc;
@@ -153,38 +181,67 @@ export class Cave extends Scene {
 
         // --- Player ---
         this.groundY = height * 0.75;
-        this.player = this.add.rectangle(60, this.groundY - 25, 20, 50, 0xaaaaaa, 0);
+        this.player = this.add.rectangle(140, this.groundY - 25, 20, 50, 0xaaaaaa, 0);
         this.physics.add.existing(this.player);
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         body.setCollideWorldBounds(true);
         this.playerSprite = createPlayerSprite(this, this.player.x, this.groundY);
 
-        // --- HUD ---
+        this.cameras.main.setBounds(0, 0, CAVE_WIDTH, height);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+
+        // --- Exit arch on the left wall — warm daylight pouring in from the surface ---
+        this.exitX = 60;
+        this.exitY = this.groundY - 50;
+        const exitGfx = this.add.graphics();
+
+        // Outer rim — slightly lighter rock framing the opening
+        exitGfx.fillStyle(0x2a2026, 1);
+        drawArch(exitGfx, this.exitX, this.groundY, 38, 105);
+
+        // Light gradient — 4 nested arches, dark rock → bright daylight at the core
+        const lightShades = [0x553322, 0x995533, 0xddaa55, 0xffeebb];
+        const lightScale  = [0.95,     0.78,     0.60,     0.42    ];
+        lightShades.forEach((shade, i) => {
+            exitGfx.fillStyle(shade, 1);
+            drawArch(exitGfx, this.exitX, this.groundY, 35 * lightScale[i], 100 * lightScale[i]);
+        });
+
+        // Ambient glow spilling into the cave — soft warm light leak
+        const ambient = this.add.circle(this.exitX + 30, this.exitY + 10, 70, 0xffcc88, 0.15);
+        this.tweens.add({
+            targets: ambient,
+            alpha: 0.08,
+            scale: 1.15,
+            duration: 1600,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+        });
+
+        // --- HUD (all pinned to screen) ---
         this.add.text(width * 0.5, 20, `${planet.name} — Cave`, {
-            fontFamily: 'Georgia, serif',
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
             fontSize: '20px',
             color: '#aaaaaa',
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setScrollFactor(0);
 
-        this.statusText = this.add.text(width * 0.5, 48, `Items remaining: ${uncollectedItems.length}`, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#777777',
-        }).setOrigin(0.5);
+        this.statusText = this.add.text(width * 0.5, 52, `Items remaining: ${uncollectedItems.length}`, {
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
+            fontSize: '18px',
+            color: '#8a99a8',
+        }).setOrigin(0.5).setScrollFactor(0);
 
-        this.promptText = this.add.text(width * 0.5, height * 0.88, '', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#aaaaaa',
-            align: 'center',
-            wordWrap: { width: 520 },
-        }).setOrigin(0.5).setAlpha(0);
+        // Center prompt — sci-fi panel, shown when near a pickup or exit
+        this.prompt = new HudPanel(this, width * 0.5, height * 0.88, { variant: 'prompt', anchor: 'center' });
+        this.add.existing(this.prompt);
+        this.prompt.setAlpha(0);
 
-        this.add.text(width * 0.5, height - 20, '[L] Leave Cave', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '13px',
-            color: '#555555',
-        }).setOrigin(0.5);
+        // Exit indicator — bottom-left, matches the prompt panel design
+        this.exitIndicator = new HudPanel(this, 20, height * 0.88, { variant: 'indicator', anchor: 'left' });
+        this.add.existing(this.exitIndicator);
+        this.exitIndicator.setLabel('← Exit');
+        this.exitIndicator.setAlpha(0.7);
 
         // --- Input ---
         this.cursors = this.input.keyboard!.createCursorKeys();
@@ -192,6 +249,9 @@ export class Cave extends Scene {
         this.keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
         this.leaveKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L);
+
+        // Global navigation bar — shows A/D, M, E/L hints across the bottom
+        this.add.existing(new GlobalNavBar(this));
     }
 
     private getItemInfo(item: PlanetItem) {
@@ -220,9 +280,9 @@ export class Cave extends Scene {
             : `Collected: ${info.name}`;
 
         const label = this.add.text(pickup.sprite.x, pickup.sprite.y - 20, feedbackText, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#cccccc',
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
+            fontSize: '18px',
+            color: '#6ee0ff',
         }).setOrigin(0.5);
 
         this.tweens.add({
@@ -238,7 +298,7 @@ export class Cave extends Scene {
         if (idx !== -1) this.pickups.splice(idx, 1);
 
         this.statusText.setText(`Items remaining: ${this.pickups.length}`);
-        this.promptText.setAlpha(0);
+        this.prompt.setAlpha(0);
         this.currentPickup = null;
     }
 
@@ -269,22 +329,41 @@ export class Cave extends Scene {
             }
         }
 
+        // Exit proximity — only relevant when not hovering an item
+        const exitDist = Phaser.Math.Distance.Between(
+            this.player.x, this.player.y, this.exitX, this.groundY,
+        );
+        this.nearExit = !this.currentPickup && exitDist < 70;
+
+        // HUD: hide indicator when near exit (prompt takes over)
+        this.exitIndicator.setAlpha(this.nearExit ? 0 : 0.7);
+
+        // Prompt priority: items > exit > nothing
         if (this.currentPickup) {
             const info = this.getItemInfo(this.currentPickup.item);
             const resourceHint = info.resource ? ` (+${info.gain} ${info.resource})` : '';
-            this.promptText.setText(`${info.name}${resourceHint}\n${info.desc}\n[E] Pick up`);
-            this.promptText.setColor('#aaaaaa');
-            this.promptText.setAlpha(1);
+            this.prompt.setContent('[E] Pick up', `${info.name}${resourceHint}\n${info.desc}`);
+            this.prompt.setAlpha(1);
+        } else if (this.nearExit) {
+            this.prompt.setContent('[E] Leave', 'Surface');
+            this.prompt.setAlpha(1);
         } else {
-            this.promptText.setAlpha(0);
+            this.prompt.setAlpha(0);
         }
 
-        if (this.currentPickup && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-            this.collectItem(this.currentPickup);
+        // Interactions
+        if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+            if (this.currentPickup) {
+                this.collectItem(this.currentPickup);
+            } else if (this.nearExit) {
+                this.scene.start('Planet', { planetId: this.planetId, spawnAtCave: true });
+                return;
+            }
         }
 
+        // [L] kept as hidden fallback for fast exit
         if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
-            this.scene.start('Planet', { planetId: this.planetId });
+            this.scene.start('Planet', { planetId: this.planetId, spawnAtCave: true });
         }
     }
 }

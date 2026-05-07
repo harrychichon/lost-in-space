@@ -2,6 +2,8 @@ import { Scene } from 'phaser';
 import { GameState, PlanetData } from '../systems/GameState';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { AudioManager, MusicTier } from '../systems/AudioManager';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
+import { HudPanel } from '../objects/HudPanel';
 
 const BIOME_COLORS: Record<PlanetData['biome'], number> = {
     lush: 0x558855,
@@ -173,16 +175,17 @@ export class Navigation extends Scene {
             });
         }
 
-        // Back prompt
-        this.add.text(cx, height - 30, '[ESC] Back to Ship', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#555555',
-        }).setOrigin(0.5);
+        // Back hint — small indicator panel above the global nav bar
+        const backHint = new HudPanel(this, cx, height - 75, { variant: 'indicator', anchor: 'center' });
+        this.add.existing(backHint);
+        backHint.setLabel('[ESC] Back to Ship');
 
         this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
             this.scene.start('Ship', { fromRoom: 'Navigation' });
         });
+
+        // Global navigation bar — shows A/D, M, E/L hints across the bottom
+        this.add.existing(new GlobalNavBar(this));
     }
 
     update(_time: number, delta: number) {

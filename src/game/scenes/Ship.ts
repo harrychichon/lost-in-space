@@ -4,6 +4,8 @@ import { AudioManager, MusicTier } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
+import { HudPanel } from '../objects/HudPanel';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
 
 interface Door {
     x: number;
@@ -23,8 +25,8 @@ export class Ship extends Scene {
     private interactKey!: Phaser.Input.Keyboard.Key;
     private doors: Door[] = [];
     private currentDoor: Door | null = null;
-    private promptText!: Phaser.GameObjects.Text;
-    private dogPromptText!: Phaser.GameObjects.Text;
+    private prompt!: HudPanel;
+    private dogPrompt!: HudPanel;
     private playerSprite!: Phaser.GameObjects.Sprite;
     private dogSprite: Phaser.GameObjects.Sprite | null = null;
     private dogX = 0;
@@ -200,13 +202,10 @@ export class Ship extends Scene {
             } else {
                 dogMsg = 'The dog is surrounded by its treasures. Pure contentment.';
             }
-            this.dogPromptText = this.add.text(width * 0.5, height * 0.55, dogMsg, {
-                fontFamily: 'Georgia, serif',
-                fontSize: '14px',
-                color: '#888877',
-                align: 'center',
-                wordWrap: { width: 450 },
-            }).setOrigin(0.5).setAlpha(0);
+            this.dogPrompt = new HudPanel(this, width * 0.5, height * 0.55, { variant: 'prompt', anchor: 'center' });
+            this.add.existing(this.dogPrompt);
+            this.dogPrompt.setContent(undefined, dogMsg);
+            this.dogPrompt.setAlpha(0);
         }
 
         // --- Human companion ---
@@ -251,18 +250,19 @@ export class Ship extends Scene {
         // Chore checklist
         this.drawChoreChecklist(state);
 
-        // Interaction prompt
-        this.promptText = this.add.text(width * 0.5, height * 0.88, '', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '16px',
-            color: '#aaaaaa',
-        }).setOrigin(0.5).setAlpha(0);
+        // Interaction prompt — sci-fi panel for door interactions
+        this.prompt = new HudPanel(this, width * 0.5, height * 0.88, { variant: 'prompt', anchor: 'center' });
+        this.add.existing(this.prompt);
+        this.prompt.setAlpha(0);
 
         // --- Input ---
         this.cursors = this.input.keyboard!.createCursorKeys();
         this.keyA = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
+
+        // Global navigation bar — shows A/D, M, E/L hints across the bottom
+        this.add.existing(new GlobalNavBar(this));
     }
 
     private createDoor(x: number, y: number, _w: number, h: number, name: string, _color: number, choreKey: keyof Chores, sceneName: string) {
@@ -808,16 +808,16 @@ export class Ship extends Scene {
 
         // Show/hide door prompt
         if (this.currentDoor) {
-            this.promptText.setText(`[E] ${this.currentDoor.name}`);
-            this.promptText.setAlpha(1);
+            this.prompt.setContent('[E] Enter', this.currentDoor.name);
+            this.prompt.setAlpha(1);
         } else {
-            this.promptText.setAlpha(0);
+            this.prompt.setAlpha(0);
         }
 
         // Show/hide dog prompt when near the dog
-        if (this.dogSprite && this.dogPromptText) {
+        if (this.dogSprite && this.dogPrompt) {
             const nearDog = Math.abs(this.player.x - this.dogX) < 60;
-            this.dogPromptText.setAlpha(nearDog && !this.currentDoor ? 1 : 0);
+            this.dogPrompt.setAlpha(nearDog && !this.currentDoor ? 1 : 0);
         }
 
         // Handle interaction

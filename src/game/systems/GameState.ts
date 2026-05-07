@@ -37,6 +37,7 @@ export interface PlanetData {
     items: PlanetItem[];
     caveItems: PlanetItem[];
     caveLit: boolean;
+    mountainCave: boolean; // true = cave entrance is set into a mountain
 }
 
 export interface GameStateData {
@@ -110,6 +111,28 @@ const DEFAULT_STATE: GameStateData = {
 };
 
 const REGISTRY_KEY = "gameState";
+
+/**
+ * Distribute items along the x-axis using slot-based spacing.
+ * Divides [minX, maxX] into N equal slots; each item lands inside its own
+ * slot with 20% padding, guaranteeing minimum spacing. Items are shuffled
+ * first so x-position doesn't correlate with array order or item type.
+ */
+function distributeInSlots(items: PlanetItem[], minX: number, maxX: number): void {
+    if (items.length === 0) return;
+    // Fisher-Yates shuffle
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+    }
+    const slotSize = (maxX - minX) / items.length;
+    const padding = 0.2; // 20% padding inside each slot
+    items.forEach((item, i) => {
+        const slotStart = minX + i * slotSize + slotSize * padding;
+        const slotEnd = minX + (i + 1) * slotSize - slotSize * padding;
+        item.x = slotStart + Math.random() * (slotEnd - slotStart);
+    });
+}
 
 /**
  * Static helper to read/write game state via Phaser's Registry.
@@ -407,21 +430,21 @@ export class GameState {
 
         const biome = BIOMES[Math.floor(Math.random() * BIOMES.length)];
 
-        // Generate 3-6 resource items at random positions
+        // Generate 5-8 resource items (x set later by distributeInSlots)
         const resourceTypes: ResourceType[] = [
             "oxygen",
             "food",
             "fuel",
             "parts",
         ];
-        const numItems = 3 + Math.floor(Math.random() * 4);
+        const numItems = 5 + Math.floor(Math.random() * 4);
         const items: PlanetItem[] = [];
         for (let i = 0; i < numItems; i++) {
             items.push({
                 type: resourceTypes[
                     Math.floor(Math.random() * resourceTypes.length)
                 ],
-                x: 0.08 + Math.random() * 0.84,
+                x: 0,
                 collected: false,
             });
         }
@@ -431,7 +454,7 @@ export class GameState {
             items.push({
                 type: "unique",
                 uniqueId: "rubber_ball",
-                x: 0.5 + Math.random() * 0.3,
+                x: 0,
                 collected: false,
                 locked: true,
             });
@@ -457,7 +480,7 @@ export class GameState {
                 items.push({
                     type: "unique",
                     uniqueId: toyId,
-                    x: 0.15 + Math.random() * 0.7,
+                    x: 0,
                     collected: false,
                     locked: true,
                 });
@@ -486,21 +509,24 @@ export class GameState {
             items.push({
                 type: "unique",
                 uniqueId: plantId,
-                x: 0.15 + Math.random() * 0.7,
+                x: 0,
                 collected: false,
                 locked: true,
             });
         }
 
-        // --- Cave items ---
-        const numCaveResources = 3 + Math.floor(Math.random() * 3);
+        // Distribute all surface items in slots (max-x 0.83 keeps cave zone clear)
+        distributeInSlots(items, 0.06, 0.83);
+
+        // --- Cave items (4-6 resources + 1 unique) ---
+        const numCaveResources = 4 + Math.floor(Math.random() * 3);
         const caveItems: PlanetItem[] = [];
         for (let i = 0; i < numCaveResources; i++) {
             caveItems.push({
                 type: resourceTypes[
                     Math.floor(Math.random() * resourceTypes.length)
                 ],
-                x: 0.1 + Math.random() * 0.8,
+                x: 0,
                 collected: false,
                 locked: true,
             });
@@ -528,11 +554,13 @@ export class GameState {
             caveItems.push({
                 type: "unique",
                 uniqueId,
-                x: 0.2 + Math.random() * 0.6,
+                x: 0,
                 collected: false,
                 locked: true,
             });
         }
+
+        distributeInSlots(caveItems, 0.08, 0.92);
 
         const planet: PlanetData = {
             id: `planet_${state.planets.length + 1}`,
@@ -542,6 +570,7 @@ export class GameState {
             items,
             caveItems,
             caveLit: state.planets.length === CAVEDIVER_PLANET_INDEX,
+            mountainCave: state.planets.length % 2 === 1, // alternating: cave / mountain / cave…
         };
 
         GameState.update(scene, { planets: [...state.planets, planet] });
