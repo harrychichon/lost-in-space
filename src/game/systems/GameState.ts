@@ -52,6 +52,7 @@ export interface GameStateData {
     collectedCaveItems: string[]; // uniqueIds of collected cave items
     caveUnlocked: boolean; // true once cavediver joins
     wellbeingOverride: number | null; // null = auto-calculate, 0-1 = DevPanel override
+    warmthOverride: number | null;    // null = auto-calculate, 0-1 = DevPanel override
 }
 
 const EXOTIC_PLANT_IDS = ["voidbloom", "sweetmoss", "starspice"];
@@ -107,6 +108,7 @@ const DEFAULT_STATE: GameStateData = {
     collectedCaveItems: [],
     caveUnlocked: false,
     wellbeingOverride: null,
+    warmthOverride: null,
 };
 
 const REGISTRY_KEY = "gameState";
@@ -128,6 +130,7 @@ export class GameState {
             collectedCaveItems: [],
             caveUnlocked: false,
             wellbeingOverride: null,
+            warmthOverride: null,
         });
     }
 
@@ -260,9 +263,10 @@ export class GameState {
     }
 
     // Base warmth from companion tier, nudged ±0.15 by wellbeing.
-    // Max nudge is 50% of one companion step — visible but can never cross a tier boundary.
+    // Respects DevPanel warmthOverride when set.
     static getSaturation(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
+        if (state.warmthOverride !== null) return state.warmthOverride;
         const base = Math.min(1, state.companions * 0.3);
         const wellbeing = GameState.getWellbeing(scene);
         const nudge = (wellbeing - 0.5) * 0.3;

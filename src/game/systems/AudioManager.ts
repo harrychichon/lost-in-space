@@ -70,6 +70,12 @@ export class AudioManager {
     private static tensionActive = false;
     private static tensionSound: Phaser.Sound.BaseSound | null = null;
     private static eventActive = false;
+    private static currentEventKey: EventKey | null = null;
+
+    static getCurrentMusicKey(): string | null { return AudioManager.musicKey; }
+    static isEventActive(): boolean { return AudioManager.eventActive; }
+    static getCurrentEventKey(): EventKey | null { return AudioManager.currentEventKey; }
+    static getMoodName(warmth: number): MoodKey { return AudioManager.moodFromWarmth(warmth); }
 
     /** Main call: scenes declare their audio context, AudioManager handles the rest. */
     static update(scene: Scene, ctx: AudioCtx): void {
@@ -96,28 +102,33 @@ export class AudioManager {
         const sound = scene.sound.add(key, { loop: true, volume: 0 });
         sound.play();
         scene.tweens.add({ targets: sound, volume: MUSIC_VOLUME, duration: FADE_MS, ease: 'Sine.easeOut' });
-        AudioManager.musicKey   = key;
-        AudioManager.musicSound = sound;
-        AudioManager.eventActive = true;
+        AudioManager.musicKey        = key;
+        AudioManager.musicSound      = sound;
+        AudioManager.eventActive     = true;
+        AudioManager.currentEventKey = event;
     }
 
     /** Fade out all layers. Use for cutscenes that want silence, or to clear event state. */
     static stop(scene: Scene): void {
         AudioManager.fadeOut(scene, AudioManager.musicSound);
-        AudioManager.musicSound  = null;
-        AudioManager.musicKey    = null;
-        AudioManager.eventActive = false;
+        AudioManager.musicSound      = null;
+        AudioManager.musicKey        = null;
+        AudioManager.eventActive     = false;
+        AudioManager.currentEventKey = null;
         AudioManager.fadeOut(scene, AudioManager.envSound);
         AudioManager.envSound = null;
         AudioManager.envKey   = null;
         AudioManager.fadeOutTension(scene);
     }
 
-    /** Clear event state so update() resumes normal music selection. */
+    /**
+     * Clear event state so the next update() call resumes normal music.
+     * musicSound is intentionally kept so updateMusic() can fade it out gracefully.
+     */
     static clearEvent(): void {
-        AudioManager.eventActive = false;
-        AudioManager.musicKey    = null;  // force re-resolve on next update()
-        AudioManager.musicSound  = null;
+        AudioManager.eventActive     = false;
+        AudioManager.currentEventKey = null;
+        AudioManager.musicKey        = null; // force re-resolve; updateMusic fades old sound
     }
 
     private static moodFromWarmth(warmth: number): MoodKey {
