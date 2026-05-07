@@ -154,18 +154,24 @@ export class Ship extends Scene {
             hideLabel: true,
         });
         // Engine door
-        this.createDoor(width * 0.50, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine');
+        this.createDoor(width * 0.46, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine',{
+            hideVisual: true,
+            hideLabel: true,
+        });
         // Comms door
-        this.createDoor(width * 0.62, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms');
+        this.createDoor(width * 0.60, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms',{
+            hideVisual: true,
+            hideLabel: true,
+        } );
 
         // Collection room — always visible, only usable after botanist joins
-        this.createCollectionDoor(width * 0.74, floorY);
+        this.createCollectionDoor(width * 0.72, floorY, { hideVisual: true, hideLabel: true });
 
         // Navigation console (not a chore)
-        this.createNavConsole(width * 0.84, floorY);
+        this.createNavConsole(width * 0.815, floorY, {hideVisual: true, hideLabel: true });
 
         // Bed (not a door — direct interaction)
-        this.createBed(width * 0.94, floorY);
+        this.createBed(width * 0.90, floorY, { hideVisual: true, hideLabel: true });
 
         // --- Player ---
         this.player = this.add.rectangle(spawnX, floorY - 25, 20, 50, 0xaaaaaa, 0); // invisible hitbox
@@ -332,7 +338,7 @@ export class Ship extends Scene {
         });
     }
 
-    private createCollectionDoor(x: number, floorY: number) {
+    private createCollectionDoor(x: number, floorY: number, options?: { hideVisual?: boolean, hideLabel?: boolean }) {
         const doorH = 70;
         const doorY = floorY - doorH;
         const hasHuman = GameState.hasCompanion(this, 'human');
@@ -342,6 +348,7 @@ export class Ship extends Scene {
         if (!hasHuman) {
             icon.setTint(0x444444);
         }
+        if (options?.hideVisual) icon.setVisible(false);
 
         if (hasHuman) {
             // Small plant icon on door
@@ -350,12 +357,14 @@ export class Ship extends Scene {
             plant.fillCircle(x, doorY + 20, 6);
             plant.fillCircle(x - 5, doorY + 18, 5);
             plant.fillCircle(x + 5, doorY + 18, 5);
+            if (options?.hideVisual) plant.setVisible(false);
 
             const label = this.add.text(x, doorY - 12, 'Collection', {
                 fontFamily: 'Georgia, serif',
                 fontSize: '12px',
                 color: '#999999',
             }).setOrigin(0.5);
+            if (options?.hideLabel) label.setVisible(false);
 
             const collected = GameState.get(this).collectedExoticPlants;
             if (collected.length > 0) {
@@ -383,6 +392,7 @@ export class Ship extends Scene {
                 fontSize: '12px',
                 color: '#444444',
             }).setOrigin(0.5);
+            if (options?.hideLabel) label.setVisible(false);
 
             this.doors.push({
                 x,
@@ -398,7 +408,7 @@ export class Ship extends Scene {
         }
     }
 
-    private createNavConsole(x: number, floorY: number) {
+    private createNavConsole(x: number, floorY: number, options?: { hideVisual?: boolean; hideLabel?: boolean }) {
         const state = GameState.get(this);
         const planetCount = state.planets.length;
         const icon = this.add.graphics();
@@ -424,21 +434,26 @@ export class Ship extends Scene {
                 repeat: -1,
                 ease: 'Sine.easeInOut',
             });
+            if (options?.hideVisual) dot.setVisible(false);
         }
+
+        if (options?.hideVisual) icon.setVisible(false);
 
         const label = this.add.text(x, floorY - 53, 'Nav', {
             fontFamily: 'Georgia, serif',
             fontSize: '13px',
             color: '#999999',
         }).setOrigin(0.5);
+        if (options?.hideLabel) label.setVisible(false);
 
         // Planet count indicator
         if (planetCount > 0) {
-            this.add.text(x, floorY - 62, `${planetCount} planet${planetCount > 1 ? 's' : ''}`, {
+            const planetText = this.add.text(x, floorY - 62, `${planetCount} planet${planetCount > 1 ? 's' : ''}`, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '10px',
                 color: '#666666',
             }).setOrigin(0.5);
+            if (options?.hideVisual) planetText.setVisible(false);
         }
 
         this.doors.push({
@@ -454,7 +469,7 @@ export class Ship extends Scene {
         });
     }
 
-    private createBed(x: number, floorY: number) {
+    private createBed(x: number, floorY: number, options?: { hideVisual?: boolean; hideLabel?: boolean }) {
         const icon = this.add.graphics();
 
         // Bed frame
@@ -466,12 +481,14 @@ export class Ship extends Scene {
         // Blanket
         icon.fillStyle(0x554444, 1);
         icon.fillRect(x - 5, floorY - 26, 25, 22);
+        if (options?.hideVisual) icon.setVisible(false);
 
         const label = this.add.text(x, floorY - 42, 'Bed', {
             fontFamily: 'Georgia, serif',
             fontSize: '13px',
             color: '#999999',
         }).setOrigin(0.5);
+        if (options?.hideLabel) label.setVisible(false);
 
         this.doors.push({
             x,
