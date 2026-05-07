@@ -40,8 +40,8 @@ export function drawResourceBars(scene: Scene, state: ReturnType<typeof GameStat
 
     scene.add.text(panelX + s(74), panelY + s(34), 'RESOURCES', {
         fontFamily: titleFont,
-        fontSize: px(48),
-        color: '#c5cbd1',
+        fontSize: px(57),
+        color: '#fafaff',
     }).setScale(0.5, 0.5);
 
     const headerLine = scene.add.graphics();
@@ -66,7 +66,7 @@ export function drawResourceBars(scene: Scene, state: ReturnType<typeof GameStat
 
         scene.add.text(labelX, rowTop, res.key, {
             fontFamily: titleFont,
-            fontSize: px(34),
+            fontSize: px(37),
             color: '#a7aeb8',
         }).setScale(0.5, 0.5);
 
@@ -77,7 +77,7 @@ export function drawResourceBars(scene: Scene, state: ReturnType<typeof GameStat
 
         scene.add.text(percentX, rowTop + s(19), `${Math.round(res.value)}%`, {
             fontFamily: titleFont,
-            fontSize: px(42),
+            fontSize: px(46),
             color: res.accent,
         }).setScale(0.5, 0.5).setOrigin(1, 0);
     });
@@ -99,7 +99,7 @@ function drawResourceIcon(
         g.fillRect(x + s(9), y + s(1), s(4), s(4));
         scene.add.text(x + s(10), y + s(8), '2', {
             fontFamily: '"Share Tech Mono", "Courier New", monospace',
-            fontSize: px(18),
+            fontSize: px(20),
             color: '#74b8f6',
         }).setScale(0.5);
         return;

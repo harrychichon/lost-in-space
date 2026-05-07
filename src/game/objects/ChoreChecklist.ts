@@ -132,9 +132,9 @@ export function drawChoreChecklist(scene: Scene, state: ReturnType<typeof GameSt
 
     const titleText = scene.add.text(panelX + s(36), hcy, 'DAILY TASKS', {
         fontFamily: FONT,
-        fontSize:   px(20),
-        color:      allDone ? '#4a9a4a' : '#a0aabb',
-    }).setOrigin(0, 0.5);
+        fontSize:   px(42),
+        color:      allDone ? '#4a9a4a' : '#d9dbdd',
+    }).setOrigin(0, 0.5).setScale(0.5);
     container.add(titleText);
 
     // Green checkmark badge next to title when all done
@@ -177,12 +177,12 @@ export function drawChoreChecklist(scene: Scene, state: ReturnType<typeof GameSt
             const iconColor = done ? COL_ICON_D : (active ? COL_ICON_A : COL_ICON);
             chore.icon(gfx, rowX + s(24), cy, iconColor);
 
-            const labelColor = done ? '#3a5a3a' : (active ? '#c8a030' : '#99aabb');
+            const labelColor = done ? '#5a7a5a' : (active ? '#c8a030' : '#a7aeb8');
             const lbl = scene.add.text(rowX + s(48), cy, chore.label, {
                 fontFamily: FONT,
-                fontSize:   px(20),
+                fontSize:   px(25),
                 color:      labelColor,
-            }).setOrigin(0, 0.5);
+            }).setOrigin(0, 0.5).setScale(0.5);
             container.add(lbl);
 
             const circX = rowX + rowW - s(22);
