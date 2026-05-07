@@ -1,7 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, Chores } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
-import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
 import { drawDayIndicator } from '../objects/DayIndicator';
@@ -33,7 +32,6 @@ export class Ship extends Scene {
     private dogX = 0;
     private playerSpeed = 200;
     private dayComplete = false;
-    private portholeSpace!: SpaceBackground;
 
     constructor() {
         super('Ship');
@@ -106,37 +104,16 @@ export class Ship extends Scene {
                 ease: 'Sine.easeInOut',
             });
             // Subtle glow halo below each light
-            const halo = this.add.circle(lx, height * 0.22, 22, 0xffeecc, 0.08);
-            this.tweens.add({
-                targets: halo,
-                alpha: 0.03,
-                duration: Phaser.Math.Between(1800, 2600),
-                yoyo: true,
-                repeat: -1,
-                delay: i * 300,
-                ease: 'Sine.easeInOut',
-            });
-        }
-
-        // Windows — parallax space shown through circular masks, with metal ring stroke on top
-        const portholeCenters: Array<{ x: number; y: number }> = [];
-        for (let i = 0; i < 3; i++) {
-            const wx = width * 0.3 + i * (width * 0.2);
-            const wy = height * 0.32;
-            portholeCenters.push({ x: wx, y: wy });
-        }
-        // Masked space background — slow drift since we're looking out of a stationary ship
-        this.portholeSpace = new SpaceBackground(this, { bgSpeed: 2, fl1Speed: 6, fl2Speed: 12 });
-        const maskShape = this.make.graphics({ x: 0, y: 0 });
-        maskShape.fillStyle(0xffffff);
-        for (const c of portholeCenters) {
-            maskShape.fillCircle(c.x, c.y, 18);
-        }
-        this.portholeSpace.setMask(maskShape.createGeometryMask());
-        // Ring stroke on top
-        for (const c of portholeCenters) {
-            interior.lineStyle(2, 0x444444, 1);
-            interior.strokeCircle(c.x, c.y, 18);
+            // const halo = this.add.circle(lx, height * 0.22, 22, 0xffeecc, 0.08);
+            // this.tweens.add({
+            //     targets: halo,
+            //     alpha: 0.03,
+            //     duration: Phaser.Math.Between(1800, 2600),
+            //     yoyo: true,
+            //     repeat: -1,
+            //     delay: i * 300,
+            //     ease: 'Sine.easeInOut',
+            // });
         }
 
         // --- Doors ---
@@ -774,9 +751,7 @@ export class Ship extends Scene {
         }
     }
 
-    update(_time: number, delta: number) {
-        this.portholeSpace.update(delta);
-
+    update(_time: number, _delta: number) {
         if (this.dayComplete) return;
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
