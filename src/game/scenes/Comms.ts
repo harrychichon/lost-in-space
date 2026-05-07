@@ -101,6 +101,8 @@ export class Comms extends RoomScene {
                     const idx = this.interactPoints.indexOf(chorePoint);
                     if (idx !== -1) this.interactPoints.splice(idx, 1);
 
+                    this.sound.play('creepy_static', { volume: 0.5 });
+
                     if (isRescue) {
                         // Rescue event — special narrative transition
                         this.showMessage(

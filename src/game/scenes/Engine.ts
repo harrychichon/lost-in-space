@@ -101,6 +101,9 @@ export class Engine extends RoomScene {
                     GameState.completeChore(this, 'engine');
                     const idx = this.interactPoints.indexOf(chorePoint);
                     if (idx !== -1) this.interactPoints.splice(idx, 1);
+
+                    this.sound.play('beep_sequence', { volume: 0.5 });
+
                     const hasCavediver = GameState.hasCompanion(this, 'cavediver');
                     let msg: string;
                     if (state.companions === 0) {
