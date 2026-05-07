@@ -28,6 +28,7 @@ const RESOURCE_COLORS: Record<string, number> = {
     voidbloom: 0x663366,
     sweetmoss: 0x55aa77,
     starspice: 0xbbaa44,
+    oxygen_plant: 0x44bb77,
 };
 
 const ITEM_INFO: Record<string, { name: string; desc: string; resource?: ResourceType; gain?: number }> = {
@@ -64,6 +65,11 @@ const ITEM_INFO: Record<string, { name: string; desc: string; resource?: Resourc
     starspice: {
         name: 'Starspice',
         desc: 'A spiny herb. Could add flavor to food.\nNot enough oxygen-to-maintenance ratio to keep around.',
+    },
+    // Oxygen-producing plant — one per planet, collectable immediately
+    oxygen_plant: {
+        name: 'Breather Fern',
+        desc: 'This plant produces oxygen.\nWould be useful on the ship.',
     },
     // Other unique items
     exotic_flower: {
@@ -221,8 +227,11 @@ export class Planet extends Scene {
             const py = height * 0.75 - Phaser.Math.Between(5, 25);
             const colorKey = item.type === 'unique' ? (item.uniqueId ?? 'unique') : item.type;
 
-            // Exotic plants render as flower sprites rooted in the ground; other items are circles.
-            const plantSprite = item.uniqueId && EXOTIC_PLANT_SPRITES[item.uniqueId];
+            // Exotic and oxygen plants render as flower sprites rooted in the ground; others are circles.
+            const plantSprite = item.uniqueId && (
+                EXOTIC_PLANT_SPRITES[item.uniqueId] ??
+                (item.uniqueId.startsWith('oxygen_plant_') ? 'plant_basicblue' : undefined)
+            );
             let sprite: Phaser.GameObjects.Arc | Phaser.GameObjects.Image;
             if (plantSprite) {
                 sprite = this.add.image(px, height * 0.75, plantSprite, 6).setOrigin(0.5, 1);
@@ -297,7 +306,8 @@ export class Planet extends Scene {
     }
 
     private getItemInfo(item: PlanetItem) {
-        const key = item.type === 'unique' ? (item.uniqueId ?? 'unique') : item.type;
+        let key = item.type === 'unique' ? (item.uniqueId ?? 'unique') : item.type;
+        if (key.startsWith('oxygen_plant_')) key = 'oxygen_plant';
         return ITEM_INFO[key] ?? { name: 'Unknown Object', desc: 'You\'re not sure what this is.' };
     }
 
@@ -322,6 +332,9 @@ export class Planet extends Scene {
         }
         if (['voidbloom', 'sweetmoss', 'starspice'].includes(pickup.item.uniqueId ?? '')) {
             GameState.collectExoticPlant(this, pickup.item.uniqueId!);
+        }
+        if (pickup.item.uniqueId?.startsWith('oxygen_plant_')) {
+            GameState.collectOxygenPlant(this, pickup.item.uniqueId);
         }
 
         // Float-up feedback

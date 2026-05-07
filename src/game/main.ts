@@ -4,7 +4,7 @@ import { MainMenu } from "./scenes/MainMenu";
 import { DayIntro } from "./scenes/DayIntro";
 import { Ship } from "./scenes/Ship";
 import { Kitchen } from "./scenes/Kitchen";
-import { Greenhouse } from "./scenes/Greenhouse";
+import { GreenhouseModal } from "./scenes/GreenhouseModal";
 import { Engine } from "./scenes/Engine";
 import { Comms } from "./scenes/Comms";
 import { Navigation } from "./scenes/Navigation";
@@ -38,7 +38,7 @@ const config: Phaser.Types.Core.GameConfig = {
         DayIntro,
         Ship,
         Kitchen,
-        Greenhouse,
+        GreenhouseModal,
         Engine,
         Comms,
         Navigation,
