@@ -20,7 +20,7 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
     scene.add.text(x + 14, y + 12, `DAY ${state.currentDay}`, {
         fontFamily: FONT,
         fontSize: '22px',
-        color: '#d0d0d0',
+        color: '#e1e0e0',
     });
 
     // Separator line
