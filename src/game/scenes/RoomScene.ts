@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
 
 export interface InteractPoint {
     x: number;
@@ -115,6 +116,8 @@ export abstract class RoomScene extends Scene {
             fontSize: '12px',
             color: '#444444',
         }).setDepth(20);
+
+        this.add.existing(new GlobalNavBar(this));
     }
 
     /** Draw an exit door and register its interact point. */
