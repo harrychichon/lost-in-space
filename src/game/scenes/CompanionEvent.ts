@@ -15,8 +15,7 @@ export class CompanionEvent extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Grayscale (still solo at this point)
-        this.cameras.main.postFX.addColorMatrix().grayscale(1);
+        GameState.applyGrayscale(this);
 
         this.space = new SpaceBackground(this);
 
