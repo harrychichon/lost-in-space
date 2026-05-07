@@ -1,154 +1,69 @@
-# Phaser Tauri Template
+# Lost in Space
 
-This is a Phaser 3 project template that uses Tauri for bundling. It supports hot-reloading for quick development workflow, includes TypeScript support and scripts to generate production-ready builds.
+A 2D narrative game about loneliness and community, built for the **"Games That Matter"** hackathon.
 
-**[This Template is also available as a JavaScript version.](https://github.com/phaserjs/template-vite)**
+## The Concept
 
-### Versions
+You're alone on a spaceship drifting through space. Every day you wake up, do mundane chores, and go back to sleep. Life is gray, quiet, and repetitive — but easy. Eventually you find companions, and life gains color and meaning, but also real challenge.
 
-This template has been updated for:
+The game mechanics mirror the message: resources never deplete when you're alone (isolation is "easy"), but become a real management challenge once you have people to care for.
 
-- [Phaser 3.88.2](https://github.com/phaserjs/phaser)
-- [Tauri 2](https://tauri.app/)
-- [TypeScript 5.7.2](https://github.com/microsoft/TypeScript)
+## Tech Stack
 
-![screenshot](screenshot.png)
+- [Phaser 3.88](https://github.com/phaserjs/phaser) — Game framework
+- [Tauri 2](https://tauri.app/) — Desktop bundling
+- [TypeScript 5.7](https://github.com/microsoft/TypeScript)
+- [Vite 6](https://vitejs.dev/) — Build tool
 
-## Requirements
+## Getting Started
 
-[Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
-[Rust](https://www.rust-lang.org/) is required to build the Tauri app. You can install it via [rustup](https://rustup.rs/).
+### Requirements
 
-## Available Commands
+- [Node.js](https://nodejs.org) (for npm)
+- [Rust](https://www.rust-lang.org/) (for Tauri — install via [rustup](https://rustup.rs/))
 
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install project dependencies |
-| `npm run dev` | Launch a development web server |
-| `npm run build` | Create a production build in the `dist` folder |
-| `npm run dev-nolog` | Launch a development web server without sending anonymous data (see "About log.js" below) |
-| `npm run build-nolog` | Create a production build in the `dist` folder without sending anonymous data (see "About log.js" below) |
-| `npm run vite-dev` | Runs the game in a browser without Tauri |
-| `npm run vite-build` | Builds only the Vite app for web deployment |
-
-## Writing Code
-
-After cloning the repo, run `npm install` from your project directory. Then, you can start the local development server by running `npm run dev`.
-
-Once the server is running you can edit any of the files in the `src` folder. Vite will automatically recompile your code and then reload the browser.
-
-## Template Project Structure
-
-We have provided a default project structure to get you started:
-
-| Path                         | Description                                                |
-|------------------------------|------------------------------------------------------------|
-| `index.html`                 | A basic HTML page to contain the game.                     |
-| `public/assets`              | Game sprites, audio, etc. Served directly at runtime.      |
-| `public/style.css`           | Global layout styles.                                      |
-| `src/main.ts`                | Application bootstrap.                                     |
-| `src/game`                   | Folder containing the game code.                           |
-| `src/game/main.ts`           | Game entry point: configures and starts the game.          |
-| `src/game/scenes`            | Folder with all Phaser game scenes.                        |
-| `src-tauri/`                 | Tauri app source code.                                     |
-
-
-## Handling Assets
-
-Vite supports loading assets via JavaScript module `import` statements.
-
-This template provides support for both embedding assets and also loading them from a static folder. To embed an asset, you can import it at the top of the JavaScript file you are using it in:
-
-```js
-import logoImg from './assets/logo.png'
-```
-
-To load static files such as audio files, videos, etc place them into the `public/assets` folder. Then you can use this path in the Loader calls within Phaser:
-
-```js
-preload ()
-{
-    //  This is an example of an imported bundled image.
-    //  Remember to import it at the top of this file
-    this.load.image('logo', logoImg);
-
-    //  This is an example of loading a static image
-    //  from the public/assets folder:
-    this.load.image('background', 'assets/bg.png');
-}
-```
-
-When you issue the `npm run build` command, all static assets are automatically copied to the `dist/assets` folder.
-
-## Deploying to Production
-
-After you run the `npm run build` command, a production build of your app will be created in the `src-tauri/target/release/bundle` folder. This will contain a `.app` file for macOS, a `.msi` installer for Windows.
-
-## Customizing the Template
-
-### Vite
-
-If you want to customize your build, such as adding plugin (i.e. for loading CSS or fonts), you can modify the `vite.config.ts` file for cross-project changes, or you can modify and/or create new configuration files and target them in specific npm tasks inside of `package.json`. Please see the [Vite documentation](https://vitejs.dev/) for more information.
-
-## About log.js
-
-If you inspect our node scripts you will see there is a file called `log.js`. This file makes a single silent API call to a domain called `gryzor.co`. This domain is owned by Phaser Studio Inc. The domain name is a homage to one of our favorite retro games.
-
-We send the following 3 pieces of data to this API: The name of the template being used (vue, react, etc). If the build was 'dev' or 'prod' and finally the version of Phaser being used.
-
-At no point is any personal data collected or sent. We don't know about your project files, device, browser or anything else. Feel free to inspect the `log.js` file to confirm this.
-
-Why do we do this? Because being open source means we have no visible metrics about which of our templates are being used. We work hard to maintain a large and diverse set of templates for Phaser developers and this is our small anonymous way to determine if that work is actually paying off, or not. In short, it helps us ensure we're building the tools for you.
-
-However, if you don't want to send any data, you can use these commands instead:
-
-Dev:
+### Setup
 
 ```bash
-npm run dev-nolog
+npm install
 ```
 
-Build:
+### Development
 
 ```bash
-npm run build-nolog
+# Run in desktop window (Tauri)
+npm run dev
+
+# Run in browser only (faster iteration, no Rust needed)
+npm run vite-dev
 ```
 
-Or, to disable the log entirely, simply delete the file `log.js` and remove the call to it in the `scripts` section of `package.json`:
+### Build
 
-Before:
-
-```json
-"scripts": {
-    "dev": "node log.js dev & dev-template-script",
-    "build": "node log.js build & build-template-script"
-},
+```bash
+npm run build
 ```
 
-After:
+Production output goes to `src-tauri/target/release/bundle`.
 
-```json
-"scripts": {
-    "dev": "dev-template-script",
-    "build": "build-template-script"
-},
+## Project Structure
+
+```
+src/game/
+├── main.ts          # Game config, initialization, dev panel toggle
+├── scenes/          # One scene per file (11 scenes)
+├── objects/         # Custom game object classes [TO BUILD]
+└── systems/
+    └── GameState.ts # Global state (day, resources, companions, chores, planets)
+
+public/assets/       # Sprites, audio, tilemaps, UI
+src-tauri/           # Rust/Tauri backend
 ```
 
-Either of these will stop `log.js` from running. If you do decide to do this, please could you at least join our Discord and tell us which template you're using! Or send us a quick email. Either will be super-helpful, thank you.
+## For AI Collaborators
 
-## Join the Phaser Community!
+Read `CLAUDE.md` for the full project guide — game design, architecture, conventions, and implementation roadmap.
 
-We love to see what developers like you create with Phaser! It really motivates us to keep improving. So please join our community and show-off your work 😄
+## For Human Collaborators
 
-**Visit:** The [Phaser website](https://phaser.io) and follow on [Phaser Twitter](https://twitter.com/phaser_)<br />
-**Play:** Some of the amazing games [#madewithphaser](https://twitter.com/search?q=%23madewithphaser&src=typed_query&f=live)<br />
-**Learn:** [API Docs](https://newdocs.phaser.io), [Support Forum](https://phaser.discourse.group/) and [StackOverflow](https://stackoverflow.com/questions/tagged/phaser-framework)<br />
-**Discord:** Join us on [Discord](https://discord.gg/phaser)<br />
-**Code:** 2000+ [Examples](https://labs.phaser.io)<br />
-**Read:** The [Phaser World](https://phaser.io/community/newsletter) Newsletter<br />
-
-Created by [Phaser Studio](mailto:support@phaser.io). Powered by coffee, anime, pixels and love.
-
-The Phaser logo and characters are &copy; 2011 - 2025 Phaser Studio Inc.
-
-All rights reserved.
+Check `CLAUDE.md` for the current implementation status and roadmap. The "What's Next" section at the bottom tracks what needs to be built.

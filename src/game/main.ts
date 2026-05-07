@@ -1,31 +1,78 @@
-import { Boot } from './scenes/Boot';
-import { GameOver } from './scenes/GameOver';
-import { Game as MainGame } from './scenes/Game';
-import { MainMenu } from './scenes/MainMenu';
-import { AUTO, Game } from 'phaser';
-import { Preloader } from './scenes/Preloader';
+import { Boot } from "./scenes/Boot";
+import { GameOver } from "./scenes/GameOver";
+import { MainMenu } from "./scenes/MainMenu";
+import { DayIntro } from "./scenes/DayIntro";
+import { Ship } from "./scenes/Ship";
+import { Kitchen } from "./scenes/Kitchen";
+import { Greenhouse } from "./scenes/Greenhouse";
+import { Engine } from "./scenes/Engine";
+import { Comms } from "./scenes/Comms";
+import { Navigation } from "./scenes/Navigation";
+import { Planet } from "./scenes/Planet";
+import { CompanionEvent } from "./scenes/CompanionEvent";
+import { RescueEvent } from "./scenes/RescueEvent";
+import { Collection } from "./scenes/Collection";
+import { DevPanel } from "./scenes/DevPanel";
+import { AUTO, Game } from "phaser";
+import { Preloader } from "./scenes/Preloader";
 
-//  Find out more information about the Game Config at:
-//  https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const config: Phaser.Types.Core.GameConfig = {
     type: AUTO,
     width: 1024,
     height: 768,
-    parent: 'game-container',
-    backgroundColor: '#028af8',
+    parent: "game-container",
+    backgroundColor: "#000000",
+    physics: {
+        default: "arcade",
+        arcade: {
+            gravity: { x: 0, y: 0 },
+            debug: false,
+        },
+    },
     scene: [
         Boot,
         Preloader,
         MainMenu,
-        MainGame,
-        GameOver
-    ]
+        DayIntro,
+        Ship,
+        Kitchen,
+        Greenhouse,
+        Engine,
+        Comms,
+        Navigation,
+        Planet,
+        CompanionEvent,
+        RescueEvent,
+        Collection,
+        GameOver,
+        DevPanel,
+    ],
 };
 
 const StartGame = (parent: string) => {
+    const game = new Game({ ...config, parent });
 
-    return new Game({ ...config, parent });
+    // Global M toggle for dev panel — works from any scene
+    game.events.on("ready", () => {
+        window.addEventListener("keydown", (e: KeyboardEvent) => {
+            if (e.key === "m" || e.key === "M") {
+                e.preventDefault();
+                const devScene = game.scene.getScene("DevPanel");
+                if (devScene && devScene.scene.isActive()) {
+                    devScene.scene.stop();
+                } else {
+                    // Use any active scene's plugin to launch DevPanel
+                    const activeScenes = game.scene.getScenes(true);
+                    if (activeScenes.length > 0) {
+                        activeScenes[0].scene.launch("DevPanel");
+                        activeScenes[0].scene.bringToTop("DevPanel");
+                    }
+                }
+            }
+        });
+    });
 
-}
+    return game;
+};
 
 export default StartGame;
