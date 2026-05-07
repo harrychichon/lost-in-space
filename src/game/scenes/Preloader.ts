@@ -39,14 +39,26 @@ export class Preloader extends Scene {
         // Planet art (round-robin by discovery index in Navigation)
         const planetNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20];
         for (const n of planetNumbers) {
-            this.load.image(`planet${n}`, `planet${n}.png`);
+            this.load.image(`planet${n}`, `navplanets/planet${n}.png`);
         }
-        this.load.image("planet18", "planet18_0.png");
+        this.load.image("planet18", "navplanets/planet18_0.png");
 
         // Seamless parallax space background (3 layers)
         this.load.image("bg_space", "bg_space_seamless.png");
         this.load.image("bg_space_fl1", "bd_space_seamless_fl1.png");
         this.load.image("bg_space_fl2", "bg_space_seamless_fl2.png");
+
+        // Planet surface backdrops
+        this.load.image("bg_grass", "planetbgs/grass.png");
+        this.load.image("bg_rock", "planetbgs/rock.png");
+        this.load.image("bg_snow", "planetbgs/snow.png");
+
+        // Terrain tile atlas (Kenney-style XML)
+        this.load.atlasXML(
+            "tiles",
+            "tiles/spritesheet-tiles-default.png",
+            "tiles/spritesheet-tiles-default.xml",
+        );
 
         // Player spritesheet (15 frames: 3 rows × 5 cols)
         loadPlayerAssets(this);
@@ -65,6 +77,7 @@ export class Preloader extends Scene {
         createPlayerAnimations(this);
         createDogAnimations(this);
         this.textures.get("doors").setFilter(Phaser.Textures.FilterMode.NEAREST);
+        this.textures.get("tiles").setFilter(Phaser.Textures.FilterMode.NEAREST);
         this.scene.start("MainMenu");
     }
 }
