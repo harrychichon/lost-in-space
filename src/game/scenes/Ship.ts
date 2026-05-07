@@ -44,9 +44,9 @@ export class Ship extends Scene {
 
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
-            Kitchen: 0.12,
-            Greenhouse: 0.30,
-            Engine: 0.48,
+            Kitchen: 0.18,
+            Greenhouse: 0.35,
+            Engine: 0.50,
             Comms: 0.62,
             Collection: 0.74,
             Navigation: 0.84,
@@ -56,6 +56,10 @@ export class Ship extends Scene {
             : width * 0.5;
 
         this.cameras.main.setBackgroundColor(0x111111);
+
+        this.add.image(width * 0.5, height * 0.5 + 13, 'bg_main')
+            .setDisplaySize(width, height)
+            .setDepth(-100);
 
         GameState.applyGrayscale(this);
 
@@ -68,21 +72,21 @@ export class Ship extends Scene {
         const interior = this.add.graphics();
 
         // Floor
-        interior.fillStyle(0x333333, 1);
+        interior.fillStyle(0x333333, 0);
         interior.fillRect(0, height * 0.7, width, height * 0.3);
 
         // Floor detail — grating lines
-        interior.lineStyle(1, 0x3a3a3a, 0.5);
+        interior.lineStyle(1, 0x3a3a3a, 0);
         for (let lx = 0; lx < width; lx += 40) {
             interior.lineBetween(lx, height * 0.7, lx, height);
         }
 
         // Back wall
-        interior.fillStyle(0x222222, 1);
+        interior.fillStyle(0x222222, 0);
         interior.fillRect(0, height * 0.25, width, height * 0.45);
 
         // Ceiling
-        interior.fillStyle(0x1a1a1a, 1);
+        interior.fillStyle(0x1a1a1a, 0);
         interior.fillRect(0, height * 0.2, width, height * 0.05);
 
         // Ceiling lights — soft pulsing strips
@@ -139,12 +143,18 @@ export class Ship extends Scene {
         const doorY = floorY - doorH;
         const state = GameState.get(this);
 
-        // Kitchen door
-        this.createDoor(width * 0.12, doorY, doorW, doorH, 'Kitchen', 0x886644, 'kitchen', 'Kitchen');
+        // Kitchen door (interaction only; visuals hidden to match painted door in bg)
+        this.createDoor(width * 0.18, doorY, doorW, doorH, 'Kitchen', 0x886644, 'kitchen', 'Kitchen', {
+            hideVisual: true,
+            hideLabel: true,
+        });
         // Greenhouse door
-        this.createDoor(width * 0.30, doorY, doorW, doorH, 'Greenhouse', 0x447744, 'greenhouse', 'Greenhouse');
+        this.createDoor(width * 0.34, doorY, doorW, doorH, 'Greenhouse', 0x447744, 'greenhouse', 'Greenhouse', {
+            hideVisual: true,
+            hideLabel: true,
+        });
         // Engine door
-        this.createDoor(width * 0.48, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine');
+        this.createDoor(width * 0.50, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine');
         // Comms door
         this.createDoor(width * 0.62, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms');
 
@@ -264,15 +274,30 @@ export class Ship extends Scene {
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
 
-    private createDoor(x: number, y: number, _w: number, h: number, name: string, _color: number, choreKey: keyof Chores, sceneName: string) {
+    private createDoor(
+        x: number,
+        y: number,
+        _w: number,
+        h: number,
+        name: string,
+        _color: number,
+        choreKey: keyof Chores,
+        sceneName: string,
+        options?: { hideVisual?: boolean; hideLabel?: boolean },
+    ) {
         const state = GameState.get(this);
         const done = state.chores[choreKey];
+        const hideVisual = options?.hideVisual ?? false;
+        const hideLabel = options?.hideLabel ?? false;
 
         // Metal door sprite at 2× scale (48×64), anchored at bottom
         const floorY = y + h;
         const icon = this.add.image(x, floorY, 'doors', 13).setOrigin(0.5, 1).setScale(2);
         if (done) {
             icon.setTint(0x555555);
+        }
+        if (hideVisual) {
+            icon.setVisible(false);
         }
 
         // Label above door
@@ -281,9 +306,12 @@ export class Ship extends Scene {
             fontSize: '13px',
             color: done ? '#444444' : '#999999',
         }).setOrigin(0.5);
+        if (hideLabel) {
+            label.setVisible(false);
+        }
 
         // Checkmark if done
-        if (done) {
+        if (done && !hideVisual) {
             this.add.text(x, y + h / 2, '✓', {
                 fontFamily: 'Arial',
                 fontSize: '22px',
