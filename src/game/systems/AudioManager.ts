@@ -1,33 +1,48 @@
 import { Scene } from 'phaser';
 
-export type MusicTier = 0 | 1 | 2 | 3;
 export type LocationKey = 'ship' | 'room' | 'planet' | 'cave' | 'navigation';
+export type MoodKey = 'very_sad' | 'sad' | 'neutral' | 'happy' | 'very_happy';
+export type EventKey = 'companion_found' | 'rescue' | 'cavediver' | 'alarm';
 
 export interface AudioCtx {
-    tier: MusicTier;
+    warmth: number;       // 0-1: drives mood tier + tension
     location: LocationKey;
-    wellbeing: number;
     biome?: string;
 }
 
-// Tier defaults for the music layer. Swap a key for the real asset once it exists.
-const MUSIC_TIER_DEFAULT: Record<MusicTier, string> = {
-    0: 'music_solo',
-    1: 'music_dog',
-    2: 'music_botanist',
-    3: 'music_crew',
+// Warmth thresholds mapping to mood folders
+const WARMTH_BRACKETS: Array<{ max: number; mood: MoodKey }> = [
+    { max: 0.20, mood: 'very_sad'  },
+    { max: 0.40, mood: 'sad'       },
+    { max: 0.60, mood: 'neutral'   },
+    { max: 0.80, mood: 'happy'     },
+    { max: 1.01, mood: 'very_happy'},
+];
+
+// Low + medium intensity tracks per mood — default gameplay pool.
+// Moods without their own low/medium tracks fall back to the nearest available mood.
+const MOOD_TRACKS: Record<MoodKey, string[]> = {
+    very_sad:  ['music_sad_low_1', 'music_sad_low_2', 'music_sad_low_3', 'music_sad_medium'],
+    sad:       ['music_sad_low_1', 'music_sad_low_2', 'music_sad_low_3', 'music_sad_medium'],
+    neutral:   ['music_neutral_low', 'music_neutral_medium_1', 'music_neutral_medium_2'],
+    happy:     ['music_neutral_medium_1', 'music_neutral_medium_2'],
+    very_happy:['music_neutral_medium_1', 'music_neutral_medium_2'],
 };
 
-// Sparse overrides: MUSIC_MAP[tier][location] beats the tier default.
-// Example: 1: { planet: 'music_solo' }  — planet feels lonelier at tier 1.
-const MUSIC_MAP: Partial<Record<MusicTier, Partial<Record<LocationKey, string>>>> = {};
+// High-intensity event tracks played during companion/discovery moments
+const EVENT_TRACKS: Record<EventKey, string> = {
+    companion_found: 'music_event_happy_1',
+    rescue:          'music_event_happy_2',
+    cavediver:       'music_event_happy_1',
+    alarm:           'music_event_verysad',
+};
 
-// Environment sounds by location (independent of tier).
+// Environment sounds by location (independent of mood)
 const ENV_MAP: Record<LocationKey, string | null> = {
     ship:       'env_ship',
     room:       'env_room',
     navigation: 'env_ship',
-    planet:     null,        // resolved per biome below
+    planet:     null,   // resolved per biome below
     cave:       'env_cave',
 };
 
@@ -42,22 +57,11 @@ const MUSIC_VOLUME = 0.4;
 const ENV_VOLUME   = 0.2;
 const FADE_MS      = 1200;
 
-// Tension layer (spooky_wind) fades in when wellbeing drops below threshold.
-const TENSION_CONFIG: Record<MusicTier, { threshold: number | null; maxVolume: number }> = {
-    0: { threshold: 0.45, maxVolume: 0.25 },
-    1: { threshold: 0.35, maxVolume: 0.18 },
-    2: { threshold: 0.35, maxVolume: 0.12 },
-    3: { threshold: null,  maxVolume: 0    },
-};
+// Tension (spooky_wind) fades in when warmth drops below this level.
+// Intensity scales linearly from 0 at threshold to max at warmth=0.
+const TENSION_THRESHOLD  = 0.40;
+const TENSION_MAX_VOLUME = 0.25;
 
-/**
- * Global audio controller. Three independent layers: music, environment, tension.
- * Phaser's sound system is game-scoped, so all state survives scene transitions.
- *
- * To add a new music track: load it in Preloader, add the key to MUSIC_TIER_DEFAULT
- * (or MUSIC_MAP for a tier×location override). No call sites change.
- * To add environment sounds: load in Preloader, the silent no-op will become active.
- */
 export class AudioManager {
     private static musicKey: string | null = null;
     private static musicSound: Phaser.Sound.BaseSound | null = null;
@@ -65,32 +69,89 @@ export class AudioManager {
     private static envSound: Phaser.Sound.BaseSound | null = null;
     private static tensionActive = false;
     private static tensionSound: Phaser.Sound.BaseSound | null = null;
+    private static eventActive = false;
+    private static currentEventKey: EventKey | null = null;
 
-    /** Main call: scenes declare their context and AudioManager handles the rest. */
+    static getCurrentMusicKey(): string | null { return AudioManager.musicKey; }
+    static isEventActive(): boolean { return AudioManager.eventActive; }
+    static getCurrentEventKey(): EventKey | null { return AudioManager.currentEventKey; }
+    static getMoodName(warmth: number): MoodKey { return AudioManager.moodFromWarmth(warmth); }
+
+    /** Main call: scenes declare their audio context, AudioManager handles the rest. */
     static update(scene: Scene, ctx: AudioCtx): void {
-        const musicKey = AudioManager.resolveMusic(scene, ctx.tier, ctx.location);
+        if (AudioManager.eventActive) return;
+        const musicKey = AudioManager.resolveMusic(scene, ctx.warmth);
         const envKey   = AudioManager.resolveEnv(ctx.location, ctx.biome);
         AudioManager.updateMusic(scene, musicKey);
         AudioManager.updateEnv(scene, envKey);
-        AudioManager.updateTension(scene, ctx.tier, ctx.wellbeing);
+        AudioManager.updateTension(scene, ctx.warmth);
     }
 
-    /** Fade out all layers. Use for cutscenes that want silence. */
-    static stop(scene: Scene): void {
+    /**
+     * Play a high-intensity event track, pausing the normal music layer.
+     * Call once from the event scene's create(). AudioManager.stop() or the next
+     * update() call (when entering a regular scene) will clear the event state.
+     */
+    static playEvent(scene: Scene, event: EventKey): void {
+        const key = EVENT_TRACKS[event];
+        if (!scene.cache.audio.has(key)) return;
         AudioManager.fadeOut(scene, AudioManager.musicSound);
         AudioManager.musicSound = null;
         AudioManager.musicKey   = null;
+        AudioManager.fadeOutTension(scene);
+        const sound = scene.sound.add(key, { loop: true, volume: 0 });
+        sound.play();
+        scene.tweens.add({ targets: sound, volume: MUSIC_VOLUME, duration: FADE_MS, ease: 'Sine.easeOut' });
+        AudioManager.musicKey        = key;
+        AudioManager.musicSound      = sound;
+        AudioManager.eventActive     = true;
+        AudioManager.currentEventKey = event;
+    }
+
+    /** Fade out all layers. Use for cutscenes that want silence, or to clear event state. */
+    static stop(scene: Scene): void {
+        AudioManager.fadeOut(scene, AudioManager.musicSound);
+        AudioManager.musicSound      = null;
+        AudioManager.musicKey        = null;
+        AudioManager.eventActive     = false;
+        AudioManager.currentEventKey = null;
         AudioManager.fadeOut(scene, AudioManager.envSound);
         AudioManager.envSound = null;
         AudioManager.envKey   = null;
         AudioManager.fadeOutTension(scene);
     }
 
-    private static resolveMusic(scene: Scene, tier: MusicTier, location: LocationKey): string | null {
-        const key = MUSIC_MAP[tier]?.[location] ?? MUSIC_TIER_DEFAULT[tier];
-        if (scene.cache.audio.has(key)) return key;
-        // Asset not loaded yet — fall back to music_solo
-        return scene.cache.audio.has('music_solo') ? 'music_solo' : null;
+    /**
+     * Clear event state so the next update() call resumes normal music.
+     * musicSound is intentionally kept so updateMusic() can fade it out gracefully.
+     */
+    static clearEvent(): void {
+        AudioManager.eventActive     = false;
+        AudioManager.currentEventKey = null;
+        AudioManager.musicKey        = null; // force re-resolve; updateMusic fades old sound
+    }
+
+    private static moodFromWarmth(warmth: number): MoodKey {
+        for (const bracket of WARMTH_BRACKETS) {
+            if (warmth < bracket.max) return bracket.mood;
+        }
+        return 'very_happy';
+    }
+
+    private static resolveMusic(scene: Scene, warmth: number): string | null {
+        const mood   = AudioManager.moodFromWarmth(warmth);
+        const pool   = MOOD_TRACKS[mood];
+        const loaded = pool.filter(k => scene.cache.audio.has(k));
+        if (loaded.length === 0) return null;
+        // If current track is in the pool, keep it (avoid mid-gameplay skips)
+        if (AudioManager.musicKey && loaded.includes(AudioManager.musicKey)) {
+            return AudioManager.musicKey;
+        }
+        // Pick a random track from the pool (avoid repeating the last one if possible)
+        const choices = loaded.filter(k => k !== AudioManager.musicKey);
+        return choices.length > 0
+            ? choices[Math.floor(Math.random() * choices.length)]
+            : loaded[0];
     }
 
     private static resolveEnv(location: LocationKey, biome?: string): string | null {
@@ -126,15 +187,10 @@ export class AudioManager {
         AudioManager.envSound = sound;
     }
 
-    private static updateTension(scene: Scene, tier: MusicTier, wellbeing: number): void {
-        const config = TENSION_CONFIG[tier];
-        if (config.threshold === null) {
-            AudioManager.fadeOutTension(scene);
-            return;
-        }
-        if (wellbeing <= config.threshold) {
-            const intensity  = (config.threshold - wellbeing) / config.threshold;
-            const targetVol  = config.maxVolume * intensity;
+    private static updateTension(scene: Scene, warmth: number): void {
+        if (warmth < TENSION_THRESHOLD) {
+            const intensity = (TENSION_THRESHOLD - warmth) / TENSION_THRESHOLD;
+            const targetVol = TENSION_MAX_VOLUME * intensity;
             if (AudioManager.tensionActive && AudioManager.tensionSound) {
                 scene.tweens.add({ targets: AudioManager.tensionSound, volume: targetVol, duration: FADE_MS, ease: 'Sine.easeOut' });
             } else {
