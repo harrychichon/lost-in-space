@@ -317,7 +317,8 @@ export class DevPanel extends Scene {
             this.scene.launch(active);
             this.scene.bringToTop("DevPanel");
         }
-        this.refreshState();
+        // Delay so the restarted scene's create() has run and AudioManager state is fresh
+        this.time.delayedCall(150, () => this.refreshState());
     }
 
     private goToScene(key: string): void {

@@ -65,6 +65,7 @@ const TENSION_MAX_VOLUME = 0.25;
 export class AudioManager {
     private static musicKey: string | null = null;
     private static musicSound: Phaser.Sound.BaseSound | null = null;
+    private static currentMood: MoodKey | null = null;
     private static envKey: string | null = null;
     private static envSound: Phaser.Sound.BaseSound | null = null;
     private static tensionActive = false;
@@ -80,8 +81,10 @@ export class AudioManager {
     /** Main call: scenes declare their audio context, AudioManager handles the rest. */
     static update(scene: Scene, ctx: AudioCtx): void {
         if (AudioManager.eventActive) return;
-        const musicKey = AudioManager.resolveMusic(scene, ctx.warmth);
+        const mood     = AudioManager.moodFromWarmth(ctx.warmth);
+        const musicKey = AudioManager.resolveMusic(scene, mood);
         const envKey   = AudioManager.resolveEnv(ctx.location, ctx.biome);
+        AudioManager.currentMood = mood;
         AudioManager.updateMusic(scene, musicKey);
         AudioManager.updateEnv(scene, envKey);
         AudioManager.updateTension(scene, ctx.warmth);
@@ -113,6 +116,7 @@ export class AudioManager {
         AudioManager.fadeOut(scene, AudioManager.musicSound);
         AudioManager.musicSound      = null;
         AudioManager.musicKey        = null;
+        AudioManager.currentMood     = null;
         AudioManager.eventActive     = false;
         AudioManager.currentEventKey = null;
         AudioManager.fadeOut(scene, AudioManager.envSound);
@@ -129,6 +133,7 @@ export class AudioManager {
         AudioManager.eventActive     = false;
         AudioManager.currentEventKey = null;
         AudioManager.musicKey        = null; // force re-resolve; updateMusic fades old sound
+        AudioManager.currentMood     = null; // force fresh track pick on resume
     }
 
     private static moodFromWarmth(warmth: number): MoodKey {
@@ -138,16 +143,15 @@ export class AudioManager {
         return 'very_happy';
     }
 
-    private static resolveMusic(scene: Scene, warmth: number): string | null {
-        const mood   = AudioManager.moodFromWarmth(warmth);
+    private static resolveMusic(scene: Scene, mood: MoodKey): string | null {
         const pool   = MOOD_TRACKS[mood];
         const loaded = pool.filter(k => scene.cache.audio.has(k));
         if (loaded.length === 0) return null;
-        // If current track is in the pool, keep it (avoid mid-gameplay skips)
-        if (AudioManager.musicKey && loaded.includes(AudioManager.musicKey)) {
+        // Only keep the current track if the mood hasn't changed — when mood changes,
+        // always pick from the new pool so the track matches the displayed mood.
+        if (mood === AudioManager.currentMood && AudioManager.musicKey && loaded.includes(AudioManager.musicKey)) {
             return AudioManager.musicKey;
         }
-        // Pick a random track from the pool (avoid repeating the last one if possible)
         const choices = loaded.filter(k => k !== AudioManager.musicKey);
         return choices.length > 0
             ? choices[Math.floor(Math.random() * choices.length)]
