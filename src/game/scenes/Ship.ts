@@ -142,7 +142,9 @@ export class Ship extends Scene {
 
             // Dog prompt (separate from door prompt)
             let dogMsg: string;
-            if (collectedToys.length === 0) {
+            if (GameState.isRescueEventReady(this)) {
+                dogMsg = 'The dog is staring at the comms room, ears pricked.\nIt lets out a low, uncertain bark.';
+            } else if (collectedToys.length === 0) {
                 dogMsg = 'The dog wags its tail as you pass by, but looks understimulated.\nMaybe there was something on that first planet...';
             } else if (collectedToys.length === 1) {
                 dogMsg = 'The dog has a toy to play with, but still looks around for more.';
