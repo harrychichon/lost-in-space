@@ -4,6 +4,7 @@ import { AudioManager } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
+import { drawDayIndicator } from '../objects/DayIndicator';
 
 interface Door {
     x: number;
@@ -254,11 +255,7 @@ export class Ship extends Scene {
         }
 
         // --- HUD ---
-        this.add.text(16, 16, `Day ${state.currentDay}`, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '18px',
-            color: '#888888',
-        });
+        drawDayIndicator(this, state);
 
         // Resource bars
         this.drawResourceBars(state);
