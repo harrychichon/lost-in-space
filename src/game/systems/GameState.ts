@@ -51,7 +51,7 @@ export interface GameStateData {
     collectedExoticPlants: string[]; // uniqueIds of collected exotic plants
     collectedCaveItems: string[]; // uniqueIds of collected cave items
     caveUnlocked: boolean; // true once cavediver joins
-    moodOverride: number | null; // null = auto-calculate, 0-1 = DevPanel override
+    wellbeingOverride: number | null; // null = auto-calculate, 0-1 = DevPanel override
 }
 
 const EXOTIC_PLANT_IDS = ["voidbloom", "sweetmoss", "starspice"];
@@ -106,7 +106,7 @@ const DEFAULT_STATE: GameStateData = {
     collectedExoticPlants: [],
     collectedCaveItems: [],
     caveUnlocked: false,
-    moodOverride: null,
+    wellbeingOverride: null,
 };
 
 const REGISTRY_KEY = "gameState";
@@ -127,7 +127,7 @@ export class GameState {
             collectedExoticPlants: [],
             collectedCaveItems: [],
             caveUnlocked: false,
-            moodOverride: null,
+            wellbeingOverride: null,
         });
     }
 
@@ -252,29 +252,29 @@ export class GameState {
         return resourceScore * 0.75 + choreScore * 0.25;
     }
 
-    // Returns the mood modifier used for audio and saturation fine-tuning.
+    // Returns the wellbeing value used for audio and warmth fine-tuning.
     // Respects DevPanel override when set; otherwise auto-calculates from resources/chores.
-    static getMoodModifier(scene: Phaser.Scene): number {
+    static getWellbeing(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
-        return state.moodOverride !== null ? state.moodOverride : GameState.getSecondaryScale(scene);
+        return state.wellbeingOverride !== null ? state.wellbeingOverride : GameState.getSecondaryScale(scene);
     }
 
-    // Base saturation from companion tier, nudged ±0.15 by mood modifier.
+    // Base warmth from companion tier, nudged ±0.15 by wellbeing.
     // Max nudge is 50% of one companion step — visible but can never cross a tier boundary.
     static getSaturation(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
         const base = Math.min(1, state.companions * 0.3);
-        const mood = GameState.getMoodModifier(scene);
-        const nudge = (mood - 0.5) * 0.3;
+        const wellbeing = GameState.getWellbeing(scene);
+        const nudge = (wellbeing - 0.5) * 0.3;
         return Math.max(0, Math.min(1, base + nudge));
     }
 
     // Apply grayscale by setting a CSS filter on the canvas element.
     // Works in both WebGL and Canvas renderer modes.
     static applyGrayscale(scene: Phaser.Scene): void {
-        const saturation = GameState.getSaturation(scene);
-        scene.game.canvas.style.filter = `grayscale(${((1 - saturation) * 100).toFixed(1)}%)`;
-        console.log(`[mood] ${scene.scene.key} companions=${GameState.get(scene).companions} sat=${saturation.toFixed(3)}`);
+        const warmth = GameState.getSaturation(scene);
+        scene.game.canvas.style.filter = `grayscale(${((1 - warmth) * 100).toFixed(1)}%)`;
+        console.log(`[warmth] ${scene.scene.key} companions=${GameState.get(scene).companions} warmth=${warmth.toFixed(3)}`);
     }
 
     // --- Companion methods ---

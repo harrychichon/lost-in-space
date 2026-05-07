@@ -5,11 +5,11 @@ import { GameState } from "../systems/GameState";
  * Dev panel overlay — toggled with M from any scene.
  * Runs as a parallel scene on top of the active gameplay scene.
  */
-const MOOD_PRESETS: (number | null)[] = [null, 0.0, 0.25, 0.5, 0.75, 1.0];
+const WELLBEING_PRESETS: (number | null)[] = [null, 0.0, 0.25, 0.5, 0.75, 1.0];
 
 export class DevPanel extends Scene {
     private texts: Phaser.GameObjects.Text[] = [];
-    private moodBtn!: Phaser.GameObjects.Text;
+    private wellbeingBtn!: Phaser.GameObjects.Text;
 
     constructor() {
         super("DevPanel");
@@ -125,8 +125,8 @@ export class DevPanel extends Scene {
         });
         y += gap;
 
-        this.moodBtn = this.addButton(16, y, this.getMoodLabel(), () => {
-            this.cycleMoodOverride();
+        this.wellbeingBtn = this.addButton(16, y, this.getWellbeingLabel(), () => {
+            this.cycleWellbeingOverride();
         });
 
         // Keyboard shortcuts
@@ -202,7 +202,7 @@ export class DevPanel extends Scene {
             this.refreshState();
         });
         this.input.keyboard!.on("keydown-T", () => {
-            this.cycleMoodOverride();
+            this.cycleWellbeingOverride();
         });
 
         this.refreshState();
@@ -250,13 +250,13 @@ export class DevPanel extends Scene {
             }
             const r = state.resources;
             const c = state.chores;
-            const moodVal = GameState.getMoodModifier(this);
-            const moodTag = state.moodOverride !== null ? " (override)" : "";
+            const wellbeingVal = GameState.getWellbeing(this);
+            const wellbeingTag = state.wellbeingOverride !== null ? " (override)" : "";
             const lines = [
                 `Day: ${state.currentDay}`,
                 `Companions: ${state.companions}`,
-                `Saturation: ${GameState.getSaturation(this).toFixed(2)}`,
-                `Mood modifier: ${moodVal.toFixed(2)}${moodTag}`,
+                `Warmth: ${GameState.getSaturation(this).toFixed(2)}`,
+                `Wellbeing: ${wellbeingVal.toFixed(2)}${wellbeingTag}`,
                 ``,
                 `O2: ${r.oxygen}  Food: ${r.food}`,
                 `Fuel: ${r.fuel}  Parts: ${r.parts}`,
@@ -269,31 +269,31 @@ export class DevPanel extends Scene {
                 }),
             ];
             this.texts[1].setText(lines.join("\n"));
-            if (this.moodBtn) this.moodBtn.setText(this.getMoodLabel());
+            if (this.wellbeingBtn) this.wellbeingBtn.setText(this.getWellbeingLabel());
         } catch {
             this.texts[1].setText("No game state (start a game first)");
         }
     }
 
-    private getMoodLabel(): string {
+    private getWellbeingLabel(): string {
         try {
             const state = GameState.get(this);
-            if (!state) return "[T] Mood: AUTO";
-            return state.moodOverride !== null
-                ? `[T] Mood: ${state.moodOverride.toFixed(2)} (override)`
-                : "[T] Mood: AUTO";
+            if (!state) return "[T] Wellbeing: AUTO";
+            return state.wellbeingOverride !== null
+                ? `[T] Wellbeing: ${state.wellbeingOverride.toFixed(2)} (override)`
+                : "[T] Wellbeing: AUTO";
         } catch {
-            return "[T] Mood: AUTO";
+            return "[T] Wellbeing: AUTO";
         }
     }
 
-    private cycleMoodOverride(): void {
+    private cycleWellbeingOverride(): void {
         try {
             const state = GameState.get(this);
-            const current = state?.moodOverride ?? null;
-            const idx = MOOD_PRESETS.findIndex((v) => v === current);
-            const next = MOOD_PRESETS[(idx + 1) % MOOD_PRESETS.length];
-            GameState.update(this, { moodOverride: next });
+            const current = state?.wellbeingOverride ?? null;
+            const idx = WELLBEING_PRESETS.findIndex((v) => v === current);
+            const next = WELLBEING_PRESETS[(idx + 1) % WELLBEING_PRESETS.length];
+            GameState.update(this, { wellbeingOverride: next });
         } catch {
             // no state yet
         }

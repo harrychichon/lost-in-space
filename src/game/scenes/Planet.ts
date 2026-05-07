@@ -136,7 +136,7 @@ export class Planet extends Scene {
         AudioManager.update(this, {
             tier: Math.min(3, GameState.get(this).companions) as MusicTier,
             location: 'planet',
-            moodModifier: GameState.getMoodModifier(this),
+            wellbeing: GameState.getWellbeing(this),
             biome: planet.biome,
         });
 
