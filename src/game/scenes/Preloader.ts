@@ -27,13 +27,25 @@ export class Preloader extends Scene {
         this.load.setPath("assets");
 
         this.load.image("logo", "logo.png");
+
+        // Audio tracks
+        this.load.audio("low_ambient", "audio/freesound_community-low-ambient-01-61547.mp3");
+        this.load.audio("spooky_wind", "audio/dragon-studio-spooky-wind-429221.mp3");
+
+        // Planet art (round-robin by discovery index in Navigation)
+        const planetNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20];
+        for (const n of planetNumbers) {
+            this.load.image(`planet${n}`, `planet${n}.png`);
+        }
+        this.load.image("planet18", "planet18_0.png");
+
+        // Seamless parallax space background (3 layers)
+        this.load.image("bg_space", "bg_space_seamless.png");
+        this.load.image("bg_space_fl1", "bd_space_seamless_fl1.png");
+        this.load.image("bg_space_fl2", "bg_space_seamless_fl2.png");
     }
 
     create() {
-        //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
-        //  For example, you can define global animations here, so we can use them in other scenes.
-
-        //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
         this.scene.start("MainMenu");
     }
 }

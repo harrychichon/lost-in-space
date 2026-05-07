@@ -1,5 +1,7 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData, PlanetItem, ResourceType } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 interface PickupSprite {
     sprite: Phaser.GameObjects.Arc;
@@ -96,6 +98,7 @@ export class Planet extends Scene {
     private caveY = 0;
     private caveRadius = 55;
     private nearCave = false;
+    private space!: SpaceBackground;
 
     constructor() {
         super('Planet');
@@ -106,6 +109,8 @@ export class Planet extends Scene {
         this.planetId = data.planetId;
         this.pickups = [];
         this.currentPickup = null;
+
+        AudioManager.play(this, 'spooky_wind');
 
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
@@ -124,20 +129,8 @@ export class Planet extends Scene {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
         }
 
-        // --- Starfield first (behind everything) ---
-        const stars = this.add.graphics();
-        for (let i = 0; i < 200; i++) {
-            const x = Phaser.Math.Between(0, width);
-            const y = Phaser.Math.Between(0, height);
-            const brightness = Phaser.Math.FloatBetween(0.3, 1);
-            const size = Phaser.Math.FloatBetween(0.5, 2);
-            stars.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness)
-            ), 1);
-            stars.fillCircle(x, y, size);
-        }
+        // Parallax space sky (behind terrain). Slow drift — we're standing on the surface, not flying.
+        this.space = new SpaceBackground(this, { bgSpeed: 1, fl1Speed: 3, fl2Speed: 7 });
 
         // --- Draw planet surface (on top of stars) ---
         const ground = this.add.graphics();
@@ -379,7 +372,8 @@ export class Planet extends Scene {
         this.currentPickup = null;
     }
 
-    update() {
+    update(_time: number, delta: number) {
+        this.space.update(delta);
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 

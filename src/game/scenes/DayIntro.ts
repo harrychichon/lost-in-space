@@ -1,7 +1,10 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class DayIntro extends Scene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('DayIntro');
     }
@@ -12,23 +15,9 @@ export class DayIntro extends Scene {
         const isCompanionEvent = GameState.isCompanionEventDay(this);
         const isDiscoveryDay = GameState.isPlanetDiscoveryDay(this) && !isCompanionEvent;
 
-        // Black background
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Procedural starfield
-        const gfx = this.add.graphics();
-        for (let i = 0; i < 200; i++) {
-            const x = Phaser.Math.Between(0, width);
-            const y = Phaser.Math.Between(0, height);
-            const brightness = Phaser.Math.FloatBetween(0.3, 1);
-            const size = Phaser.Math.FloatBetween(0.5, 2);
-            gfx.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness)
-            ), 1);
-            gfx.fillCircle(x, y, size);
-        }
+        this.space = new SpaceBackground(this);
 
         // Small spaceship shape
         const ship = this.add.graphics();
@@ -113,5 +102,9 @@ export class DayIntro extends Scene {
                 this.scene.start('Ship');
             }
         });
+    }
+
+    update(_time: number, delta: number) {
+        this.space.update(delta);
     }
 }

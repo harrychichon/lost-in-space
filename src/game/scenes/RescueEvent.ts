@@ -1,7 +1,10 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class RescueEvent extends Scene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('RescueEvent');
     }
@@ -15,19 +18,7 @@ export class RescueEvent extends Scene {
         const saturation = GameState.getSaturation(this);
         this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
 
-        // Starfield
-        const gfx = this.add.graphics();
-        for (let i = 0; i < 200; i++) {
-            const x = Phaser.Math.Between(0, width);
-            const y = Phaser.Math.Between(0, height);
-            const brightness = Phaser.Math.FloatBetween(0.3, 1);
-            gfx.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness)
-            ), 1);
-            gfx.fillCircle(x, y, Phaser.Math.FloatBetween(0.5, 2));
-        }
+        this.space = new SpaceBackground(this);
 
         // Drifting escape pod
         const pod = this.add.graphics();
@@ -142,5 +133,9 @@ export class RescueEvent extends Scene {
         };
 
         this.time.delayedCall(1000, showNextLine);
+    }
+
+    update(_time: number, delta: number) {
+        this.space.update(delta);
     }
 }

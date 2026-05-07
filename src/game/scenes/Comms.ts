@@ -1,7 +1,10 @@
 import { GameState } from '../systems/GameState';
 import { RoomScene, InteractPoint } from './RoomScene';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class Comms extends RoomScene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('Comms');
     }
@@ -27,26 +30,24 @@ export class Comms extends RoomScene {
         gfx.fillRect(this.rx(0.27), height * 0.55 + 15, 8, 50);
         gfx.fillRect(this.rx(0.73), height * 0.55 + 15, 8, 50);
 
-        // Main screen
-        gfx.fillStyle(0x111118, 1);
-        gfx.fillRect(this.rx(0.3), height * 0.3, this.roomWidth * 0.4, height * 0.22);
-        gfx.lineStyle(2, 0x444455, 0.6);
-        gfx.strokeRect(this.rx(0.3), height * 0.3, this.roomWidth * 0.4, height * 0.22);
-
-        // Static/noise on screen
-        const screenLeft = this.rx(0.31);
-        const screenWidth = this.roomWidth * 0.38;
-        for (let i = 0; i < 60; i++) {
-            const sx = screenLeft + Math.random() * screenWidth;
-            const sy = height * 0.31 + Math.random() * (height * 0.2);
-            const bright = Math.random() * 0.2;
-            gfx.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * bright),
-                Math.floor(255 * bright),
-                Math.floor(255 * bright + 20)
-            ), 1);
-            gfx.fillRect(sx, sy, 2, 2);
+        // Main screen — parallax space feed (a live transmission from outside)
+        const screenX = this.rx(0.3);
+        const screenY = height * 0.3;
+        const screenW = this.roomWidth * 0.4;
+        const screenH = height * 0.22;
+        this.space = new SpaceBackground(this, {
+            x: screenX, y: screenY, width: screenW, height: screenH,
+            bgSpeed: 2, fl1Speed: 5, fl2Speed: 11,
+        });
+        // Faint horizontal scan lines to keep the "screen" feel
+        const scan = this.add.graphics();
+        scan.lineStyle(1, 0x88aaff, 0.05);
+        for (let y = screenY; y < screenY + screenH; y += 3) {
+            scan.lineBetween(screenX, y, screenX + screenW, y);
         }
+        // Screen frame on top
+        gfx.lineStyle(2, 0x444455, 0.6);
+        gfx.strokeRect(screenX, screenY, screenW, screenH);
 
         // Indicator lights on desk
         const lightColors = [0x335533, 0x553333, 0x333355, 0x335533];
@@ -134,7 +135,8 @@ export class Comms extends RoomScene {
         this.setupPlayerAndUI();
     }
 
-    update() {
+    update(_time: number, delta: number) {
+        this.space.update(delta);
         this.updateRoom();
     }
 }

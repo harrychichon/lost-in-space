@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
 
 export interface InteractPoint {
     x: number;
@@ -49,6 +50,13 @@ export abstract class RoomScene extends Scene {
         const saturation = GameState.getSaturation(this);
         if (saturation < 1) {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
+        }
+
+        // Ambient music: low ambient while alone on the ship
+        if (GameState.get(this).companions === 0) {
+            AudioManager.play(this, 'low_ambient');
+        } else {
+            AudioManager.stop(this);
         }
 
         // Input

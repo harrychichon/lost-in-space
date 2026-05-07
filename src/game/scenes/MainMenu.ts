@@ -1,7 +1,10 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class MainMenu extends Scene {
+    private space!: SpaceBackground;
+
     constructor() {
         super('MainMenu');
     }
@@ -11,19 +14,7 @@ export class MainMenu extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Starfield background
-        const gfx = this.add.graphics();
-        for (let i = 0; i < 150; i++) {
-            const x = Phaser.Math.Between(0, width);
-            const y = Phaser.Math.Between(0, height);
-            const brightness = Phaser.Math.FloatBetween(0.2, 0.8);
-            gfx.fillStyle(Phaser.Display.Color.GetColor(
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness),
-                Math.floor(255 * brightness)
-            ), 1);
-            gfx.fillCircle(x, y, Phaser.Math.FloatBetween(0.5, 1.5));
-        }
+        this.space = new SpaceBackground(this);
 
         // Title
         const title = this.add.text(width * 0.5, height * 0.35, 'Lost in Space', {
@@ -76,5 +67,9 @@ export class MainMenu extends Scene {
             GameState.init(this);
             this.scene.start('DayIntro');
         });
+    }
+
+    update(_time: number, delta: number) {
+        this.space.update(delta);
     }
 }
