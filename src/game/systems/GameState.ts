@@ -508,15 +508,17 @@ export class GameState {
             });
         }
 
-        // Each planet has one oxygen-producing plant (collectable immediately, no companion needed)
-        const planetIndex = state.planets.length + 1;
-        items.push({
-            type: "unique",
-            uniqueId: `oxygen_plant_${planetIndex}`,
-            x: 0.1 + Math.random() * 0.6,
-            collected: false,
-            locked: false,
-        });
+        // Lush planets have one oxygen-producing plant (collectable immediately, no companion needed)
+        if (biome === "lush") {
+            const planetIndex = state.planets.length + 1;
+            items.push({
+                type: "unique",
+                uniqueId: `oxygen_plant_${planetIndex}`,
+                x: 0.1 + Math.random() * 0.6,
+                collected: false,
+                locked: false,
+            });
+        }
 
         // --- Cave items ---
         const numCaveResources = 3 + Math.floor(Math.random() * 3);
