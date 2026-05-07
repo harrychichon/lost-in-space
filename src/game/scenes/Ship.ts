@@ -149,10 +149,18 @@ export class Ship extends Scene {
             hideVisual: true,
             hideLabel: true,
         });
-        // Greenhouse door
+        // Greenhouse door — opens in-place modal instead of a room scene
         this.createDoor(width * 0.34, doorY, doorW, doorH, 'Greenhouse', 0x447744, 'greenhouse', 'Greenhouse', {
             hideVisual: true,
             hideLabel: true,
+            customAction: () => {
+                if (GameState.get(this).chores.greenhouse) {
+                    this.showMessage('The plants are already tended for today.');
+                    return;
+                }
+                this.scene.launch('GreenhouseModal');
+                this.scene.pause('Ship');
+            },
         });
         // Engine door
         this.createDoor(width * 0.46, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine',{
@@ -286,7 +294,7 @@ export class Ship extends Scene {
         _color: number,
         choreKey: keyof Chores,
         sceneName: string,
-        options?: { hideVisual?: boolean; hideLabel?: boolean },
+        options?: { hideVisual?: boolean; hideLabel?: boolean; customAction?: () => void },
     ) {
         const state = GameState.get(this);
         const done = state.chores[choreKey];
@@ -329,9 +337,7 @@ export class Ship extends Scene {
             name,
             choreKey,
             sceneName,
-            action: () => {
-                this.scene.start(sceneName);
-            },
+            action: options?.customAction ?? (() => { this.scene.start(sceneName); }),
         });
     }
 
