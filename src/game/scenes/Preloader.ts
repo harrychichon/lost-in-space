@@ -30,11 +30,21 @@ export class Preloader extends Scene {
 
         this.load.image("logo", "logo.png");
 
-        // Audio tracks
-        this.load.audio("low_ambient", "audio/freesound_community-low-ambient-01-61547.mp3");
+        // Music library (tier-based; music_dog/botanist/crew slots in when assets arrive)
+        this.load.audio("music_solo", "audio/freesound_community-low-ambient-01-61547.mp3");
+        // Tension overlay
         this.load.audio("spooky_wind", "audio/dragon-studio-spooky-wind-429221.mp3");
+        // One-shot SFX
         this.load.audio("creepy_static", "audio/creepy_static.wav");
         this.load.audio("beep_sequence", "audio/beep_sequence_02.wav");
+        // Environment library (silently no-ops until asset files are added)
+        // this.load.audio("env_ship",           "audio/env_ship.mp3");
+        // this.load.audio("env_room",           "audio/env_room.mp3");
+        // this.load.audio("env_cave",           "audio/env_cave.mp3");
+        // this.load.audio("env_planet_rocky",   "audio/env_planet_rocky.mp3");
+        // this.load.audio("env_planet_lush",    "audio/env_planet_lush.mp3");
+        // this.load.audio("env_planet_frozen",  "audio/env_planet_frozen.mp3");
+        // this.load.audio("env_planet_desert",  "audio/env_planet_desert.mp3");
 
         // Planet art (round-robin by discovery index in Navigation)
         const planetNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20];

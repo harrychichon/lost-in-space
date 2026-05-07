@@ -14,11 +14,7 @@ export class CavediverEvent extends Scene {
 
         this.cameras.main.setBackgroundColor(0x050505);
 
-        // Grayscale based on current saturation (2 companions at this point)
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         // Cave walls — rough outline
         const walls = this.add.graphics();
