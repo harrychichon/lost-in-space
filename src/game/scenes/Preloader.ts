@@ -43,6 +43,10 @@ export class Preloader extends Scene {
         }
         this.load.image("planet18", "navplanets/planet18_0.png");
 
+        // Spaceship sprites (DayIntro)
+        this.load.image("ship_default", "spaceship/default.png");
+        this.load.image("ship_active", "spaceship/active.png");
+
         // Seamless parallax space background (3 layers)
         this.load.image("bg_space", "bg_space_seamless.png");
         this.load.image("bg_space_fl1", "bd_space_seamless_fl1.png");
