@@ -187,7 +187,7 @@ export class Navigation extends Scene {
         }).setOrigin(0.5);
 
         this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
-            this.scene.start('Ship');
+            this.scene.start('Ship', { fromRoom: 'Navigation' });
         });
     }
 

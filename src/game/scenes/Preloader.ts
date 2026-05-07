@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import { loadPlayerAssets, createPlayerAnimations } from "../objects/Player";
+import { loadDogAssets, createDogAnimations } from "../objects/Dog";
 
 export class Preloader extends Scene {
     constructor() {
@@ -47,10 +48,14 @@ export class Preloader extends Scene {
 
         // Player spritesheet (15 frames: 3 rows × 5 cols)
         loadPlayerAssets(this);
+
+        // Dog idle spritesheet (4 frames)
+        loadDogAssets(this);
     }
 
     create() {
         createPlayerAnimations(this);
+        createDogAnimations(this);
         this.scene.start("MainMenu");
     }
 }

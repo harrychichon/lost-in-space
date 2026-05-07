@@ -3,6 +3,7 @@ import { GameState, Chores } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
+import { createDogSprite } from '../objects/Dog';
 
 interface Door {
     x: number;
@@ -25,7 +26,7 @@ export class Ship extends Scene {
     private promptText!: Phaser.GameObjects.Text;
     private dogPromptText!: Phaser.GameObjects.Text;
     private playerSprite!: Phaser.GameObjects.Sprite;
-    private dogGraphics: Phaser.GameObjects.Graphics | null = null;
+    private dogSprite: Phaser.GameObjects.Sprite | null = null;
     private dogX = 0;
     private playerSpeed = 200;
     private dayComplete = false;
@@ -35,11 +36,24 @@ export class Ship extends Scene {
         super('Ship');
     }
 
-    create() {
+    create(data?: { fromRoom?: string }) {
         const { width, height } = this.scale;
         this.dayComplete = false;
         this.doors = [];
         this.currentDoor = null;
+
+        // Spawn position — default to corridor center, or outside the door we just left.
+        const spawnDoorX: Record<string, number> = {
+            Kitchen: 0.12,
+            Greenhouse: 0.30,
+            Engine: 0.48,
+            Comms: 0.62,
+            Collection: 0.74,
+            Navigation: 0.84,
+        };
+        const spawnX = data?.fromRoom && spawnDoorX[data.fromRoom] !== undefined
+            ? width * spawnDoorX[data.fromRoom]
+            : width * 0.5;
 
         this.cameras.main.setBackgroundColor(0x111111);
 
@@ -150,19 +164,18 @@ export class Ship extends Scene {
         this.createBed(width * 0.94, floorY);
 
         // --- Player ---
-        this.player = this.add.rectangle(width * 0.5, floorY - 25, 20, 50, 0xaaaaaa, 0); // invisible hitbox
+        this.player = this.add.rectangle(spawnX, floorY - 25, 20, 50, 0xaaaaaa, 0); // invisible hitbox
         this.physics.add.existing(this.player);
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         body.setCollideWorldBounds(true);
         this.playerSprite = createPlayerSprite(this, this.player.x, floorY);
 
         // --- Dog companion ---
-        this.dogGraphics = null;
+        this.dogSprite = null;
         if (GameState.hasCompanion(this, 'dog')) {
             this.dogX = width * 0.35;
             const dogY = floorY - 10;
-            this.dogGraphics = this.add.graphics();
-            this.drawDog(this.dogGraphics, this.dogX, dogY);
+            this.dogSprite = createDogSprite(this, this.dogX, floorY);
 
             // Draw collected toys near the dog
             const collectedToys = GameState.get(this).collectedDogToys;
@@ -652,40 +665,6 @@ export class Ship extends Scene {
         gfx.fillCircle(x - 3, y - 19, 3);
     }
 
-    private drawDog(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
-        // Body
-        gfx.fillStyle(0x997755, 1);
-        gfx.fillEllipse(x, y, 24, 12);
-        // Legs
-        gfx.fillStyle(0x886644, 1);
-        gfx.fillRect(x - 8, y + 4, 3, 8);
-        gfx.fillRect(x - 3, y + 4, 3, 8);
-        gfx.fillRect(x + 3, y + 4, 3, 8);
-        gfx.fillRect(x + 8, y + 4, 3, 8);
-        // Tail
-        gfx.lineStyle(2, 0x886644, 1);
-        gfx.lineBetween(x - 12, y - 2, x - 16, y - 8);
-        // Head
-        gfx.fillStyle(0xaa8866, 1);
-        gfx.fillCircle(x + 12, y - 5, 6);
-        // Ears poking out of helmet
-        gfx.fillStyle(0x886644, 1);
-        gfx.fillTriangle(x + 7, y - 13, x + 11, y - 13, x + 9, y - 8);
-        gfx.fillTriangle(x + 14, y - 13, x + 18, y - 13, x + 16, y - 8);
-        // Space helmet (glass dome)
-        gfx.lineStyle(2, 0x8899aa, 0.7);
-        gfx.strokeCircle(x + 12, y - 5, 9);
-        // Helmet reflection
-        gfx.fillStyle(0xaabbcc, 0.15);
-        gfx.fillCircle(x + 10, y - 7, 4);
-        // Eye through helmet
-        gfx.fillStyle(0x222222, 1);
-        gfx.fillCircle(x + 14, y - 6, 1.5);
-        // Snout
-        gfx.fillStyle(0xbb9977, 1);
-        gfx.fillCircle(x + 17, y - 4, 2);
-    }
-
     private drawOldPhotograph(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         // Outer frame
         gfx.fillStyle(0x443322, 1);
@@ -860,7 +839,7 @@ export class Ship extends Scene {
         }
 
         // Show/hide dog prompt when near the dog
-        if (this.dogGraphics && this.dogPromptText) {
+        if (this.dogSprite && this.dogPromptText) {
             const nearDog = Math.abs(this.player.x - this.dogX) < 60;
             this.dogPromptText.setAlpha(nearDog && !this.currentDoor ? 1 : 0);
         }
