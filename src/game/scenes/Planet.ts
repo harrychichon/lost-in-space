@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData, PlanetItem, ResourceType } from '../systems/GameState';
-import { AudioManager, MusicTier } from '../systems/AudioManager';
+import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
@@ -134,9 +134,8 @@ export class Planet extends Scene {
         }
 
         AudioManager.update(this, {
-            tier: Math.min(3, GameState.get(this).companions) as MusicTier,
+            warmth: GameState.getSaturation(this),
             location: 'planet',
-            wellbeing: GameState.getWellbeing(this),
             biome: planet.biome,
         });
 

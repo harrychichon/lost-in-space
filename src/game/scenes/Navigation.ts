@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData } from '../systems/GameState';
 import { SpaceBackground } from '../objects/SpaceBackground';
-import { AudioManager, MusicTier } from '../systems/AudioManager';
+import { AudioManager } from '../systems/AudioManager';
 
 const BIOME_COLORS: Record<PlanetData['biome'], number> = {
     lush: 0x558855,
@@ -40,9 +40,8 @@ export class Navigation extends Scene {
         this.space = new SpaceBackground(this);
 
         AudioManager.update(this, {
-            tier: Math.min(3, state.companions) as MusicTier,
+            warmth: GameState.getSaturation(this),
             location: 'navigation',
-            wellbeing: GameState.getWellbeing(this),
         });
 
         // Title

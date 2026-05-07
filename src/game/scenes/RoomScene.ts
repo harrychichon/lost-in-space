@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
-import { AudioManager, MusicTier } from '../systems/AudioManager';
+import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 export interface InteractPoint {
@@ -50,9 +50,8 @@ export abstract class RoomScene extends Scene {
         GameState.applyGrayscale(this);
 
         AudioManager.update(this, {
-            tier: Math.min(3, GameState.get(this).companions) as MusicTier,
+            warmth: GameState.getSaturation(this),
             location: 'room',
-            wellbeing: GameState.getWellbeing(this),
         });
 
         // Input

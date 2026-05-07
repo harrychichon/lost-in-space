@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
 
 export class CavediverEvent extends Scene {
     private planetId = '';
@@ -15,6 +16,7 @@ export class CavediverEvent extends Scene {
         this.cameras.main.setBackgroundColor(0x050505);
 
         GameState.applyGrayscale(this);
+        AudioManager.playEvent(this, 'cavediver');
 
         // Cave walls — rough outline
         const walls = this.add.graphics();
@@ -131,6 +133,7 @@ export class CavediverEvent extends Scene {
                 });
                 this.time.delayedCall(2800, () => {
                     GameState.addCavediverCompanion(this);
+                    AudioManager.clearEvent();
                     // Return to the planet surface rather than the ship —
                     // the cave stays entered-from-here.
                     this.scene.start('Planet', { planetId: this.planetId });

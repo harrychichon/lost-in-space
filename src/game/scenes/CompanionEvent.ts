@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { createDogSprite } from '../objects/Dog';
 
@@ -16,6 +17,7 @@ export class CompanionEvent extends Scene {
         this.cameras.main.setBackgroundColor(0x000000);
 
         GameState.applyGrayscale(this);
+        AudioManager.playEvent(this, 'companion_found');
 
         this.space = new SpaceBackground(this);
 
@@ -94,6 +96,7 @@ export class CompanionEvent extends Scene {
                     });
                     // Unlock all dog toys on planets
                     GameState.unlockDogToys(this);
+                    AudioManager.clearEvent();
                     this.scene.start('Ship');
                 });
                 return;
