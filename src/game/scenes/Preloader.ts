@@ -30,11 +30,34 @@ export class Preloader extends Scene {
 
         this.load.image("logo", "logo.png");
 
-        // Audio tracks
-        this.load.audio("low_ambient", "audio/freesound_community-low-ambient-01-61547.mp3");
-        this.load.audio("spooky_wind", "audio/dragon-studio-spooky-wind-429221.mp3");
-        this.load.audio("creepy_static", "audio/creepy_static.wav");
-        this.load.audio("beep_sequence", "audio/beep_sequence_02.wav");
+        // --- Music: mood-based (warmth 0→1 maps very_sad→sad→neutral→happy→very_happy) ---
+        // sad low intensity (warmth < 0.4)
+        this.load.audio("music_sad_low_1",     "audio/music/2. sad/1. low intensity/bensound-silentsuspicions.mp3");
+        this.load.audio("music_sad_low_2",     "audio/music/2. sad/1. low intensity/bensound-stifledscreams.mp3");
+        this.load.audio("music_sad_low_3",     "audio/music/2. sad/1. low intensity/bensound-vanishinghope.mp3");
+        // sad medium intensity (warmth < 0.4)
+        this.load.audio("music_sad_medium",    "audio/music/2. sad/2. medium intensity/bensound-refract.mp3");
+        // neutral low intensity (warmth 0.4–0.6)
+        this.load.audio("music_neutral_low",   "audio/music/3. neutral/1. low intensity/freesound_community-low-ambient-01-61547.mp3");
+        // neutral medium intensity (warmth 0.4–0.6, also fallback for happy/very_happy)
+        this.load.audio("music_neutral_medium_1", "audio/music/3. neutral/2. medium intensity/bensound-asyourworldgrowssmaller.mp3");
+        this.load.audio("music_neutral_medium_2", "audio/music/3. neutral/2. medium intensity/finding-doggo.mp3");
+        // --- Music: high-intensity event tracks ---
+        this.load.audio("music_event_verysad", "audio/music/1. very sad/3. high intensity/bensound-november.mp3");
+        this.load.audio("music_event_happy_1", "audio/music/4. happy/3. high intensity/bensound-hearty.mp3");
+        this.load.audio("music_event_happy_2", "audio/music/4. happy/3. high intensity/bensound-longnight.mp3");
+        // --- Tension + SFX ---
+        this.load.audio("spooky_wind",   "audio/environment/dragon-studio-spooky-wind-429221.mp3");
+        this.load.audio("creepy_static", "audio/environment/creepy_static.wav");
+        this.load.audio("beep_sequence", "audio/environment/beep_sequence_02.wav");
+        // Environment ambience (uncomment once files are added)
+        // this.load.audio("env_ship",           "audio/environment/env_ship.mp3");
+        // this.load.audio("env_room",           "audio/environment/env_room.mp3");
+        // this.load.audio("env_cave",           "audio/environment/env_cave.mp3");
+        // this.load.audio("env_planet_rocky",   "audio/environment/env_planet_rocky.mp3");
+        // this.load.audio("env_planet_lush",    "audio/environment/env_planet_lush.mp3");
+        // this.load.audio("env_planet_frozen",  "audio/environment/env_planet_frozen.mp3");
+        // this.load.audio("env_planet_desert",  "audio/environment/env_planet_desert.mp3");
 
         // Planet art (round-robin by discovery index in Navigation)
         const planetNumbers = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20];
@@ -56,6 +79,7 @@ export class Preloader extends Scene {
         this.load.image("bg_grass", "planetbgs/grass.png");
         this.load.image("bg_rock", "planetbgs/rock.png");
         this.load.image("bg_snow", "planetbgs/snow.png");
+        this.load.image("bg_main", "sceens/main.png");
 
         // Terrain tile atlas (Kenney-style XML)
         this.load.atlasXML(

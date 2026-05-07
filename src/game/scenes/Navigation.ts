@@ -35,20 +35,14 @@ export class Navigation extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Apply grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         this.space = new SpaceBackground(this);
 
-        // Navigation is still "on the ship" — keep ship ambience
-        if (state.companions === 0) {
-            AudioManager.play(this, 'low_ambient');
-        } else {
-            AudioManager.stop(this);
-        }
+        AudioManager.update(this, {
+            warmth: GameState.getSaturation(this),
+            location: 'navigation',
+        });
 
         // Title
         this.add.text(cx, 28, 'Navigation', {

@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetItem, ResourceType } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
@@ -76,13 +77,14 @@ export class Cave extends Scene {
             return;
         }
 
+        AudioManager.update(this, {
+            warmth: GameState.getSaturation(this),
+            location: 'cave',
+        });
+
         this.cameras.main.setBackgroundColor(0x07060a);
 
-        // Grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
         // --- Cave walls ---
         const walls = this.add.graphics();

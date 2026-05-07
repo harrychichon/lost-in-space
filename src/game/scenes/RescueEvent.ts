@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
+import { AudioManager } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 
 export class RescueEvent extends Scene {
@@ -14,9 +15,8 @@ export class RescueEvent extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
-        // Still mostly grayscale but slightly shifting
-        const saturation = GameState.getSaturation(this);
-        this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
+        GameState.applyGrayscale(this);
+        AudioManager.playEvent(this, 'rescue');
 
         this.space = new SpaceBackground(this);
 
@@ -104,6 +104,7 @@ export class RescueEvent extends Scene {
                     });
                     // Unlock all exotic plants on discovered planets
                     GameState.unlockExoticPlants(this);
+                    AudioManager.clearEvent();
                     this.scene.start('Ship');
                 });
                 return;

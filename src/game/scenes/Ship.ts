@@ -4,7 +4,8 @@ import { AudioManager } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
-
+import { drawDayIndicator } from '../objects/DayIndicator';
+//test
 interface Door {
     x: number;
     label: Phaser.GameObjects.Text;
@@ -44,9 +45,9 @@ export class Ship extends Scene {
 
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
-            Kitchen: 0.12,
-            Greenhouse: 0.30,
-            Engine: 0.48,
+            Kitchen: 0.18,
+            Greenhouse: 0.35,
+            Engine: 0.50,
             Comms: 0.62,
             Collection: 0.74,
             Navigation: 0.84,
@@ -57,38 +58,36 @@ export class Ship extends Scene {
 
         this.cameras.main.setBackgroundColor(0x111111);
 
-        // Apply grayscale
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        this.add.image(width * 0.5, height * 0.5 + 13, 'bg_main')
+            .setDisplaySize(width, height)
+            .setDepth(-100);
 
-        // Ambient music: low ambient only while alone on the ship
-        if (GameState.get(this).companions === 0) {
-            AudioManager.play(this, 'low_ambient');
-        } else {
-            AudioManager.stop(this);
-        }
+        GameState.applyGrayscale(this);
+
+        AudioManager.update(this, {
+            warmth: GameState.getSaturation(this),
+            location: 'ship',
+        });
 
         // --- Draw the ship corridor ---
         const interior = this.add.graphics();
 
         // Floor
-        interior.fillStyle(0x333333, 1);
+        interior.fillStyle(0x333333, 0);
         interior.fillRect(0, height * 0.7, width, height * 0.3);
 
         // Floor detail — grating lines
-        interior.lineStyle(1, 0x3a3a3a, 0.5);
+        interior.lineStyle(1, 0x3a3a3a, 0);
         for (let lx = 0; lx < width; lx += 40) {
             interior.lineBetween(lx, height * 0.7, lx, height);
         }
 
         // Back wall
-        interior.fillStyle(0x222222, 1);
+        interior.fillStyle(0x222222, 0);
         interior.fillRect(0, height * 0.25, width, height * 0.45);
 
         // Ceiling
-        interior.fillStyle(0x1a1a1a, 1);
+        interior.fillStyle(0x1a1a1a, 0);
         interior.fillRect(0, height * 0.2, width, height * 0.05);
 
         // Ceiling lights — soft pulsing strips
@@ -145,23 +144,35 @@ export class Ship extends Scene {
         const doorY = floorY - doorH;
         const state = GameState.get(this);
 
-        // Kitchen door
-        this.createDoor(width * 0.12, doorY, doorW, doorH, 'Kitchen', 0x886644, 'kitchen', 'Kitchen');
+        // Kitchen door (interaction only; visuals hidden to match painted door in bg)
+        this.createDoor(width * 0.18, doorY, doorW, doorH, 'Kitchen', 0x886644, 'kitchen', 'Kitchen', {
+            hideVisual: true,
+            hideLabel: true,
+        });
         // Greenhouse door
-        this.createDoor(width * 0.30, doorY, doorW, doorH, 'Greenhouse', 0x447744, 'greenhouse', 'Greenhouse');
+        this.createDoor(width * 0.34, doorY, doorW, doorH, 'Greenhouse', 0x447744, 'greenhouse', 'Greenhouse', {
+            hideVisual: true,
+            hideLabel: true,
+        });
         // Engine door
-        this.createDoor(width * 0.48, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine');
+        this.createDoor(width * 0.46, doorY, doorW, doorH, 'Engine', 0x668888, 'engine', 'Engine',{
+            hideVisual: true,
+            hideLabel: true,
+        });
         // Comms door
-        this.createDoor(width * 0.62, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms');
+        this.createDoor(width * 0.60, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms',{
+            hideVisual: true,
+            hideLabel: true,
+        } );
 
         // Collection room — always visible, only usable after botanist joins
-        this.createCollectionDoor(width * 0.74, floorY);
+        this.createCollectionDoor(width * 0.72, floorY, { hideVisual: true, hideLabel: true });
 
         // Navigation console (not a chore)
-        this.createNavConsole(width * 0.84, floorY);
+        this.createNavConsole(width * 0.815, floorY, {hideVisual: true, hideLabel: true });
 
         // Bed (not a door — direct interaction)
-        this.createBed(width * 0.94, floorY);
+        this.createBed(width * 0.90, floorY, { hideVisual: true, hideLabel: true });
 
         // --- Player ---
         this.player = this.add.rectangle(spawnX, floorY - 25, 20, 50, 0xaaaaaa, 0); // invisible hitbox
@@ -244,11 +255,7 @@ export class Ship extends Scene {
         }
 
         // --- HUD ---
-        this.add.text(16, 16, `Day ${state.currentDay}`, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '18px',
-            color: '#888888',
-        });
+        drawDayIndicator(this, state);
 
         // Resource bars
         this.drawResourceBars(state);
@@ -270,15 +277,30 @@ export class Ship extends Scene {
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
     }
 
-    private createDoor(x: number, y: number, _w: number, h: number, name: string, _color: number, choreKey: keyof Chores, sceneName: string) {
+    private createDoor(
+        x: number,
+        y: number,
+        _w: number,
+        h: number,
+        name: string,
+        _color: number,
+        choreKey: keyof Chores,
+        sceneName: string,
+        options?: { hideVisual?: boolean; hideLabel?: boolean },
+    ) {
         const state = GameState.get(this);
         const done = state.chores[choreKey];
+        const hideVisual = options?.hideVisual ?? false;
+        const hideLabel = options?.hideLabel ?? false;
 
         // Metal door sprite at 2× scale (48×64), anchored at bottom
         const floorY = y + h;
         const icon = this.add.image(x, floorY, 'doors', 13).setOrigin(0.5, 1).setScale(2);
         if (done) {
             icon.setTint(0x555555);
+        }
+        if (hideVisual) {
+            icon.setVisible(false);
         }
 
         // Label above door
@@ -287,9 +309,12 @@ export class Ship extends Scene {
             fontSize: '13px',
             color: done ? '#444444' : '#999999',
         }).setOrigin(0.5);
+        if (hideLabel) {
+            label.setVisible(false);
+        }
 
         // Checkmark if done
-        if (done) {
+        if (done && !hideVisual) {
             this.add.text(x, y + h / 2, '✓', {
                 fontFamily: 'Arial',
                 fontSize: '22px',
@@ -310,7 +335,7 @@ export class Ship extends Scene {
         });
     }
 
-    private createCollectionDoor(x: number, floorY: number) {
+    private createCollectionDoor(x: number, floorY: number, options?: { hideVisual?: boolean, hideLabel?: boolean }) {
         const doorH = 70;
         const doorY = floorY - doorH;
         const hasHuman = GameState.hasCompanion(this, 'human');
@@ -320,6 +345,7 @@ export class Ship extends Scene {
         if (!hasHuman) {
             icon.setTint(0x444444);
         }
+        if (options?.hideVisual) icon.setVisible(false);
 
         if (hasHuman) {
             // Small plant icon on door
@@ -328,12 +354,14 @@ export class Ship extends Scene {
             plant.fillCircle(x, doorY + 20, 6);
             plant.fillCircle(x - 5, doorY + 18, 5);
             plant.fillCircle(x + 5, doorY + 18, 5);
+            if (options?.hideVisual) plant.setVisible(false);
 
             const label = this.add.text(x, doorY - 12, 'Collection', {
                 fontFamily: 'Georgia, serif',
                 fontSize: '12px',
                 color: '#999999',
             }).setOrigin(0.5);
+            if (options?.hideLabel) label.setVisible(false);
 
             const collected = GameState.get(this).collectedExoticPlants;
             if (collected.length > 0) {
@@ -361,6 +389,7 @@ export class Ship extends Scene {
                 fontSize: '12px',
                 color: '#444444',
             }).setOrigin(0.5);
+            if (options?.hideLabel) label.setVisible(false);
 
             this.doors.push({
                 x,
@@ -376,7 +405,7 @@ export class Ship extends Scene {
         }
     }
 
-    private createNavConsole(x: number, floorY: number) {
+    private createNavConsole(x: number, floorY: number, options?: { hideVisual?: boolean; hideLabel?: boolean }) {
         const state = GameState.get(this);
         const planetCount = state.planets.length;
         const icon = this.add.graphics();
@@ -402,21 +431,26 @@ export class Ship extends Scene {
                 repeat: -1,
                 ease: 'Sine.easeInOut',
             });
+            if (options?.hideVisual) dot.setVisible(false);
         }
+
+        if (options?.hideVisual) icon.setVisible(false);
 
         const label = this.add.text(x, floorY - 53, 'Nav', {
             fontFamily: 'Georgia, serif',
             fontSize: '13px',
             color: '#999999',
         }).setOrigin(0.5);
+        if (options?.hideLabel) label.setVisible(false);
 
         // Planet count indicator
         if (planetCount > 0) {
-            this.add.text(x, floorY - 62, `${planetCount} planet${planetCount > 1 ? 's' : ''}`, {
+            const planetText = this.add.text(x, floorY - 62, `${planetCount} planet${planetCount > 1 ? 's' : ''}`, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '10px',
                 color: '#666666',
             }).setOrigin(0.5);
+            if (options?.hideVisual) planetText.setVisible(false);
         }
 
         this.doors.push({
@@ -432,7 +466,7 @@ export class Ship extends Scene {
         });
     }
 
-    private createBed(x: number, floorY: number) {
+    private createBed(x: number, floorY: number, options?: { hideVisual?: boolean; hideLabel?: boolean }) {
         const icon = this.add.graphics();
 
         // Bed frame
@@ -444,12 +478,14 @@ export class Ship extends Scene {
         // Blanket
         icon.fillStyle(0x554444, 1);
         icon.fillRect(x - 5, floorY - 26, 25, 22);
+        if (options?.hideVisual) icon.setVisible(false);
 
         const label = this.add.text(x, floorY - 42, 'Bed', {
             fontFamily: 'Georgia, serif',
             fontSize: '13px',
             color: '#999999',
         }).setOrigin(0.5);
+        if (options?.hideLabel) label.setVisible(false);
 
         this.doors.push({
             x,

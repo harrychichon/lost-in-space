@@ -59,8 +59,7 @@ export class MainMenu extends Scene {
             },
         });
 
-        // Grayscale
-        this.cameras.main.postFX.addColorMatrix().grayscale(1);
+        this.game.canvas.style.filter = 'grayscale(100%)';
 
         // Click to start
         this.input.once('pointerdown', () => {

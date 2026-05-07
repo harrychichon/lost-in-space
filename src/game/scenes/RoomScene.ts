@@ -47,18 +47,12 @@ export abstract class RoomScene extends Scene {
         this.roomLeft = (width - this.roomWidth) / 2;
         this.roomRight = this.roomLeft + this.roomWidth;
 
-        // Apply grayscale based on companion count
-        const saturation = GameState.getSaturation(this);
-        if (saturation < 1) {
-            this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
-        }
+        GameState.applyGrayscale(this);
 
-        // Ambient music: low ambient while alone on the ship
-        if (GameState.get(this).companions === 0) {
-            AudioManager.play(this, 'low_ambient');
-        } else {
-            AudioManager.stop(this);
-        }
+        AudioManager.update(this, {
+            warmth: GameState.getSaturation(this),
+            location: 'room',
+        });
 
         // Input
         this.cursors = this.input.keyboard!.createCursorKeys();

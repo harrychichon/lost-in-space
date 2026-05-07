@@ -51,6 +51,8 @@ export interface GameStateData {
     collectedExoticPlants: string[]; // uniqueIds of collected exotic plants
     collectedCaveItems: string[]; // uniqueIds of collected cave items
     caveUnlocked: boolean; // true once cavediver joins
+    wellbeingOverride: number | null; // null = auto-calculate, 0-1 = DevPanel override
+    warmthOverride: number | null;    // null = auto-calculate, 0-1 = DevPanel override
 }
 
 const EXOTIC_PLANT_IDS = ["voidbloom", "sweetmoss", "starspice"];
@@ -105,6 +107,8 @@ const DEFAULT_STATE: GameStateData = {
     collectedExoticPlants: [],
     collectedCaveItems: [],
     caveUnlocked: false,
+    wellbeingOverride: null,
+    warmthOverride: null,
 };
 
 const REGISTRY_KEY = "gameState";
@@ -125,6 +129,8 @@ export class GameState {
             collectedExoticPlants: [],
             collectedCaveItems: [],
             caveUnlocked: false,
+            wellbeingOverride: null,
+            warmthOverride: null,
         });
     }
 
@@ -238,9 +244,41 @@ export class GameState {
         return !!planet && planet.caveLit;
     }
 
+    // Returns 0-1: 1 = full resources + all chores done, 0 = depleted + nothing done.
+    // Resources carry 75% weight (long-run threat); chores 25% (daily signal).
+    static getSecondaryScale(scene: Phaser.Scene): number {
+        const state = GameState.get(scene);
+        const r = state.resources;
+        const resourceScore = (r.oxygen + r.food + r.fuel + r.parts) / 4 / 100;
+        const choresCompleted = Object.values(state.chores).filter(Boolean).length;
+        const choreScore = choresCompleted / 4;
+        return resourceScore * 0.75 + choreScore * 0.25;
+    }
+
+    // Returns the wellbeing value used for audio and warmth fine-tuning.
+    // Respects DevPanel override when set; otherwise auto-calculates from resources/chores.
+    static getWellbeing(scene: Phaser.Scene): number {
+        const state = GameState.get(scene);
+        return state.wellbeingOverride !== null ? state.wellbeingOverride : GameState.getSecondaryScale(scene);
+    }
+
+    // Base warmth from companion tier, nudged ±0.15 by wellbeing.
+    // Respects DevPanel warmthOverride when set.
     static getSaturation(scene: Phaser.Scene): number {
         const state = GameState.get(scene);
-        return Math.min(1, state.companions * 0.3);
+        if (state.warmthOverride !== null) return state.warmthOverride;
+        const base = Math.min(1, state.companions * 0.3);
+        const wellbeing = GameState.getWellbeing(scene);
+        const nudge = (wellbeing - 0.5) * 0.3;
+        return Math.max(0, Math.min(1, base + nudge));
+    }
+
+    // Apply grayscale by setting a CSS filter on the canvas element.
+    // Works in both WebGL and Canvas renderer modes.
+    static applyGrayscale(scene: Phaser.Scene): void {
+        const warmth = GameState.getSaturation(scene);
+        scene.game.canvas.style.filter = `grayscale(${((1 - warmth) * 100).toFixed(1)}%)`;
+        console.log(`[warmth] ${scene.scene.key} companions=${GameState.get(scene).companions} warmth=${warmth.toFixed(3)}`);
     }
 
     // --- Companion methods ---
