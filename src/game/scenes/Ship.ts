@@ -5,7 +5,7 @@ import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
 import { drawDayIndicator } from '../objects/DayIndicator';
-
+//test
 interface Door {
     x: number;
     label: Phaser.GameObjects.Text;
