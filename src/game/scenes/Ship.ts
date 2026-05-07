@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, Chores } from '../systems/GameState';
-import { AudioManager } from '../systems/AudioManager';
+import { AudioManager, MusicTier } from '../systems/AudioManager';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { createDogSprite } from '../objects/Dog';
@@ -63,12 +63,11 @@ export class Ship extends Scene {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
         }
 
-        // Ambient music: low ambient only while alone on the ship
-        if (GameState.get(this).companions === 0) {
-            AudioManager.play(this, 'low_ambient');
-        } else {
-            AudioManager.stop(this);
-        }
+        AudioManager.update(this, {
+            tier: Math.min(3, GameState.get(this).companions) as MusicTier,
+            location: 'ship',
+            moodModifier: GameState.getMoodModifier(this),
+        });
 
         // --- Draw the ship corridor ---
         const interior = this.add.graphics();

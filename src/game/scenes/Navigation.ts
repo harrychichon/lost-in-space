@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetData } from '../systems/GameState';
 import { SpaceBackground } from '../objects/SpaceBackground';
-import { AudioManager } from '../systems/AudioManager';
+import { AudioManager, MusicTier } from '../systems/AudioManager';
 
 const BIOME_COLORS: Record<PlanetData['biome'], number> = {
     lush: 0x558855,
@@ -43,12 +43,11 @@ export class Navigation extends Scene {
 
         this.space = new SpaceBackground(this);
 
-        // Navigation is still "on the ship" — keep ship ambience
-        if (state.companions === 0) {
-            AudioManager.play(this, 'low_ambient');
-        } else {
-            AudioManager.stop(this);
-        }
+        AudioManager.update(this, {
+            tier: Math.min(3, state.companions) as MusicTier,
+            location: 'navigation',
+            moodModifier: GameState.getMoodModifier(this),
+        });
 
         // Title
         this.add.text(cx, 28, 'Navigation', {

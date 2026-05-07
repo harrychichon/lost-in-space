@@ -1,6 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
-import { AudioManager } from '../systems/AudioManager';
+import { AudioManager, MusicTier } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 export interface InteractPoint {
@@ -53,12 +53,11 @@ export abstract class RoomScene extends Scene {
             this.cameras.main.postFX.addColorMatrix().grayscale(1 - saturation);
         }
 
-        // Ambient music: low ambient while alone on the ship
-        if (GameState.get(this).companions === 0) {
-            AudioManager.play(this, 'low_ambient');
-        } else {
-            AudioManager.stop(this);
-        }
+        AudioManager.update(this, {
+            tier: Math.min(3, GameState.get(this).companions) as MusicTier,
+            location: 'room',
+            moodModifier: GameState.getMoodModifier(this),
+        });
 
         // Input
         this.cursors = this.input.keyboard!.createCursorKeys();

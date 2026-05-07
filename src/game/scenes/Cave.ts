@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { GameState, PlanetItem, ResourceType } from '../systems/GameState';
+import { AudioManager, MusicTier } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 
 interface PickupSprite {
@@ -75,6 +76,12 @@ export class Cave extends Scene {
             this.scene.start('Ship');
             return;
         }
+
+        AudioManager.update(this, {
+            tier: Math.min(3, GameState.get(this).companions) as MusicTier,
+            location: 'cave',
+            moodModifier: GameState.getMoodModifier(this),
+        });
 
         this.cameras.main.setBackgroundColor(0x07060a);
 
