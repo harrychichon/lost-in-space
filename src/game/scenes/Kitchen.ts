@@ -15,23 +15,23 @@ export class Kitchen extends RoomScene {
 
         const gfx = this.add.graphics();
 
-        // Ship hull backdrop
-        gfx.fillStyle(0x1b1f2b, 1);
+        // Ship hull backdrop (dark steel with warm highlights)
+        gfx.fillStyle(0x141821, 1);
         gfx.fillRect(0, height * 0.18, width, height * 0.58);
 
         // Back wall panel
-        gfx.fillStyle(0x242b3a, 1);
+        gfx.fillStyle(0x1f252f, 1);
         gfx.fillRect(this.roomLeft, height * 0.24, this.roomWidth, height * 0.42);
 
         // Ceiling beam and light strips
-        gfx.fillStyle(0x2e3546, 1);
+        gfx.fillStyle(0x3b3127, 1);
         gfx.fillRect(this.roomLeft - 20, height * 0.21, this.roomWidth + 40, 12);
-        gfx.fillStyle(0x8ec7ff, 0.35);
+        gfx.fillStyle(0xe7bb73, 0.32);
         gfx.fillRect(this.rx(0.08), height * 0.23, this.roomWidth * 0.26, 4);
         gfx.fillRect(this.rx(0.66), height * 0.23, this.roomWidth * 0.26, 4);
 
         // Vertical hull ribs
-        gfx.fillStyle(0x1d2432, 0.9);
+        gfx.fillStyle(0x252d3a, 0.9);
         for (let tx = this.roomLeft + 18; tx < this.roomRight; tx += 36) {
             gfx.fillRect(tx, height * 0.24, 3, height * 0.42);
         }
@@ -39,87 +39,111 @@ export class Kitchen extends RoomScene {
         // Portholes
         const portholeY = height * 0.33;
         for (const x of [this.rx(0.22), this.rx(0.5), this.rx(0.78)]) {
-            gfx.fillStyle(0x131926, 1);
+            gfx.fillStyle(0x0f141e, 1);
             gfx.fillCircle(x, portholeY, 28);
-            gfx.lineStyle(4, 0x4f5f77, 1);
+            gfx.lineStyle(4, 0x7a6550, 1);
             gfx.strokeCircle(x, portholeY, 28);
             gfx.fillStyle(0xffffff, 0.35);
             gfx.fillCircle(x - 8, portholeY - 10, 2);
             gfx.fillCircle(x + 7, portholeY + 4, 1.5);
         }
 
-        // Floor with subtle grid
-        gfx.fillStyle(0x2a303f, 1);
+        // Floor with subtle warm metal grid
+        gfx.fillStyle(0x2a2019, 1);
         gfx.fillRect(0, this.floorY, width, height * 0.3);
-        gfx.lineStyle(1, 0x3a4356, 0.35);
+        gfx.lineStyle(1, 0x4a392d, 0.4);
         for (let x = 0; x < width; x += 32) {
             gfx.lineBetween(x, this.floorY, x, height);
         }
+        gfx.lineStyle(1, 0x3d2e23, 0.35);
+        for (let y = this.floorY; y < height; y += 30) {
+            gfx.lineBetween(0, y, width, y);
+        }
 
+        const furnitureScale = 0.45;
         const furnitureBaseY = this.floorY + 2;
 
-        // Main galley counter with drawers
-        const counterX = this.rx(0.1);
-        const counterTotalH = 86;
+        // Green backsplash tile strip behind work surfaces
+        const backsplashY = this.floorY - 112 * furnitureScale;
+        const backsplashH = 60 * furnitureScale;
+        gfx.fillStyle(0x1b3c33, 0.95);
+        gfx.fillRect(this.roomLeft + 12, backsplashY, this.roomWidth - 24, backsplashH);
+        gfx.lineStyle(1, 0x2c594d, 0.45);
+        for (let tx = this.roomLeft + 12; tx < this.roomRight - 12; tx += 24 * furnitureScale) {
+            gfx.lineBetween(tx, backsplashY, tx, backsplashY + backsplashH);
+        }
+        for (let ty = backsplashY; ty < backsplashY + backsplashH; ty += 18 * furnitureScale) {
+            gfx.lineBetween(this.roomLeft + 12, ty, this.roomRight - 12, ty);
+        }
+
+        // Main galley counter with drawers (scaled down 20%)
+        const counterX = this.rx(0.28); //position for stove
+        const counterW = this.roomWidth * 0.36 * furnitureScale;
+        const counterTopH = 18 * furnitureScale;
+        const counterBodyH = 68 * furnitureScale;
+        const counterTotalH = counterTopH + counterBodyH;
         const counterY = furnitureBaseY - counterTotalH;
-        const counterW = this.roomWidth * 0.36;
-        gfx.fillStyle(0x3f4658, 1);
-        gfx.fillRect(counterX, counterY, counterW, 18);
-        gfx.fillStyle(0x2f3647, 1);
-        gfx.fillRect(counterX, counterY + 18, counterW, 68);
-        gfx.lineStyle(2, 0x59627a, 0.7);
-        gfx.strokeRect(counterX, counterY + 18, counterW, 68);
+        gfx.fillStyle(0x8b6238, 1);
+        gfx.fillRect(counterX, counterY, counterW, counterTopH);
+        gfx.fillStyle(0x6c4b2d, 1);
+        gfx.fillRect(counterX, counterY + counterTopH, counterW, counterBodyH);
+        gfx.lineStyle(2, 0xa57a4d, 0.7);
+        gfx.strokeRect(counterX, counterY + counterTopH, counterW, counterBodyH);
         for (let i = 1; i <= 2; i++) {
-            const y = counterY + 18 + i * 22;
-            gfx.lineStyle(1, 0x5f687f, 0.5);
+            const y = counterY + counterTopH + i * (22 * furnitureScale);
+            gfx.lineStyle(1, 0x9a7247, 0.5);
             gfx.lineBetween(counterX + 8, y, counterX + counterW - 8, y);
         }
 
         // Sink, stove and prep light on the counter
-        gfx.fillStyle(0x222937, 1);
-        gfx.fillRect(counterX + 14, counterY + 3, 34, 10);
-        gfx.lineStyle(1, 0x7ea7ca, 0.8);
-        gfx.strokeRect(counterX + 14, counterY + 3, 34, 10);
-        gfx.fillStyle(0x1a1a24, 1);
-        gfx.fillCircle(counterX + counterW - 34, counterY + 9, 6);
-        gfx.fillCircle(counterX + counterW - 20, counterY + 9, 6);
-        gfx.fillStyle(0x8ec7ff, 0.4);
-        gfx.fillRect(counterX + 8, counterY - 3, counterW - 16, 2);
+        gfx.fillStyle(0x4a5158, 1);
+        gfx.fillRect(counterX + 14 * furnitureScale, counterY + 3 * furnitureScale, 34 * furnitureScale, 10 * furnitureScale);
+        gfx.lineStyle(1, 0x8f9da8, 0.8);
+        gfx.strokeRect(counterX + 14 * furnitureScale, counterY + 3 * furnitureScale, 34 * furnitureScale, 10 * furnitureScale);
+        gfx.fillStyle(0x242228, 1);
+        gfx.fillCircle(counterX + counterW - 34 * furnitureScale, counterY + 9 * furnitureScale, 6 * furnitureScale);
+        gfx.fillCircle(counterX + counterW - 20 * furnitureScale, counterY + 9 * furnitureScale, 6 * furnitureScale);
+        gfx.fillStyle(0xe7bb73, 0.35);
+        gfx.fillRect(counterX + 8 * furnitureScale, counterY - 3 * furnitureScale, counterW - 16 * furnitureScale, 2 * furnitureScale);
 
-        // Storage cabinet/fridge module
+        // Storage cabinet/fridge module (scaled down 20%)
         const cabinetX = this.rx(0.86);
-        const cabinetH = 150;
+        const cabinetW = 68 * furnitureScale;
+        const cabinetH = 150 * furnitureScale;
         const cabinetY = furnitureBaseY - cabinetH;
-        gfx.fillStyle(0x364055, 1);
-        gfx.fillRect(cabinetX - 34, cabinetY, 68, cabinetH);
-        gfx.lineStyle(2, 0x58637d, 0.75);
-        gfx.strokeRect(cabinetX - 34, cabinetY, 68, cabinetH);
-        gfx.lineStyle(1, 0x6f7b96, 0.6);
-        gfx.lineBetween(cabinetX - 34, cabinetY + 80, cabinetX + 34, cabinetY + 80);
-        gfx.fillStyle(0x7db6ff, 0.7);
-        gfx.fillRect(cabinetX - 6, cabinetY + 20, 12, 4);
+        gfx.fillStyle(0x7a5634, 1);
+        gfx.fillRect(cabinetX - cabinetW / 2, cabinetY, cabinetW, cabinetH);
+        gfx.lineStyle(2, 0xa67a4b, 0.75);
+        gfx.strokeRect(cabinetX - cabinetW / 2, cabinetY, cabinetW, cabinetH);
+        gfx.lineStyle(1, 0x8e6840, 0.6);
+        gfx.lineBetween(cabinetX - cabinetW / 2, cabinetY + 80 * furnitureScale, cabinetX + cabinetW / 2, cabinetY + 80 * furnitureScale);
+        gfx.fillStyle(0x85d19a, 0.75);
+        gfx.fillRect(cabinetX - 6 * furnitureScale, cabinetY + 20 * furnitureScale, 12 * furnitureScale, 4 * furnitureScale);
 
-        // Central dining table and bench
+        // Central dining table and bench (scaled down 20%)
         const tableX = this.rx(0.56);
-        const tableY = furnitureBaseY - 64;
-        gfx.fillStyle(0x4a5367, 1);
-        gfx.fillRect(tableX - 95, tableY, 190, 14);
-        gfx.fillStyle(0x364055, 1);
-        gfx.fillRect(tableX - 80, tableY + 14, 10, 50);
-        gfx.fillRect(tableX + 70, tableY + 14, 10, 50);
+        const tableW = 190 * furnitureScale;
+        const tableTopH = 14 * furnitureScale;
+        const tableLegH = 50 * furnitureScale;
+        const tableY = furnitureBaseY - (tableTopH + tableLegH);
+        gfx.fillStyle(0x835d39, 1);
+        gfx.fillRect(tableX - tableW / 2, tableY, tableW, tableTopH);
+        gfx.fillStyle(0x67462b, 1);
+        gfx.fillRect(tableX - 80 * furnitureScale, tableY + tableTopH, 10 * furnitureScale, tableLegH);
+        gfx.fillRect(tableX + 70 * furnitureScale, tableY + tableTopH, 10 * furnitureScale, tableLegH);
 
-        gfx.fillStyle(0x2e3646, 1);
-        gfx.fillRect(tableX - 42, tableY + 27, 84, 12);
-        gfx.fillRect(tableX - 45, tableY + 39, 8, 25);
-        gfx.fillRect(tableX + 37, tableY + 39, 8, 25);
+        gfx.fillStyle(0x5a3f27, 1);
+        gfx.fillRect(tableX - 42 * furnitureScale, tableY + 27 * furnitureScale, 84 * furnitureScale, 12 * furnitureScale);
+        gfx.fillRect(tableX - 45 * furnitureScale, tableY + 39 * furnitureScale, 8 * furnitureScale, 25 * furnitureScale);
+        gfx.fillRect(tableX + 37 * furnitureScale, tableY + 39 * furnitureScale, 8 * furnitureScale, 25 * furnitureScale);
 
         // Food tray + cup on table
-        gfx.fillStyle(0x6f7788, 1);
-        gfx.fillRect(tableX + 12, tableY - 2, 32, 7);
-        gfx.fillStyle(0xd0b87e, 1);
-        gfx.fillCircle(tableX + 24, tableY - 1, 5);
-        gfx.fillStyle(0xc6d0de, 1);
-        gfx.fillRect(tableX - 16, tableY - 3, 7, 8);
+        gfx.fillStyle(0x7f6a4f, 1);
+        gfx.fillRect(tableX + 12 * furnitureScale, tableY - 2 * furnitureScale, 32 * furnitureScale, 7 * furnitureScale);
+        gfx.fillStyle(0xc99456, 1);
+        gfx.fillCircle(tableX + 24 * furnitureScale, tableY - 1 * furnitureScale, 5 * furnitureScale);
+        gfx.fillStyle(0xbfb5a6, 1);
+        gfx.fillRect(tableX - 16 * furnitureScale, tableY - 3 * furnitureScale, 7 * furnitureScale, 8 * furnitureScale);
 
         // Coffee maker on counter (once found in a cave)
         if (state.collectedCaveItems.includes('coffee_maker')) {
