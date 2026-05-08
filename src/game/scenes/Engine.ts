@@ -1,5 +1,8 @@
 import { GameState } from '../systems/GameState';
 import { RoomScene, InteractPoint } from './RoomScene';
+import { drawDayIndicator } from '../objects/DayIndicator';
+import { drawResourceBars } from '../objects/ResourceBars';
+import { drawChoreChecklist } from '../objects/ChoreChecklist';
 
 export class Engine extends RoomScene {
     constructor() {
@@ -127,6 +130,10 @@ export class Engine extends RoomScene {
         }
 
         this.setupPlayerAndUI();
+
+        drawDayIndicator(this, state);
+        drawResourceBars(this, state);
+        drawChoreChecklist(this, state);
     }
 
     update() {

@@ -23,7 +23,7 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
         fontFamily: FONT,
         fontSize: '22px',
         color: '#e1e0e0',
-    });
+    }).setDepth(HUD_DEPTH);
 
     // Separator line
     const line = scene.add.graphics().setDepth(HUD_DEPTH);
