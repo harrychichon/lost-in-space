@@ -14,7 +14,7 @@ const INTENSITY_DIR: Record<TrackIntensity, string> = {
     high:   '3. high intensity',
 };
 
-interface TrackDef { mood: TrackMood; intensity: TrackIntensity; file: string; }
+interface TrackDef { mood: TrackMood; intensity: TrackIntensity; file: string; eventOnly?: boolean; }
 
 const TRACKS: TrackDef[] = [
     // very sad — high intensity (event: alarm)
@@ -35,7 +35,7 @@ const TRACKS: TrackDef[] = [
 
     // neutral — medium intensity (planets / caves)
     { mood: 'neutral',  intensity: 'medium', file: 'bensound-asyourworldgrowssmaller.mp3' },
-    { mood: 'neutral',  intensity: 'medium', file: 'finding-doggo.mp3'    },
+    { mood: 'neutral',  intensity: 'medium', file: 'finding-doggo.mp3', eventOnly: true },
     { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain.mp3'     },
     { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain-2.mp3'   },
     { mood: 'neutral',  intensity: 'medium', file: 'cobalt-thunder-2.mp3' },
@@ -68,10 +68,17 @@ export function musicEntries(): Array<[string, string]> {
 
 /** Phaser keys for all tracks matching mood + intensity — used to build AudioManager pools. */
 export function musicPool(mood: TrackMood, intensity: TrackIntensity): string[] {
-    return TRACKS.filter(t => t.mood === mood && t.intensity === intensity).map(toKey);
+    return TRACKS.filter(t => t.mood === mood && t.intensity === intensity && !t.eventOnly).map(toKey);
 }
 
 /** First high-intensity track for a mood — used for event playback. */
 export function eventTrack(mood: TrackMood): string {
     return musicPool(mood, 'high')[0] ?? '';
+}
+
+/** Phaser key for a specific file — used to pin a track to an exact event. */
+export function namedTrack(file: string): string {
+    const track = TRACKS.find(t => t.file === file);
+    if (!track) throw new Error(`MusicRegistry: no track found for file "${file}"`);
+    return toKey(track);
 }
