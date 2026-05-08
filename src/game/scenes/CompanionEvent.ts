@@ -40,14 +40,14 @@ export class CompanionEvent extends Scene {
         }
 
         // Ship — landed to the left of the dog, scaled to match Planet.ts
-        const ship = this.add.image(width * 0.22, height * 0.66 + 110, 'ship_default').setOrigin(0.5, 1);
+        const ship = this.add.image(width * 0.22 - 120, height * 0.66 + 110, 'ship_default').setOrigin(0.5, 1);
         ship.displayHeight = 256;
         ship.scaleX = ship.scaleY;
 
         // Dog — small figure near the wreck
-        const dogX = width * 0.55;
-        const dogGroundY = height * 0.66 + 30;
-        createDogSprite(this, dogX, dogGroundY);
+        const dogX = width * 0.55 - 30;
+        const dogGroundY = height * 0.66 + 80;
+        createDogSprite(this, dogX, dogGroundY, { flipX: true });
 
         // --- Story text sequence ---
         const textStyle = {
