@@ -4,6 +4,8 @@ import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { HudPanel } from '../objects/HudPanel';
 import { GlobalNavBar } from '../objects/GlobalNavBar';
+import { drawDayIndicator } from '../objects/DayIndicator';
+import { drawResourceBars } from '../objects/ResourceBars';
 
 interface PickupSprite {
     sprite: Phaser.GameObjects.Arc;
@@ -108,6 +110,11 @@ export class Cave extends Scene {
         this.cameras.main.setBackgroundColor(0x07060a);
 
         GameState.applyGrayscale(this);
+
+        // HUD overlays — pinned to camera by the draw helpers
+        const hudState = GameState.get(this);
+        drawDayIndicator(this, hudState);
+        drawResourceBars(this, hudState);
 
         this.physics.world.setBounds(0, 0, CAVE_WIDTH, height);
 
