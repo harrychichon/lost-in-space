@@ -70,6 +70,8 @@ export class Preloader extends Scene {
         this.load.image("bg_snow", "planetbgs/snow.png");
         this.load.image("bg_main", "sceens/main.png");
         this.load.image("bg_kitchen", "sceens/kitchen.png");
+        this.load.image("bg_engine", "sceens/engine.room.png");
+        this.load.image("bg_companion_event", "sceens/dogMeeting/img1.png");
 
         // Terrain tile atlas (Kenney-style XML)
         this.load.atlasXML(
@@ -99,6 +101,10 @@ export class Preloader extends Scene {
             frameWidth: 24,
             frameHeight: 32,
         });
+
+        // Companion sprite sheets (irregular frame widths — frames registered in create())
+        this.load.image("botanist", "botanist/botanist.png");
+        this.load.image("cavediver", "cavediver/cavediver.png");
     }
 
     create() {
@@ -109,6 +115,16 @@ export class Preloader extends Scene {
         for (const key of ["plant_basicblue", "plant_basicyellow", "plant_voidbloom", "plant_sweetmoss", "plant_starspice"]) {
             this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
+
+        // Register specific frames on the irregular companion sheets so we can draw
+        // a single pose (botanist: frame 4, cavediver: frame 0).
+        const botanist = this.textures.get("botanist");
+        botanist.add("frame4", 0, 2090, 0, 384, 982);
+        botanist.setFilter(Phaser.Textures.FilterMode.NEAREST);
+        const cavediver = this.textures.get("cavediver");
+        cavediver.add("frame0", 0, 128, 0, 368, 859);
+        cavediver.setFilter(Phaser.Textures.FilterMode.NEAREST);
+
         this.scene.start("MainMenu");
     }
 }
