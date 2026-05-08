@@ -86,7 +86,7 @@ export class Navigation extends Scene {
 
         // Ship in center — pixel-art sprite
         const ship = this.add.image(cx, cy, 'ship_navigation').setOrigin(0.5)
-        ship.displayHeight = 110
+        ship.displayHeight = 105
         ship.scaleX = ship.scaleY
 
         this.add
@@ -112,7 +112,9 @@ export class Navigation extends Scene {
             // Odd rings are angle-staggered by half a step so adjacent rings don't
             // align radially and visually clash.
             const PLANETS_PER_RING = 5
-            const RING_RADII = [160, 210, 260, 300]
+            // Tightened so the outermost ring's straight-down planet (radius 270)
+            // and its labels fit above the GlobalNavBar without clipping.
+            const RING_RADII = [160, 200, 235, 270]
             const angleStep = (Math.PI * 2) / PLANETS_PER_RING // 72°
             const startAngle = -Math.PI / 2 // start from top
 
