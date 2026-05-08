@@ -563,10 +563,8 @@ export class Ship extends Scene {
 
     private showMessage(text: string) {
         const { width } = this.scale
-        const halfW = 200
-        const initialX = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
         const msg = this.add
-            .text(initialX, this.player.y - 90, text, {
+            .text(this.player.x, this.player.y - 90, text, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '18px',
                 color: '#999999',
@@ -585,6 +583,7 @@ export class Ship extends Scene {
             hold: 1500,
             // Reposition every frame so the message follows the player
             onUpdate: () => {
+                const halfW = msg.width / 2
                 const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
                 msg.setPosition(x, this.player.y - 90)
             },
@@ -598,7 +597,7 @@ export class Ship extends Scene {
         const screenX = this.player.x - cam.scrollX
         const screenY = this.player.y - cam.scrollY
         const { width } = this.scale
-        const halfW = 280
+        const halfW = panel.getBounds().width / 2
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX))
         panel.setPosition(clampedX, screenY + yOffset)
     }

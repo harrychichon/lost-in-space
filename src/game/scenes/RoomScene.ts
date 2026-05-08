@@ -152,15 +152,15 @@ export abstract class RoomScene extends Scene {
 
     /**
      * Position a HudPanel at the player's current screen position, clamped to viewport.
-     * Uses scrollX/Y so it works on both fixed-camera (Ship, rooms) and following-camera
-     * (Planet, Cave) scenes — HudPanel itself is scrollFactor 0, so we feed it screen coords.
+     * Uses the panel's actual bounds so short prompts can reach the screen edges
+     * (otherwise the panel "stops" several hundred px before doors at viewport edges).
      */
     protected anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -90) {
         const cam = this.cameras.main;
         const screenX = this.player.x - cam.scrollX;
         const screenY = this.player.y - cam.scrollY;
         const { width } = this.scale;
-        const halfW = 280;
+        const halfW = panel.getBounds().width / 2;
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
         panel.setPosition(clampedX, screenY + yOffset);
     }

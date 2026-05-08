@@ -381,7 +381,7 @@ export class Cave extends Scene {
         const screenX = this.player.x - cam.scrollX;
         const screenY = this.player.y - cam.scrollY;
         const { width } = this.scale;
-        const halfW = 280;
+        const halfW = panel.getBounds().width / 2;
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
         panel.setPosition(clampedX, screenY + yOffset);
     }
