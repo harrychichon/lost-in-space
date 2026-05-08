@@ -173,6 +173,9 @@ export class Planet extends Scene {
 
         this.cameras.main.setBackgroundColor(0x000000);
 
+        // Fade in from black on landing — matches the sleep-cycle fade pattern
+        this.cameras.main.fadeIn(500, 0, 0, 0);
+
         GameState.applyGrayscale(this);
 
         // HUD overlays — pinned to camera by the draw helpers
