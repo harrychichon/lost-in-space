@@ -309,6 +309,8 @@ export class Cave extends Scene {
     }
 
     update() {
+        AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'cave' });
+
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
         if (this.cursors.left.isDown || this.keyA.isDown) {

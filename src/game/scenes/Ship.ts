@@ -45,6 +45,10 @@ export class Ship extends Scene {
         this.doors = []
         this.currentDoor = null
 
+        // Fade in from black on every entry — smooths the morning-after-sleep transition
+        // and any return from rooms / planets / cave.
+        this.cameras.main.fadeIn(500, 0, 0, 0)
+
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
             Kitchen: 0.18,
@@ -241,18 +245,18 @@ export class Ship extends Scene {
             this.dogPrompt.setAlpha(0)
         }
 
-        // --- Human companion ---
+        // --- Human companion (next to Collection door) ---
         if (GameState.hasCompanion(this, 'human')) {
             const humanGfx = this.add.graphics()
-            const hx = width * 0.72
+            const hx = width * 0.78
             const hy = floorY - 25
             this.drawCompanionHuman(humanGfx, hx, hy)
         }
 
-        // --- Cavediver companion ---
+        // --- Cavediver companion (next to Engine door) ---
         if (GameState.hasCompanion(this, 'cavediver')) {
             const cavediverGfx = this.add.graphics()
-            const cx = width * 0.56
+            const cx = width * 0.51
             const cy = floorY - 25
             this.drawCavediver(cavediverGfx, cx, cy)
         }
@@ -332,17 +336,6 @@ export class Ship extends Scene {
             .setOrigin(0.5)
         if (hideLabel) {
             label.setVisible(false)
-        }
-
-        // Checkmark if done
-        if (done && !hideVisual) {
-            this.add
-                .text(x, y + h / 2, '✓', {
-                    fontFamily: 'Arial',
-                    fontSize: '22px',
-                    color: '#555555',
-                })
-                .setOrigin(0.5)
         }
 
         this.doors.push({
@@ -553,9 +546,12 @@ export class Ship extends Scene {
 
                 this.dayComplete = true
                 this.showMessage('You close your eyes. Another day done.')
-                this.time.delayedCall(2000, () => {
-                    GameState.advanceDay(this)
-                    this.scene.start('DayIntro')
+                this.time.delayedCall(800, () => {
+                    this.cameras.main.fadeOut(1200, 0, 0, 0)
+                    this.cameras.main.once('camerafadeoutcomplete', () => {
+                        GameState.advanceDay(this)
+                        this.scene.start('DayIntro')
+                    })
                 })
             },
         })
@@ -655,53 +651,10 @@ export class Ship extends Scene {
         gfx.strokePath()
     }
 
-    private drawCompanionHuman(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
-        // Legs
-        gfx.fillStyle(0x555566, 1)
-        gfx.fillRect(x - 5, y + 10, 4, 14)
-        gfx.fillRect(x + 1, y + 10, 4, 14)
-        // Boots
-        gfx.fillStyle(0x444455, 1)
-        gfx.fillRect(x - 6, y + 22, 6, 3)
-        gfx.fillRect(x, y + 22, 6, 3)
-        // Body — slightly different suit color
-        gfx.fillStyle(0x667766, 1)
-        gfx.fillRect(x - 7, y - 6, 14, 18)
-        // Belt with tool pouch
-        gfx.fillStyle(0x555544, 1)
-        gfx.fillRect(x - 7, y + 6, 14, 3)
-        gfx.fillRect(x + 3, y + 3, 6, 5)
-        // Arms
-        gfx.fillStyle(0x667766, 1)
-        gfx.fillRect(x - 10, y - 4, 4, 12)
-        gfx.fillRect(x + 6, y - 4, 4, 12)
-        // Gloves
-        gfx.fillStyle(0x778877, 1)
-        gfx.fillRect(x - 10, y + 6, 4, 3)
-        gfx.fillRect(x + 6, y + 6, 4, 3)
-        // Neck
-        gfx.fillStyle(0x997766, 1)
-        gfx.fillRect(x - 3, y - 10, 6, 5)
-        // Helmet — slightly different tint
-        gfx.fillStyle(0x889977, 0.5)
-        gfx.fillCircle(x, y - 16, 9)
-        gfx.lineStyle(2, 0x889988, 0.8)
-        gfx.strokeCircle(x, y - 16, 9)
-        // Face
-        gfx.fillStyle(0x997766, 1)
-        gfx.fillCircle(x, y - 16, 6)
-        // Eyes
-        gfx.fillStyle(0x222222, 1)
-        gfx.fillCircle(x - 2, y - 17, 1.2)
-        gfx.fillCircle(x + 2, y - 17, 1.2)
-        // Slight smile
-        gfx.lineStyle(1, 0x222222, 0.6)
-        gfx.beginPath()
-        gfx.arc(x, y - 14, 3, 0.2, Math.PI - 0.2)
-        gfx.strokePath()
-        // Visor reflection
-        gfx.fillStyle(0xaabb99, 0.2)
-        gfx.fillCircle(x - 3, y - 19, 3)
+    private drawCompanionHuman(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
+        const img = this.add.image(x, y, 'botanist', 'frame4').setOrigin(0.5, 0.5)
+        img.displayHeight = 80
+        img.scaleX = img.scaleY
     }
 
     private drawOldPhotograph(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
@@ -851,6 +804,8 @@ export class Ship extends Scene {
 
     update(_time: number, _delta: number) {
         if (this.dayComplete) return
+
+        AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'ship' })
 
         const body = this.player.body as Phaser.Physics.Arcade.Body
 
