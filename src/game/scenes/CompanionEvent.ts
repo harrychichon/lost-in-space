@@ -39,16 +39,10 @@ export class CompanionEvent extends Scene {
             });
         }
 
-        // Ship — floats in space, same drift as DayIntro
-        const ship = this.add.image(width * 0.5, height * 0.4, 'ship_default').setOrigin(0.5);
-        ship.setScale(0.12);
-        this.tweens.add({
-            targets: ship,
-            x: ship.x + 30,
-            y: ship.y - 5,
-            duration: 4000,
-            ease: 'Sine.easeInOut',
-        });
+        // Ship — landed to the left of the dog, scaled to match Planet.ts
+        const ship = this.add.image(width * 0.22, height * 0.66 + 110, 'ship_default').setOrigin(0.5, 1);
+        ship.displayHeight = 256;
+        ship.scaleX = ship.scaleY;
 
         // Dog — small figure near the wreck
         const dogX = width * 0.55;
