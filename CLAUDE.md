@@ -2,6 +2,13 @@
 
 This is the AI collaborator guide. Read this before making any changes.
 
+## ⚠️ Branching & Merging Rules — MANDATORY
+
+- AI agents MUST create feature or bugfix branches for all work.
+- AI agents MUST only merge or target PRs into the `staging` branch.
+- AI agents MUST **NEVER** merge into `master` unless the user explicitly instructs it.
+- When creating a PR, always set the base branch to `staging`, not `master`.
+
 ## What Is This Game?
 
 A 2D narrative game built with **Phaser 3.88** + **Tauri 2** for the **"Games That Matter"** hackathon. The game is a metaphor for loneliness vs community.
