@@ -3,7 +3,8 @@ import { AudioManager } from '../systems/AudioManager';
 
 const LINES = [
     'The stars fade. The ship drifts quietly into still space.',
-    'They sit for a moment, then reach up and pull off their headset.\nThe hum of engines fades into the ordinary sounds of a room.',
+    'They sit for a moment, then reach up and pull off their headset.',
+    'The hum of engines fades into the ordinary sounds of a room.',
     'A house.',
     'A home.',
     'They set down their headset on the desk and stand up.',
