@@ -82,6 +82,9 @@ export class AudioManager {
     private static tensionSound: Phaser.Sound.BaseSound | null = null;
     private static eventActive = false;
     private static currentEventKey: EventKey | null = null;
+    // Sounds currently fading out — tracked so orphaned fades can be hard-stopped
+    // before a new track starts (scene transitions kill scene tweens mid-fade).
+    private static fadingOut: Phaser.Sound.BaseSound[] = [];
 
     static getCurrentMusicKey(): string | null { return AudioManager.musicKey; }
     static isEventActive(): boolean { return AudioManager.eventActive; }
@@ -181,6 +184,11 @@ export class AudioManager {
 
     private static updateMusic(scene: Scene, key: string | null): void {
         if (key === AudioManager.musicKey && AudioManager.musicSound) return;
+        // Hard-stop any sounds whose fade-out tweens were orphaned by a scene transition.
+        for (const s of AudioManager.fadingOut) {
+            try { s.stop(); s.destroy(); } catch (_) { /* already destroyed */ }
+        }
+        AudioManager.fadingOut = [];
         AudioManager.fadeOut(scene, AudioManager.musicSound);
         AudioManager.musicSound = null;
         AudioManager.musicKey   = null;
@@ -210,7 +218,8 @@ export class AudioManager {
             const intensity = (TENSION_THRESHOLD - warmth) / TENSION_THRESHOLD;
             const targetVol = TENSION_MAX_VOLUME * intensity;
             if (AudioManager.tensionActive && AudioManager.tensionSound) {
-                scene.tweens.add({ targets: AudioManager.tensionSound, volume: targetVol, duration: FADE_MS, ease: 'Sine.easeOut' });
+                // Set volume directly — called every frame so no tween needed.
+                (AudioManager.tensionSound as any).volume = targetVol;
             } else {
                 if (!scene.cache.audio.has('spooky_wind')) return;
                 const sound = scene.sound.add('spooky_wind', { loop: true, volume: 0 });
@@ -226,12 +235,17 @@ export class AudioManager {
 
     private static fadeOut(scene: Scene, sound: Phaser.Sound.BaseSound | null): void {
         if (!sound) return;
+        AudioManager.fadingOut.push(sound);
         scene.tweens.add({
             targets: sound,
             volume: 0,
             duration: FADE_MS,
             ease: 'Sine.easeIn',
-            onComplete: () => { sound.stop(); sound.destroy(); },
+            onComplete: () => {
+                try { sound.stop(); sound.destroy(); } catch (_) { /* already cleaned up */ }
+                const idx = AudioManager.fadingOut.indexOf(sound);
+                if (idx !== -1) AudioManager.fadingOut.splice(idx, 1);
+            },
         });
     }
 
