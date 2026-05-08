@@ -108,7 +108,7 @@ export class Navigation extends Scene {
                 .setOrigin(0.5)
         } else {
             // Spread planets in a circle around the ship
-            const minRadius = 140
+            const minRadius = 180
             const maxRadius = Math.min(width, height) * 0.4
             const angleStep = (Math.PI * 2) / Math.max(state.planets.length, 1)
             const startAngle = -Math.PI / 2 // start from top
@@ -153,7 +153,7 @@ export class Navigation extends Scene {
                 // doesn't crowd the border.
                 const selectionRing = this.add.graphics()
                 selectionRing.lineStyle(2, 0x6ee0ff, 0.9)
-                selectionRing.strokeRoundedRect(px - 65, py - 40, 130, 112, 16)
+                selectionRing.strokeRoundedRect(px - 65, py - 43, 130, 112, 16)
                 selectionRing.setVisible(false)
 
                 // Planet name
@@ -192,16 +192,8 @@ export class Navigation extends Scene {
             this.updateSelection()
         }
 
-        // Back prompt
-        this.add
-            .text(cx, height - 30, '[L] Back to Ship', {
-                fontFamily: 'Georgia, serif',
-                fontSize: '14px',
-                color: '#555555',
-            })
-            .setOrigin(0.5)
-
-        // Inputs — A/D cycle, E confirm, L back
+        // Inputs — A/D cycle, E confirm, L back (the GlobalNavBar at the bottom
+        // already shows the L hint, so no extra prompt text needed up here).
         const keyA = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A)
         const keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
         const keyE = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E)
