@@ -83,13 +83,13 @@ export abstract class RoomScene extends Scene {
         // Side walls — hull panels that mask content outside the room
         const walls = this.add.graphics().setDepth(15);
         // Left hull
-        walls.fillStyle(0x0a0a0a, 1);
+        walls.fillStyle(0x000000, 1);
         walls.fillRect(0, 0, this.roomLeft, height);
         // Right hull
-        walls.fillStyle(0x0a0a0a, 1);
+        walls.fillStyle(0x000000, 1);
         walls.fillRect(this.roomRight, 0, width - this.roomRight, height);
         // Wall edge trim
-        walls.fillStyle(0x222222, 1);
+        walls.fillStyle(0x000000, 1);
         walls.fillRect(this.roomLeft - 3, height * 0.15, 3, height * 0.85);
         walls.fillRect(this.roomRight, height * 0.15, 3, height * 0.85);
 

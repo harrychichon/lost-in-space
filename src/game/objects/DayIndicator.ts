@@ -9,8 +9,10 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
     const panelW = 180;
     const panelH = 72;
 
+    const HUD_DEPTH = 30;
+
     // Background panel with border
-    const panel = scene.add.graphics();
+    const panel = scene.add.graphics().setDepth(HUD_DEPTH);
     panel.fillStyle(0x000000, 0.75);
     panel.fillRoundedRect(x, y, panelW, panelH, 6);
     panel.lineStyle(1, 0x555566, 1);
@@ -21,10 +23,10 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
         fontFamily: FONT,
         fontSize: '22px',
         color: '#e1e0e0',
-    });
+    }).setDepth(HUD_DEPTH);
 
     // Separator line
-    const line = scene.add.graphics();
+    const line = scene.add.graphics().setDepth(HUD_DEPTH);
     line.lineStyle(1, 0x555566, 0.7);
     line.lineBetween(x + 10, y + 42, x + panelW - 10, y + 42);
 
@@ -36,6 +38,6 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
         fontFamily: FONT,
         fontSize: '13px',
         color: '#888899',
-    });
+    }).setDepth(HUD_DEPTH);
 }
 
