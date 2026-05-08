@@ -241,18 +241,18 @@ export class Ship extends Scene {
             this.dogPrompt.setAlpha(0)
         }
 
-        // --- Human companion ---
+        // --- Human companion (next to Collection door) ---
         if (GameState.hasCompanion(this, 'human')) {
             const humanGfx = this.add.graphics()
-            const hx = width * 0.72
+            const hx = width * 0.78
             const hy = floorY - 25
             this.drawCompanionHuman(humanGfx, hx, hy)
         }
 
-        // --- Cavediver companion ---
+        // --- Cavediver companion (next to Engine door) ---
         if (GameState.hasCompanion(this, 'cavediver')) {
             const cavediverGfx = this.add.graphics()
-            const cx = width * 0.56
+            const cx = width * 0.51
             const cy = floorY - 25
             this.drawCavediver(cavediverGfx, cx, cy)
         }
@@ -586,13 +586,13 @@ export class Ship extends Scene {
 
     private drawCavediver(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         const img = this.add.image(x, y, 'cavediver', 'frame0').setOrigin(0.5, 0.5)
-        img.displayHeight = 90
+        img.displayHeight = 80
         img.scaleX = img.scaleY
     }
 
     private drawCompanionHuman(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         const img = this.add.image(x, y, 'botanist', 'frame4').setOrigin(0.5, 0.5)
-        img.displayHeight = 90
+        img.displayHeight = 80
         img.scaleX = img.scaleY
     }
 

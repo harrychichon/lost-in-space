@@ -57,52 +57,43 @@ export class CavediverEvent extends Scene {
             });
         }
 
-        // Crystals — the source of the light
-        const crystalGfx = this.add.graphics();
-        const crystals = [
-            { x: width * 0.52, y: height * 0.7, size: 14 },
-            { x: width * 0.58, y: height * 0.72, size: 10 },
-            { x: width * 0.47, y: height * 0.73, size: 8 },
-            { x: width * 0.62, y: height * 0.71, size: 11 },
-        ];
-        for (const c of crystals) {
-            crystalGfx.fillStyle(0xffcc66, 0.9);
-            crystalGfx.fillTriangle(
-                c.x - c.size / 2, c.y,
-                c.x + c.size / 2, c.y,
-                c.x, c.y - c.size * 1.5,
-            );
-            crystalGfx.fillStyle(0xffe8a8, 0.4);
-            crystalGfx.fillTriangle(
-                c.x - c.size / 4, c.y,
-                c.x + c.size / 8, c.y,
-                c.x - c.size / 8, c.y - c.size,
-            );
-        }
-
-        // Warm glow around the crystals
-        const glow = this.add.circle(width * 0.55, height * 0.7, 90, 0xffcc66, 0.18);
+        // Exit arch on the left wall — warm daylight pouring in (matches Cave scene)
+        const groundY = height * 0.75;
+        const exitX = 60;
+        const exitGfx = this.add.graphics();
+        const drawArch = (g: Phaser.GameObjects.Graphics, cx: number, baseY: number, halfW: number, h: number) => {
+            const archCenterY = baseY - h + halfW;
+            g.beginPath();
+            g.moveTo(cx - halfW, baseY);
+            g.lineTo(cx - halfW, archCenterY);
+            g.arc(cx, archCenterY, halfW, Math.PI, 0, false);
+            g.lineTo(cx + halfW, baseY);
+            g.closePath();
+            g.fillPath();
+        };
+        exitGfx.fillStyle(0x2a2026, 1);
+        drawArch(exitGfx, exitX, groundY, 38, 105);
+        const lightShades = [0x553322, 0x995533, 0xddaa55, 0xffeebb];
+        const lightScale  = [0.95,     0.78,     0.60,     0.42    ];
+        lightShades.forEach((shade, i) => {
+            exitGfx.fillStyle(shade, 1);
+            drawArch(exitGfx, exitX, groundY, 35 * lightScale[i], 100 * lightScale[i]);
+        });
+        const ambient = this.add.circle(exitX + 30, groundY - 40, 70, 0xffcc88, 0.15);
         this.tweens.add({
-            targets: glow,
+            targets: ambient,
             alpha: 0.08,
             scale: 1.15,
-            duration: 1400,
+            duration: 1600,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut',
         });
 
-        // Mira — cavediver sprite frame 0
-        const mx = width * 0.55;
-        const my = height * 0.62;
-        const mira = this.add.image(mx, my, 'cavediver', 'frame0').setOrigin(0.5, 1);
-        mira.displayHeight = 160;
+        // Mira — cavediver sprite, same size as on the ship, standing on the cave floor
+        const mira = this.add.image(width * 0.55, groundY, 'cavediver', 'frame0').setOrigin(0.5, 1);
+        mira.displayHeight = 80;
         mira.scaleX = mira.scaleY;
-
-        // Headlamp beam — origin at sprite head
-        const beam = this.add.graphics();
-        beam.fillStyle(0xffe8a8, 0.15);
-        beam.fillTriangle(mx, my - 130, mx + 70, my - 150, mx + 70, my - 110);
 
         // --- Story text sequence ---
         const textStyle = {

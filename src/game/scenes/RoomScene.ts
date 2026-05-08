@@ -201,13 +201,13 @@ export abstract class RoomScene extends Scene {
 
     protected drawCavediver(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         const img = this.add.image(x, y, 'cavediver', 'frame0').setOrigin(0.5, 0.5);
-        img.displayHeight = 90;
+        img.displayHeight = 80;
         img.scaleX = img.scaleY;
     }
 
     protected drawCompanionHuman(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
         const img = this.add.image(x, y, 'botanist', 'frame4').setOrigin(0.5, 0.5);
-        img.displayHeight = 90;
+        img.displayHeight = 80;
         img.scaleX = img.scaleY;
     }
 }
