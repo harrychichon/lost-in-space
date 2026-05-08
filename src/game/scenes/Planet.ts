@@ -148,6 +148,7 @@ export class Planet extends Scene {
     private nearShip = false;
     private caveIndicator!: HudPanel;
     private shipIndicator!: HudPanel;
+    private biome = '';
 
     constructor() {
         super('Planet');
@@ -165,10 +166,11 @@ export class Planet extends Scene {
             return;
         }
 
+        this.biome = planet.biome;
         AudioManager.update(this, {
             warmth: GameState.getSaturation(this),
             location: 'planet',
-            biome: planet.biome,
+            biome: this.biome,
         });
 
         this.cameras.main.setBackgroundColor(0x000000);
@@ -562,6 +564,8 @@ export class Planet extends Scene {
 
     update() {
         this.bgTile.tilePositionX = this.cameras.main.scrollX * 0.3;
+
+        AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'planet', biome: this.biome });
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
