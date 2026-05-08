@@ -107,16 +107,24 @@ export class Navigation extends Scene {
                 })
                 .setOrigin(0.5)
         } else {
-            // Spread planets in a circle around the ship
-            const minRadius = 180
-            const maxRadius = Math.min(width, height) * 0.4
-            const angleStep = (Math.PI * 2) / Math.max(state.planets.length, 1)
+            // Solar-system layout — concentric rings of 5 planets each.
+            // Index 0..4 → ring 0, 5..9 → ring 1, 10..14 → ring 2, 15..19 → ring 3.
+            // Odd rings are angle-staggered by half a step so adjacent rings don't
+            // align radially and visually clash.
+            const PLANETS_PER_RING = 5
+            const RING_RADII = [160, 210, 260, 300]
+            const angleStep = (Math.PI * 2) / PLANETS_PER_RING // 72°
             const startAngle = -Math.PI / 2 // start from top
 
             state.planets.forEach((planet, i) => {
-                // Vary the radius so they don't sit on a perfect circle
-                const radius = minRadius + ((i * 67) % 3) * ((maxRadius - minRadius) / 3)
-                const angle = startAngle + i * angleStep
+                const ringIndex = Math.min(
+                    Math.floor(i / PLANETS_PER_RING),
+                    RING_RADII.length - 1,
+                )
+                const positionInRing = i % PLANETS_PER_RING
+                const radius = RING_RADII[ringIndex]
+                const ringStagger = (ringIndex % 2) * (angleStep / 2)
+                const angle = startAngle + positionInRing * angleStep + ringStagger
                 const px = cx + Math.cos(angle) * radius
                 const py = cy + Math.sin(angle) * radius
                 const color = BIOME_COLORS[planet.biome]
