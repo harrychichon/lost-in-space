@@ -28,9 +28,12 @@ export class GreenhouseModal extends Scene {
     }
 
     create() {
-        this.finished = false;
-        this.canPress = true;
+        // Reset per-run state — Phaser reuses the scene instance across stop()/launch() cycles
+        // so class-property initializers only run once (on construction, not on re-open).
+        this.finished     = false;
         this.currentPlant = 0;
+        this.canPress     = true;
+        this.plantIcons   = [];
 
         const { width, height } = this.scale;
         const cx = width  * 0.5;
