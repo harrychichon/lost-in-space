@@ -93,7 +93,7 @@ export class Navigation extends Scene {
             .text(cx, cy + ship.displayHeight / 2 + 12, 'Your Ship', {
                 fontFamily: 'Georgia, serif',
                 fontSize: '11px',
-                color: '#666666',
+                color: '#b0b8c0',
             })
             .setOrigin(0.5)
 
