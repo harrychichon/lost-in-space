@@ -1,11 +1,12 @@
-export type TrackMood      = 'very-sad' | 'sad' | 'neutral' | 'happy';
+export type TrackMood      = 'very-sad' | 'sad' | 'neutral' | 'happy' | 'very-happy';
 export type TrackIntensity = 'low' | 'medium' | 'high';
 
 const MOOD_DIR: Record<TrackMood, string> = {
-    'very-sad': '1. very sad',
-    sad:        '2. sad',
-    neutral:    '3. neutral',
-    happy:      '4. happy',
+    'very-sad':   '1. very sad',
+    sad:          '2. sad',
+    neutral:      '3. neutral',
+    happy:        '4. happy',
+    'very-happy': '5. very happy',
 };
 
 const INTENSITY_DIR: Record<TrackIntensity, string> = {
@@ -17,41 +18,54 @@ const INTENSITY_DIR: Record<TrackIntensity, string> = {
 interface TrackDef { mood: TrackMood; intensity: TrackIntensity; file: string; }
 
 const TRACKS: TrackDef[] = [
-    // very sad — high intensity (events: alarm, companion_found)
-    { mood: 'very-sad', intensity: 'high',   file: 'bensound-november.mp3'  },
-    { mood: 'very-sad', intensity: 'high',   file: 'finding-doggo.mp3'      },
+    // very sad — low
+    { mood: 'very-sad',   intensity: 'low',    file: 'bensound-vanishinghope.mp3' },
 
-    // sad — low intensity (ship / rooms / navigation)
-    { mood: 'sad',      intensity: 'low',    file: 'bensound-silentsuspicions.mp3' },
-    { mood: 'sad',      intensity: 'low',    file: 'bensound-stifledscreams.mp3'  },
-    { mood: 'sad',      intensity: 'low',    file: 'bensound-vanishinghope.mp3'   },
+    // very sad — medium
+    { mood: 'very-sad',   intensity: 'medium', file: 'bensound-november.mp3' },
 
-    // sad — medium intensity (planets / caves)
-    { mood: 'sad',      intensity: 'medium', file: 'bensound-refract.mp3' },
+    // very sad — high (events: companion_found)
+    { mood: 'very-sad',   intensity: 'high',   file: 'finding-doggo.mp3' },
 
-    // neutral — low intensity (ship / rooms / navigation)
-    { mood: 'neutral',  intensity: 'low',    file: 'freesound-community-low-ambient-01-61547.mp3' },
-    { mood: 'neutral',  intensity: 'low',    file: 'tin-can-sky.mp3'  },
-    { mood: 'neutral',  intensity: 'low',    file: 'tin-can-sky-2.mp3' },
+    // sad — low
+    { mood: 'sad',        intensity: 'low',    file: 'bensound-silentsuspicions.mp3' },
+    { mood: 'sad',        intensity: 'low',    file: 'bensound-stifledscreams.mp3'  },
 
-    // neutral — medium intensity (planets / caves)
-    { mood: 'neutral',  intensity: 'medium', file: 'bensound-asyourworldgrowssmaller.mp3' },
+    // sad — medium
+    { mood: 'sad',        intensity: 'medium', file: 'bensound-refract.mp3' },
 
-    { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain.mp3'     },
-    { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain-2.mp3'   },
-    { mood: 'neutral',  intensity: 'medium', file: 'cobalt-thunder-2.mp3' },
+    // sad — high
+    { mood: 'sad',        intensity: 'high',   file: 'cobalt-thunder-2.mp3' },
 
-    // neutral — high intensity (event: cavediver)
-    { mood: 'neutral',  intensity: 'high',   file: 'cobalt-thunder.mp3' },
+    // neutral — low
+    { mood: 'neutral',    intensity: 'low',    file: 'freesound-community-low-ambient-01-61547.mp3' },
+    { mood: 'neutral',    intensity: 'low',    file: 'tin-can-sky.mp3'  },
+    { mood: 'neutral',    intensity: 'low',    file: 'tin-can-sky-2.mp3' },
 
-    // happy — medium intensity (planets / caves)
-    { mood: 'happy',    intensity: 'medium', file: 'bensound-longnight.mp3'      },
-    { mood: 'happy',    intensity: 'medium', file: 'echoes-between-quests.mp3'   },
-    { mood: 'happy',    intensity: 'medium', file: 'reactive-echoes.mp3'         },
-    { mood: 'happy',    intensity: 'medium', file: 'reactive-echoes-2.mp3'       },
+    // neutral — medium
+    { mood: 'neutral',    intensity: 'medium', file: 'bensound-asyourworldgrowssmaller.mp3' },
 
-    // happy — high intensity (event: rescue)
-    { mood: 'happy',    intensity: 'high',   file: 'bensound-hearty.mp3' },
+    // neutral — high (event: cavediver)
+    { mood: 'neutral',    intensity: 'high',   file: 'cobalt-thunder.mp3' },
+
+    // happy — low
+    { mood: 'happy',      intensity: 'low',    file: 'reactive-echoes-2.mp3' },
+
+    // happy — medium
+    { mood: 'happy',      intensity: 'medium', file: 'echoes-between-quests.mp3' },
+    { mood: 'happy',      intensity: 'medium', file: 'reactive-echoes.mp3'       },
+
+    // happy — high (event: rescue)
+    { mood: 'happy',      intensity: 'high',   file: 'bensound-hearty.mp3' },
+
+    // very happy — low
+    { mood: 'very-happy', intensity: 'low',    file: 'bensound-longnight.mp3' },
+
+    // very happy — medium
+    { mood: 'very-happy', intensity: 'medium', file: 'celesta-rain.mp3' },
+
+    // very happy — high
+    { mood: 'very-happy', intensity: 'high',   file: 'celesta-rain-2.mp3' },
 ];
 
 function toKey(t: TrackDef): string {
