@@ -99,7 +99,7 @@ export class Navigation extends Scene {
 
         if (state.planets.length === 0) {
             this.add
-                .text(cx, cy + 80, 'No planets discovered yet.\nKeep drifting...', {
+                .text(cx, cy + 100, 'No planets discovered yet.\nKeep drifting...', {
                     fontFamily: 'Georgia, serif',
                     fontSize: '18px',
                     color: '#555555',
