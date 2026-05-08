@@ -17,8 +17,9 @@ const INTENSITY_DIR: Record<TrackIntensity, string> = {
 interface TrackDef { mood: TrackMood; intensity: TrackIntensity; file: string; }
 
 const TRACKS: TrackDef[] = [
-    // very sad — high intensity (event: alarm)
-    { mood: 'very-sad', intensity: 'high',   file: 'bensound-november.mp3' },
+    // very sad — high intensity (events: alarm, companion_found)
+    { mood: 'very-sad', intensity: 'high',   file: 'bensound-november.mp3'  },
+    { mood: 'very-sad', intensity: 'high',   file: 'finding-doggo.mp3'      },
 
     // sad — low intensity (ship / rooms / navigation)
     { mood: 'sad',      intensity: 'low',    file: 'bensound-silentsuspicions.mp3' },
@@ -35,7 +36,7 @@ const TRACKS: TrackDef[] = [
 
     // neutral — medium intensity (planets / caves)
     { mood: 'neutral',  intensity: 'medium', file: 'bensound-asyourworldgrowssmaller.mp3' },
-    { mood: 'neutral',  intensity: 'medium', file: 'finding-doggo.mp3'    },
+
     { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain.mp3'     },
     { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain-2.mp3'   },
     { mood: 'neutral',  intensity: 'medium', file: 'cobalt-thunder-2.mp3' },
@@ -49,7 +50,7 @@ const TRACKS: TrackDef[] = [
     { mood: 'happy',    intensity: 'medium', file: 'reactive-echoes.mp3'         },
     { mood: 'happy',    intensity: 'medium', file: 'reactive-echoes-2.mp3'       },
 
-    // happy — high intensity (events: companion_found, rescue)
+    // happy — high intensity (event: rescue)
     { mood: 'happy',    intensity: 'high',   file: 'bensound-hearty.mp3' },
 ];
 
@@ -74,4 +75,11 @@ export function musicPool(mood: TrackMood, intensity: TrackIntensity): string[] 
 /** First high-intensity track for a mood — used for event playback. */
 export function eventTrack(mood: TrackMood): string {
     return musicPool(mood, 'high')[0] ?? '';
+}
+
+/** Phaser key for a specific file — used to pin a track to an exact event. */
+export function namedTrack(file: string): string {
+    const track = TRACKS.find(t => t.file === file);
+    if (!track) throw new Error(`MusicRegistry: no track found for file "${file}"`);
+    return toKey(track);
 }
