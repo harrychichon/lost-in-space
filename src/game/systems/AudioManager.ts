@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { musicPool, eventTrack } from './MusicRegistry';
+import { musicPool, eventTrack, namedTrack } from './MusicRegistry';
 
 export type LocationKey = 'ship' | 'room' | 'planet' | 'cave' | 'navigation';
 export type MoodKey = 'very_sad' | 'sad' | 'neutral' | 'happy' | 'very_happy';
@@ -41,7 +41,7 @@ const MEDIUM_TRACKS: Record<MoodKey, string[]> = {
 
 // Event tracks — first high-intensity track per mood from MusicRegistry
 const EVENT_TRACKS: Record<EventKey, string> = {
-    companion_found: eventTrack('happy'),
+    companion_found: namedTrack('finding-doggo.mp3'),
     rescue:          eventTrack('happy'),
     cavediver:       eventTrack('neutral'),
     alarm:           eventTrack('very-sad'),
