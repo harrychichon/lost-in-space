@@ -553,9 +553,12 @@ export class Ship extends Scene {
 
                 this.dayComplete = true
                 this.showMessage('You close your eyes. Another day done.')
-                this.time.delayedCall(2000, () => {
-                    GameState.advanceDay(this)
-                    this.scene.start('DayIntro')
+                this.time.delayedCall(800, () => {
+                    this.cameras.main.fadeOut(1200, 0, 0, 0)
+                    this.cameras.main.once('camerafadeoutcomplete', () => {
+                        GameState.advanceDay(this)
+                        this.scene.start('DayIntro')
+                    })
                 })
             },
         })
