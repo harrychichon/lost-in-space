@@ -27,6 +27,8 @@ export abstract class RoomScene extends Scene {
     protected message!: HudPanel;
     protected interactPoints: InteractPoint[] = [];
     protected currentPoint: InteractPoint | null = null;
+    /** Tracks the previous frame's interact-point so we know when to re-anchor the prompt. */
+    private lastPoint: InteractPoint | null = null;
     protected transitioning = false;
     protected floorY = 0;
     /** Left edge of the walkable room area. */
@@ -42,6 +44,7 @@ export abstract class RoomScene extends Scene {
         this.floorY = height * 0.7;
         this.interactPoints = [];
         this.currentPoint = null;
+        this.lastPoint = null;
         this.transitioning = false;
 
         // Room bounds — centered, 50% of canvas width
@@ -137,6 +140,7 @@ export abstract class RoomScene extends Scene {
     protected showMessage(text: string, _color?: string) {
         // _color kept for back-compat with old callers; HudPanel uses one consistent colour scheme.
         this.message.setContent(undefined, text);
+        this.anchorPanelAtPlayer(this.message);
         this.message.setAlpha(0);
         this.tweens.killTweensOf(this.message);
         this.tweens.add({
@@ -147,6 +151,21 @@ export abstract class RoomScene extends Scene {
             yoyo: true,
             ease: 'Power2',
         });
+    }
+
+    /**
+     * Position a HudPanel at the player's current screen position, clamped to viewport.
+     * Uses scrollX/Y so it works on both fixed-camera (Ship, rooms) and following-camera
+     * (Planet, Cave) scenes — HudPanel itself is scrollFactor 0, so we feed it screen coords.
+     */
+    protected anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -90) {
+        const cam = this.cameras.main;
+        const screenX = this.player.x - cam.scrollX;
+        const screenY = this.player.y - cam.scrollY;
+        const { width } = this.scale;
+        const halfW = 280;
+        const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
+        panel.setPosition(clampedX, screenY + yOffset);
     }
 
     /** Call from update() — handles movement, proximity detection, and input. */
@@ -175,13 +194,17 @@ export abstract class RoomScene extends Scene {
             }
         }
 
-        // Show/hide prompt
+        // Show/hide prompt — re-anchor to player only when the target changes
         if (this.currentPoint) {
             this.prompt.setContent(`[E] ${this.currentPoint.label}`);
+            if (this.currentPoint !== this.lastPoint) {
+                this.anchorPanelAtPlayer(this.prompt);
+            }
             this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0);
         }
+        this.lastPoint = this.currentPoint;
 
         // Handle E key
         if (this.currentPoint && Phaser.Input.Keyboard.JustDown(this.interactKey)) {

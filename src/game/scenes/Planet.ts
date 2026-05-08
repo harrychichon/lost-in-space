@@ -148,6 +148,8 @@ export class Planet extends Scene {
     private nearShip = false;
     private caveIndicator!: HudPanel;
     private shipIndicator!: HudPanel;
+    /** Tracks the last prompt target so we re-anchor to player only on transitions. */
+    private lastPromptTarget: 'cave' | 'ship' | PickupSprite | null = null;
 
     constructor() {
         super('Planet');
@@ -158,6 +160,7 @@ export class Planet extends Scene {
         this.planetId = data.planetId;
         this.pickups = [];
         this.currentPickup = null;
+        this.lastPromptTarget = null;
 
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
@@ -622,6 +625,8 @@ export class Planet extends Scene {
             } else {
                 this.prompt.setContent(undefined, "A dark cave. Wouldn't go in there.");
             }
+            if (this.lastPromptTarget !== 'cave') this.anchorPanelAtPlayer(this.prompt);
+            this.lastPromptTarget = 'cave';
             this.prompt.setAlpha(1);
 
             if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
@@ -642,6 +647,8 @@ export class Planet extends Scene {
 
         if (this.nearShip) {
             this.prompt.setContent('[E] Board', 'Your ship');
+            if (this.lastPromptTarget !== 'ship') this.anchorPanelAtPlayer(this.prompt);
+            this.lastPromptTarget = 'ship';
             this.prompt.setAlpha(1);
 
             if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
@@ -651,7 +658,7 @@ export class Planet extends Scene {
             return;
         }
 
-        // Show/hide prompt
+        // Show/hide prompt — re-anchor only when the pickup target changes
         if (this.currentPickup) {
             const info = this.getItemInfo(this.currentPickup.item);
             const isLocked = this.currentPickup.item.locked;
@@ -662,9 +669,12 @@ export class Planet extends Scene {
                 const resourceHint = info.resource ? ` (+${info.gain} ${info.resource})` : '';
                 this.prompt.setContent('[E] Pick up', `${info.name}${resourceHint}\n${info.desc}`);
             }
+            if (this.lastPromptTarget !== this.currentPickup) this.anchorPanelAtPlayer(this.prompt);
+            this.lastPromptTarget = this.currentPickup;
             this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0);
+            this.lastPromptTarget = null;
         }
 
         // Handle pickup
@@ -679,5 +689,16 @@ export class Planet extends Scene {
         if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
             this.scene.start('Ship');
         }
+    }
+
+    /** Position a HudPanel at the player's screen position, clamped to viewport. */
+    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -90) {
+        const cam = this.cameras.main;
+        const screenX = this.player.x - cam.scrollX;
+        const screenY = this.player.y - cam.scrollY;
+        const { width } = this.scale;
+        const halfW = 280;
+        const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
+        panel.setPosition(clampedX, screenY + yOffset);
     }
 }
