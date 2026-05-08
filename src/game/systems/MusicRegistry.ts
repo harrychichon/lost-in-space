@@ -14,11 +14,12 @@ const INTENSITY_DIR: Record<TrackIntensity, string> = {
     high:   '3. high intensity',
 };
 
-interface TrackDef { mood: TrackMood; intensity: TrackIntensity; file: string; eventOnly?: boolean; }
+interface TrackDef { mood: TrackMood; intensity: TrackIntensity; file: string; }
 
 const TRACKS: TrackDef[] = [
-    // very sad — high intensity (event: alarm)
-    { mood: 'very-sad', intensity: 'high',   file: 'bensound-november.mp3' },
+    // very sad — high intensity (events: alarm, companion_found)
+    { mood: 'very-sad', intensity: 'high',   file: 'bensound-november.mp3'  },
+    { mood: 'very-sad', intensity: 'high',   file: 'finding-doggo.mp3'      },
 
     // sad — low intensity (ship / rooms / navigation)
     { mood: 'sad',      intensity: 'low',    file: 'bensound-silentsuspicions.mp3' },
@@ -35,7 +36,7 @@ const TRACKS: TrackDef[] = [
 
     // neutral — medium intensity (planets / caves)
     { mood: 'neutral',  intensity: 'medium', file: 'bensound-asyourworldgrowssmaller.mp3' },
-    { mood: 'neutral',  intensity: 'medium', file: 'finding-doggo.mp3', eventOnly: true },
+
     { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain.mp3'     },
     { mood: 'neutral',  intensity: 'medium', file: 'celesta-rain-2.mp3'   },
     { mood: 'neutral',  intensity: 'medium', file: 'cobalt-thunder-2.mp3' },
@@ -49,7 +50,7 @@ const TRACKS: TrackDef[] = [
     { mood: 'happy',    intensity: 'medium', file: 'reactive-echoes.mp3'         },
     { mood: 'happy',    intensity: 'medium', file: 'reactive-echoes-2.mp3'       },
 
-    // happy — high intensity (events: companion_found, rescue)
+    // happy — high intensity (event: rescue)
     { mood: 'happy',    intensity: 'high',   file: 'bensound-hearty.mp3' },
 ];
 
@@ -68,7 +69,7 @@ export function musicEntries(): Array<[string, string]> {
 
 /** Phaser keys for all tracks matching mood + intensity — used to build AudioManager pools. */
 export function musicPool(mood: TrackMood, intensity: TrackIntensity): string[] {
-    return TRACKS.filter(t => t.mood === mood && t.intensity === intensity && !t.eventOnly).map(toKey);
+    return TRACKS.filter(t => t.mood === mood && t.intensity === intensity).map(toKey);
 }
 
 /** First high-intensity track for a mood — used for event playback. */
