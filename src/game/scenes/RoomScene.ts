@@ -112,13 +112,13 @@ export abstract class RoomScene extends Scene {
         this.message.setDepth(20).setAlpha(0)
 
         // Leave hint — small indicator-style panel bottom-left, sits above the global nav bar
-        const escHint = new HudPanel(this, 20, height - 24 - 52, {
+        const leaveHint = new HudPanel(this, 20, height - 24 - 52, {
             variant: 'indicator',
             anchor: 'left',
         })
-        this.add.existing(escHint)
-        escHint.setLabel('[L] Leave')
-        escHint.setDepth(20).setAlpha(0.6)
+        this.add.existing(leaveHint)
+        leaveHint.setLabel('[L] Leave')
+        leaveHint.setDepth(20).setAlpha(0.6)
 
         // Global navigation bar — pinned to bottom of screen
         this.add.existing(new GlobalNavBar(this))
