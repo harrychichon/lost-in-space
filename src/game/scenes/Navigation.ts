@@ -161,7 +161,7 @@ export class Navigation extends Scene {
                     .text(px, py + 32, planet.name, {
                         fontFamily: 'Georgia, serif',
                         fontSize: '13px',
-                        color: '#999999',
+                        color: '#b0b8c0',
                     })
                     .setOrigin(0.5)
 
@@ -170,7 +170,7 @@ export class Navigation extends Scene {
                     uncollected > 0
                         ? `${planet.biome} · ${uncollected}/${total} items`
                         : `${planet.biome} · explored`
-                const itemColor = uncollected > 0 ? '#777777' : '#555555'
+                const itemColor = uncollected > 0 ? '#969ea6' : '#707880'
                 this.add
                     .text(px, py + 47, itemLabel, {
                         fontFamily: 'Georgia, serif',
@@ -229,7 +229,7 @@ export class Navigation extends Scene {
             e.sprite.setScale(isSelected ? e.baseScale * 1.18 : e.baseScale)
             e.orbitRing.setAlpha(isSelected ? 0.6 : 0.15)
             e.selectionRing.setVisible(isSelected)
-            e.nameText.setColor(isSelected ? '#c0cdd9' : '#999999')
+            e.nameText.setColor(isSelected ? '#c0cdd9' : '#b0b8c0')
         })
     }
 
