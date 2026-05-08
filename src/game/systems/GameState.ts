@@ -276,6 +276,13 @@ export class GameState {
         return state.currentDay === 5;
     }
 
+    static isEndingDay(scene: Phaser.Scene): boolean {
+        const state = GameState.get(scene);
+        if (state.companions < 1) return false;
+        const lastFoundDay = Math.max(...state.companionList.map((c) => c.foundDay));
+        return state.currentDay >= lastFoundDay + 2;
+    }
+
     static isRescueEventReady(scene: Phaser.Scene): boolean {
         const state = GameState.get(scene);
         return (

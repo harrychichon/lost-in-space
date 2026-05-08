@@ -12,8 +12,9 @@ export class DayIntro extends Scene {
     create() {
         const state = GameState.get(this);
         const { width, height } = this.scale;
-        const isCompanionEvent = GameState.isCompanionEventDay(this);
-        const isDiscoveryDay = GameState.isPlanetDiscoveryDay(this) && !isCompanionEvent;
+        const isEndingDay = GameState.isEndingDay(this);
+        const isCompanionEvent = !isEndingDay && GameState.isCompanionEventDay(this);
+        const isDiscoveryDay = GameState.isPlanetDiscoveryDay(this) && !isCompanionEvent && !isEndingDay;
 
         this.cameras.main.setBackgroundColor(0x000000);
 
@@ -45,6 +46,23 @@ export class DayIntro extends Scene {
             duration: 1500,
             ease: 'Power2',
         });
+
+        // Ending takes highest priority
+        if (isEndingDay) {
+            const subText = this.add.text(width * 0.5, height * 0.73, 'The journey comes to an end...', {
+                fontFamily: 'Georgia, serif',
+                fontSize: '20px',
+                color: '#ddccbb',
+            }).setOrigin(0.5).setAlpha(0);
+
+            this.tweens.add({
+                targets: subText,
+                alpha: 1,
+                duration: 1500,
+                delay: 1000,
+                ease: 'Power2',
+            });
+        }
 
         // Companion event takes priority
         if (isCompanionEvent) {
@@ -86,7 +104,9 @@ export class DayIntro extends Scene {
 
         // Advance to next scene
         this.time.delayedCall(3500, () => {
-            if (isCompanionEvent) {
+            if (isEndingDay) {
+                this.scene.start('GameOver');
+            } else if (isCompanionEvent) {
                 this.scene.start('CompanionEvent');
             } else {
                 this.scene.start('Ship');
