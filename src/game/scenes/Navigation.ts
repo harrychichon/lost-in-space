@@ -36,8 +36,18 @@ function planetTextureFor(planet: PlanetData): string {
     return PLANET_TEXTURES[(n - 1 + PLANET_TEXTURES.length) % PLANET_TEXTURES.length]
 }
 
+interface PlanetEntry {
+    sprite: Phaser.GameObjects.Image
+    orbitRing: Phaser.GameObjects.Graphics
+    selectionRing: Phaser.GameObjects.Graphics
+    nameText: Phaser.GameObjects.Text
+    planet: PlanetData
+}
+
 export class Navigation extends Scene {
     private space!: SpaceBackground
+    private selectedIndex = 0
+    private planetEntries: PlanetEntry[] = []
 
     constructor() {
         super('Navigation')
@@ -48,6 +58,9 @@ export class Navigation extends Scene {
         const state = GameState.get(this)
         const cx = width * 0.5
         const cy = height * 0.5
+
+        this.selectedIndex = 0
+        this.planetEntries = []
 
         this.cameras.main.setBackgroundColor(0x000000)
 
@@ -69,24 +82,13 @@ export class Navigation extends Scene {
             })
             .setOrigin(0.5)
 
-        // Ship in center (top-down view)
-        const ship = this.add.graphics()
-        // Hull
-        ship.fillStyle(0x888888, 1)
-        ship.fillTriangle(cx, cy - 20, cx - 10, cy + 14, cx + 10, cy + 14)
-        // Cockpit window
-        ship.fillStyle(0xaaaacc, 1)
-        ship.fillTriangle(cx, cy - 12, cx - 5, cy, cx + 5, cy)
-        // Engine glow
-        ship.fillStyle(0x666677, 0.6)
-        ship.fillRect(cx - 6, cy + 14, 12, 4)
-        // Wings
-        ship.fillStyle(0x777777, 1)
-        ship.fillTriangle(cx - 10, cy + 6, cx - 22, cy + 16, cx - 10, cy + 14)
-        ship.fillTriangle(cx + 10, cy + 6, cx + 22, cy + 16, cx + 10, cy + 14)
+        // Ship in center — pixel-art sprite
+        const ship = this.add.image(cx, cy, 'ship_navigation').setOrigin(0.5)
+        ship.displayHeight = 110
+        ship.scaleX = ship.scaleY
 
         this.add
-            .text(cx, cy + 28, 'Your Ship', {
+            .text(cx, cy + ship.displayHeight / 2 + 12, 'Your Ship', {
                 fontFamily: 'Georgia, serif',
                 fontSize: '11px',
                 color: '#666666',
@@ -95,7 +97,7 @@ export class Navigation extends Scene {
 
         if (state.planets.length === 0) {
             this.add
-                .text(cx, cy + 60, 'No planets discovered yet.\nKeep drifting...', {
+                .text(cx, cy + 80, 'No planets discovered yet.\nKeep drifting...', {
                     fontFamily: 'Georgia, serif',
                     fontSize: '18px',
                     color: '#555555',
@@ -143,8 +145,14 @@ export class Navigation extends Scene {
                 orbitRing.lineStyle(1, color, 0.15)
                 orbitRing.strokeCircle(px, py, 34)
 
+                // Selection ring — bright cyan, only visible when this planet is selected
+                const selectionRing = this.add.graphics()
+                selectionRing.lineStyle(2, 0x6ee0ff, 0.9)
+                selectionRing.strokeCircle(px, py, 38)
+                selectionRing.setVisible(false)
+
                 // Planet name
-                this.add
+                const nameText = this.add
                     .text(px, py + 32, planet.name, {
                         fontFamily: 'Georgia, serif',
                         fontSize: '13px',
@@ -166,37 +174,16 @@ export class Navigation extends Scene {
                     })
                     .setOrigin(0.5)
 
-                // Key shortcut
-                if (i < 9) {
-                    this.add
-                        .text(px, py - 32, `[${i + 1}]`, {
-                            fontFamily: 'Georgia, serif',
-                            fontSize: '11px',
-                            color: '#555555',
-                        })
-                        .setOrigin(0.5)
-
-                    const key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ONE + i)
-                    key.on('down', () => {
-                        this.scene.start('Planet', { planetId: planet.id })
-                    })
-                }
-
-                // Interactive hover/click
-                planetSprite.setInteractive({ useHandCursor: true })
-                const baseScale = planetSprite.scale
-                planetSprite.on('pointerover', () => {
-                    planetSprite.setScale(baseScale * 1.15)
-                    orbitRing.setAlpha(0.6)
-                })
-                planetSprite.on('pointerout', () => {
-                    planetSprite.setScale(baseScale)
-                    orbitRing.setAlpha(1)
-                })
-                planetSprite.on('pointerdown', () => {
-                    this.scene.start('Planet', { planetId: planet.id })
+                this.planetEntries.push({
+                    sprite: planetSprite,
+                    orbitRing,
+                    selectionRing,
+                    nameText,
+                    planet,
                 })
             })
+
+            this.updateSelection()
         }
 
         // Back prompt
@@ -208,11 +195,44 @@ export class Navigation extends Scene {
             })
             .setOrigin(0.5)
 
-        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L).on('down', () => {
+        // Inputs — A/D cycle, E confirm, L back
+        const keyA = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A)
+        const keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+        const keyE = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E)
+        const keyL = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L)
+
+        keyA.on('down', () => {
+            const n = this.planetEntries.length
+            if (n === 0) return
+            this.selectedIndex = (this.selectedIndex - 1 + n) % n
+            this.updateSelection()
+        })
+        keyD.on('down', () => {
+            const n = this.planetEntries.length
+            if (n === 0) return
+            this.selectedIndex = (this.selectedIndex + 1) % n
+            this.updateSelection()
+        })
+        keyE.on('down', () => {
+            if (this.planetEntries.length === 0) return
+            const planet = this.planetEntries[this.selectedIndex].planet
+            this.scene.start('Planet', { planetId: planet.id })
+        })
+        keyL.on('down', () => {
             this.scene.start('Ship', { fromRoom: 'Navigation' })
         })
 
-        this.add.existing(new GlobalNavBar(this, ['L']))
+        this.add.existing(new GlobalNavBar(this, ['E', 'L']))
+    }
+
+    private updateSelection() {
+        this.planetEntries.forEach((e, i) => {
+            const isSelected = i === this.selectedIndex
+            e.sprite.setScale(isSelected ? 1.18 : 1.0)
+            e.orbitRing.setAlpha(isSelected ? 0.6 : 0.15)
+            e.selectionRing.setVisible(isSelected)
+            e.nameText.setColor(isSelected ? '#c0cdd9' : '#999999')
+        })
     }
 
     update(_time: number, delta: number) {
