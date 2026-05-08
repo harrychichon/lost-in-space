@@ -13,27 +13,48 @@ export class CavediverEvent extends Scene {
         const { width, height } = this.scale;
         this.planetId = data.planetId;
 
-        this.cameras.main.setBackgroundColor(0x050505);
+        this.cameras.main.setBackgroundColor(0x07060a);
 
         GameState.applyGrayscale(this);
         AudioManager.playEvent(this, 'cavediver');
 
-        // Cave walls — rough outline
+        // Cave walls — match the regular Cave scene
         const walls = this.add.graphics();
-        walls.fillStyle(0x1a1612, 1);
+        walls.fillStyle(0x141018, 1);
         walls.fillRect(0, 0, width, height);
-        // Uneven rock silhouette
-        walls.fillStyle(0x0a0806, 1);
-        walls.fillTriangle(0, 0, 0, height, width * 0.15, height * 0.5);
-        walls.fillTriangle(width, 0, width, height, width * 0.85, height * 0.5);
-        walls.fillRect(0, height * 0.78, width, height * 0.22);
+        // Ceiling silhouette
+        walls.fillStyle(0x080610, 1);
+        walls.fillRect(0, 0, width, height * 0.2);
+        const numSpikes = 12;
+        for (let i = 0; i < numSpikes; i++) {
+            const sx = (i + 0.5) * (width / numSpikes);
+            const sh = Phaser.Math.Between(20, 70);
+            walls.fillTriangle(sx - 10, height * 0.2, sx + 10, height * 0.2, sx, height * 0.2 + sh);
+        }
+        // Floor
+        walls.fillStyle(0x1a1520, 1);
+        walls.fillRect(0, height * 0.75, width, height * 0.25);
+        // Stalagmites
+        walls.fillStyle(0x0e0a14, 1);
+        for (let i = 0; i < 6; i++) {
+            const sx = Phaser.Math.Between(40, width - 40);
+            const sh = Phaser.Math.Between(18, 40);
+            walls.fillTriangle(sx - 8, height * 0.75, sx + 8, height * 0.75, sx, height * 0.75 - sh);
+        }
 
-        // Stalactites from ceiling
-        walls.fillStyle(0x0a0806, 1);
-        for (let i = 0; i < 8; i++) {
-            const sx = Phaser.Math.Between(width * 0.1, width * 0.9);
-            const sh = Phaser.Math.Between(20, 60);
-            walls.fillTriangle(sx - 8, 0, sx + 8, 0, sx, sh);
+        // Ambient glowing crystals scattered around (background light)
+        for (let i = 0; i < 5; i++) {
+            const ax = Phaser.Math.Between(60, width - 60);
+            const ay = Phaser.Math.Between(height * 0.35, height * 0.72);
+            const glow = this.add.circle(ax, ay, 4, 0xaaccff, 0.6);
+            this.tweens.add({
+                targets: glow,
+                alpha: 0.2,
+                duration: 900 + i * 150,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+            });
         }
 
         // Crystals — the source of the light
@@ -71,35 +92,17 @@ export class CavediverEvent extends Scene {
             ease: 'Sine.easeInOut',
         });
 
-        // Mira — hunched over the crystals, headlamp on
+        // Mira — cavediver sprite frame 0
         const mx = width * 0.55;
-        const my = height * 0.66;
-        const mira = this.add.graphics();
-        // Legs (crouched)
-        mira.fillStyle(0x554433, 1);
-        mira.fillRect(mx - 6, my + 6, 4, 10);
-        mira.fillRect(mx, my + 6, 4, 10);
-        // Body
-        mira.fillStyle(0x775544, 1);
-        mira.fillRect(mx - 9, my - 8, 18, 16);
-        // Arms reaching toward the crystals
-        mira.fillStyle(0x775544, 1);
-        mira.fillRect(mx + 6, my - 2, 10, 4);
-        mira.fillRect(mx - 14, my - 2, 8, 4);
-        // Head
-        mira.fillStyle(0xbb9977, 1);
-        mira.fillCircle(mx, my - 14, 7);
-        // Helmet
-        mira.lineStyle(2, 0x998866, 1);
-        mira.strokeCircle(mx, my - 14, 9);
-        // Headlamp
-        mira.fillStyle(0xffe8a8, 1);
-        mira.fillCircle(mx + 7, my - 14, 2.5);
+        const my = height * 0.62;
+        const mira = this.add.image(mx, my, 'cavediver', 'frame0').setOrigin(0.5, 1);
+        mira.displayHeight = 160;
+        mira.scaleX = mira.scaleY;
 
-        // Headlamp beam
+        // Headlamp beam — origin at sprite head
         const beam = this.add.graphics();
         beam.fillStyle(0xffe8a8, 0.15);
-        beam.fillTriangle(mx + 7, my - 14, mx + 60, my - 30, mx + 60, my);
+        beam.fillTriangle(mx, my - 130, mx + 70, my - 150, mx + 70, my - 110);
 
         // --- Story text sequence ---
         const textStyle = {

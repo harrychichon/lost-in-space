@@ -29,27 +29,19 @@ export class CompanionEvent extends Scene {
         ground.fillCircle(width * 0.3, height * 0.65, 40);
         ground.fillCircle(width * 0.7, height * 0.65, 50);
 
-        // Wrecked ship — broken hull
-        const wreck = this.add.graphics();
-        // Main hull (tilted, broken)
-        wreck.fillStyle(0x555555, 1);
-        wreck.fillRect(width * 0.35, height * 0.45, 180, 30);
-        // Broken nose
-        wreck.fillStyle(0x444444, 1);
-        wreck.fillTriangle(
-            width * 0.35 + 180, height * 0.45,
-            width * 0.35 + 180, height * 0.45 + 30,
-            width * 0.35 + 210, height * 0.45 + 25
-        );
-        // Damage marks
-        wreck.fillStyle(0x333333, 1);
-        wreck.fillRect(width * 0.35 + 40, height * 0.45 + 5, 15, 20);
-        wreck.fillRect(width * 0.35 + 80, height * 0.45 + 8, 10, 15);
+        // Wrecked ship — same sprite used in DayIntro, tilted as if crashed
+        const wreckShip = this.add.image(width * 0.42, height * 0.6, 'ship_default')
+            .setOrigin(0.5)
+            .setScale(0.12)
+            .setRotation(0.35);
+        wreckShip.setTint(0x666666);
+
         // Debris on ground
-        wreck.fillStyle(0x444444, 0.6);
-        wreck.fillRect(width * 0.3, height * 0.63, 20, 8);
-        wreck.fillRect(width * 0.55, height * 0.62, 12, 10);
-        wreck.fillRect(width * 0.65, height * 0.64, 15, 6);
+        const debris = this.add.graphics();
+        debris.fillStyle(0x444444, 0.6);
+        debris.fillRect(width * 0.3, height * 0.63, 20, 8);
+        debris.fillRect(width * 0.55, height * 0.62, 12, 10);
+        debris.fillRect(width * 0.65, height * 0.64, 15, 6);
 
         // Dog — small figure near the wreck
         const dogX = width * 0.55;
