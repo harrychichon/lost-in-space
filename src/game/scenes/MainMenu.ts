@@ -31,7 +31,7 @@ export class MainMenu extends Scene {
         }).setOrigin(0.5).setAlpha(0);
 
         // Start prompt
-        const prompt = this.add.text(width * 0.5, height * 0.65, 'Click to begin', {
+        const prompt = this.add.text(width * 0.5, height * 0.65, 'Press [E] to start', {
             fontFamily: 'Georgia, serif',
             fontSize: '16px',
             color: '#444444',
@@ -61,8 +61,8 @@ export class MainMenu extends Scene {
 
         this.game.canvas.style.filter = 'grayscale(100%)';
 
-        // Click to start
-        this.input.once('pointerdown', () => {
+        // Press E to start
+        this.input.keyboard!.once('keydown-E', () => {
             GameState.init(this);
             this.scene.start('DayIntro');
         });
