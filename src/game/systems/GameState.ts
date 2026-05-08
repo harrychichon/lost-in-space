@@ -319,7 +319,7 @@ export class GameState {
         if (state.warmthOverride !== null) return state.warmthOverride;
         const base = Math.min(1, state.companions * 0.3);
         const wellbeing = GameState.getWellbeing(scene);
-        const nudge = (wellbeing - 0.5) * 0.3;
+        const nudge = (wellbeing - 0.5) * 0.4;
         return Math.max(0, Math.min(1, base + nudge));
     }
 
