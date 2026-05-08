@@ -147,6 +147,8 @@ export class DevPanel extends Scene {
             GameState.update(this, { resources: { oxygen: 10, food: 10, fuel: 10, parts: 10 } });
             this.restartActiveScene();
         });
+        y += 22;
+        this.addButton(12, y, "[G] Trigger end scene", () => this.goToScene("GameOver"));
 
         // ── Keyboard shortcuts ─────────────────────────────────────────────
         this.input.keyboard!.on("keydown-M",    () => this.scene.stop("DevPanel"));
@@ -166,6 +168,7 @@ export class DevPanel extends Scene {
         this.input.keyboard!.on("keydown-W",    () => this.cycleWarmth());
         this.input.keyboard!.on("keydown-T",    () => this.cycleWellbeing());
         this.input.keyboard!.on("keydown-E",    () => this.cycleEvent());
+        this.input.keyboard!.on("keydown-G",    () => this.goToScene("GameOver"));
 
         this.refreshState();
     }

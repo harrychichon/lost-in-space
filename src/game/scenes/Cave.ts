@@ -309,6 +309,8 @@ export class Cave extends Scene {
     }
 
     update() {
+        AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'cave' });
+
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
         if (this.cursors.left.isDown || this.keyA.isDown) {
@@ -344,14 +346,16 @@ export class Cave extends Scene {
         // HUD: hide indicator when near exit (prompt takes over)
         this.exitIndicator.setAlpha(this.nearExit ? 0 : 0.7);
 
-        // Prompt priority: items > exit > nothing
+        // Prompt priority: items > exit > nothing — pinned above player every frame
         if (this.currentPickup) {
             const info = this.getItemInfo(this.currentPickup.item);
             const resourceHint = info.resource ? ` (+${info.gain} ${info.resource})` : '';
             this.prompt.setContent('[E] Pick up', `${info.name}${resourceHint}\n${info.desc}`);
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
         } else if (this.nearExit) {
             this.prompt.setContent('[E] Leave', 'Surface');
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0);
@@ -371,5 +375,16 @@ export class Cave extends Scene {
         if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
             this.scene.start('Planet', { planetId: this.planetId, spawnAtCave: true });
         }
+    }
+
+    /** Pin a HudPanel's x to the player's screen position; y stays at spawn. */
+    private anchorPanelAtPlayer(panel: HudPanel) {
+        const cam = this.cameras.main;
+        const screenX = this.player.x - cam.scrollX;
+        const { width } = this.scale;
+        const halfW = panel.getBounds().width / 2;
+        const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
+        panel.setX(clampedX);
+        panel.setDepth(50);
     }
 }

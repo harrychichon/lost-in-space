@@ -71,7 +71,7 @@ export class Preloader extends Scene {
         this.load.image("bg_main", "sceens/main.png");
         this.load.image("bg_kitchen", "sceens/kitchen.png");
         this.load.image("bg_engine", "sceens/engine.room.png");
-        this.load.image("bg_companion_event", "sceens/dogMeeting/img1.png");
+        this.load.image("bg_companion_event", "sceens/img1.png");
 
         // Terrain tile atlas (Kenney-style XML)
         this.load.atlasXML(

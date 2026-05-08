@@ -54,9 +54,10 @@ export class HudPanel extends Phaser.GameObjects.Container {
         this.radius  = 6;
         this.armLen  = isPrompt ? 12 : 8;
 
-        // action matches the nav-bar key/label size; desc bumped slightly for readability
+        // action matches the nav-bar key/label size; desc bumped to 14 for readability
+        // on multi-line narrative / item-description content.
         const actionSize = 16;
-        const descSize   = 12;
+        const descSize   = 14;
         const fontStyle  = 'normal'; // Share Tech Mono carries its own weight; bold renders unevenly
 
         this.glowGfx    = scene.add.graphics();

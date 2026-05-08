@@ -45,6 +45,10 @@ export class Ship extends Scene {
         this.doors = []
         this.currentDoor = null
 
+        // Fade in from black on every entry — smooths the morning-after-sleep transition
+        // and any return from rooms / planets / cave.
+        this.cameras.main.fadeIn(500, 0, 0, 0)
+
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
             Kitchen: 0.18,
@@ -174,6 +178,14 @@ export class Ship extends Scene {
         this.createDoor(width * 0.6, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms', {
             hideVisual: true,
             hideLabel: true,
+            customAction: () => {
+                if (GameState.get(this).chores.comms) {
+                    this.showMessage('You have already checked comms today.')
+                    return
+                }
+                this.scene.launch('CommsModal')
+                this.scene.pause('Ship')
+            },
         })
 
         // Collection room — always visible, only usable after botanist joins
@@ -542,9 +554,12 @@ export class Ship extends Scene {
 
                 this.dayComplete = true
                 this.showMessage('You close your eyes. Another day done.')
-                this.time.delayedCall(2000, () => {
-                    GameState.advanceDay(this)
-                    this.scene.start('DayIntro')
+                this.time.delayedCall(800, () => {
+                    this.cameras.main.fadeOut(1200, 0, 0, 0)
+                    this.cameras.main.once('camerafadeoutcomplete', () => {
+                        GameState.advanceDay(this)
+                        this.scene.start('DayIntro')
+                    })
                 })
             },
         })
@@ -552,16 +567,18 @@ export class Ship extends Scene {
 
     private showMessage(text: string) {
         const { width, height } = this.scale
+        const msgY = height * 0.5
         const msg = this.add
-            .text(width * 0.5, height * 0.55, text, {
+            .text(this.player.x, msgY, text, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '18px',
-                color: '#999999',
+                color: '#c0cdd9',
                 wordWrap: { width: 400 },
                 align: 'center',
             })
             .setOrigin(0.5)
             .setAlpha(0)
+            .setDepth(50)
 
         this.tweens.add({
             targets: msg,
@@ -569,14 +586,77 @@ export class Ship extends Scene {
             duration: 500,
             yoyo: true,
             hold: 1500,
+            // Follow the player on x; y stays where the message spawned
+            onUpdate: () => {
+                const halfW = msg.width / 2
+                const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
+                msg.setX(x)
+            },
             onComplete: () => msg.destroy(),
         })
     }
 
-    private drawCavediver(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
-        const img = this.add.image(x, y, 'cavediver', 'frame0').setOrigin(0.5, 0.5)
-        img.displayHeight = 80
-        img.scaleX = img.scaleY
+    /** Pin a HudPanel's x to the player's screen position; y stays at spawn. */
+    private anchorPanelAtPlayer(panel: HudPanel) {
+        const cam = this.cameras.main
+        const screenX = this.player.x - cam.scrollX
+        const { width } = this.scale
+        const halfW = panel.getBounds().width / 2
+        const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX))
+        panel.setX(clampedX)
+        panel.setDepth(50)
+    }
+
+    private drawCavediver(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
+        // Legs
+        gfx.fillStyle(0x554433, 1)
+        gfx.fillRect(x - 5, y + 10, 4, 14)
+        gfx.fillRect(x + 1, y + 10, 4, 14)
+        // Heavy boots
+        gfx.fillStyle(0x332a20, 1)
+        gfx.fillRect(x - 7, y + 22, 7, 4)
+        gfx.fillRect(x, y + 22, 7, 4)
+        // Body — rugged mining suit
+        gfx.fillStyle(0x775544, 1)
+        gfx.fillRect(x - 8, y - 6, 16, 18)
+        // Tool belt
+        gfx.fillStyle(0x332a20, 1)
+        gfx.fillRect(x - 8, y + 6, 16, 4)
+        gfx.fillStyle(0x888877, 1)
+        gfx.fillRect(x - 6, y + 7, 3, 3)
+        gfx.fillRect(x + 3, y + 7, 3, 3)
+        // Arms
+        gfx.fillStyle(0x775544, 1)
+        gfx.fillRect(x - 11, y - 4, 4, 12)
+        gfx.fillRect(x + 7, y - 4, 4, 12)
+        // Gloves
+        gfx.fillStyle(0x553322, 1)
+        gfx.fillRect(x - 11, y + 6, 4, 3)
+        gfx.fillRect(x + 7, y + 6, 4, 3)
+        // Neck
+        gfx.fillStyle(0xbb9977, 1)
+        gfx.fillRect(x - 3, y - 10, 6, 5)
+        // Helmet — hardhat
+        gfx.fillStyle(0x997744, 1)
+        gfx.fillCircle(x, y - 16, 9)
+        gfx.fillRect(x - 9, y - 16, 18, 3)
+        // Helmet lamp
+        gfx.fillStyle(0xffe8a8, 1)
+        gfx.fillCircle(x, y - 20, 3)
+        gfx.fillStyle(0xffcc66, 0.4)
+        gfx.fillCircle(x, y - 20, 5)
+        // Face
+        gfx.fillStyle(0xbb9977, 1)
+        gfx.fillCircle(x, y - 15, 5)
+        // Eyes
+        gfx.fillStyle(0x222222, 1)
+        gfx.fillCircle(x - 2, y - 15, 1.2)
+        gfx.fillCircle(x + 2, y - 15, 1.2)
+        // Smirk
+        gfx.lineStyle(1, 0x222222, 0.7)
+        gfx.beginPath()
+        gfx.arc(x + 1, y - 13, 3, 0.1, Math.PI - 0.5)
+        gfx.strokePath()
     }
 
     private drawCompanionHuman(_gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
@@ -733,6 +813,8 @@ export class Ship extends Scene {
     update(_time: number, _delta: number) {
         if (this.dayComplete) return
 
+        AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'ship' })
+
         const body = this.player.body as Phaser.Physics.Arcade.Body
 
         // Movement (arrows or WASD)
@@ -756,18 +838,21 @@ export class Ship extends Scene {
             }
         }
 
-        // Show/hide door prompt
+        // Show/hide door prompt — keep it pinned above the player every frame
         if (this.currentDoor) {
             this.prompt.setContent('[E] Enter', this.currentDoor.name)
+            this.anchorPanelAtPlayer(this.prompt)
             this.prompt.setAlpha(1)
         } else {
             this.prompt.setAlpha(0)
         }
 
-        // Show/hide dog prompt when near the dog
+        // Show/hide dog prompt when near the dog — also follows
         if (this.dogSprite && this.dogPrompt) {
             const nearDog = Math.abs(this.player.x - this.dogX) < 60
-            this.dogPrompt.setAlpha(nearDog && !this.currentDoor ? 1 : 0)
+            const visible = nearDog && !this.currentDoor
+            if (visible) this.anchorPanelAtPlayer(this.dogPrompt)
+            this.dogPrompt.setAlpha(visible ? 1 : 0)
         }
 
         // Handle interaction
