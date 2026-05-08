@@ -1,12 +1,9 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
-import { SpaceBackground } from '../objects/SpaceBackground';
 import { createDogSprite } from '../objects/Dog';
 
 export class CompanionEvent extends Scene {
-    private space!: SpaceBackground;
-
     constructor() {
         super('CompanionEvent');
     }
@@ -19,41 +16,37 @@ export class CompanionEvent extends Scene {
         GameState.applyGrayscale(this);
         AudioManager.playEvent(this, 'companion_found');
 
-        this.space = new SpaceBackground(this);
+        const bg = this.add.image(width * 0.5, height * 0.5, 'bg_companion_event').setDepth(-100);
+        bg.setDisplaySize(width, height);
 
-        // Ground — barren rocky surface
-        const ground = this.add.graphics();
-        ground.fillStyle(0x1a1a12, 1);
-        ground.fillRect(0, height * 0.65, width, height * 0.35);
-        ground.fillStyle(0x222218, 1);
-        ground.fillCircle(width * 0.3, height * 0.65, 40);
-        ground.fillCircle(width * 0.7, height * 0.65, 50);
+        // Twinkling stars overlay
+        for (let i = 0; i < 60; i++) {
+            const star = this.add.circle(
+                Phaser.Math.Between(0, width),
+                Phaser.Math.Between(0, height * 0.6),
+                Phaser.Math.Between(1, 4),
+                0xffffff,
+                Phaser.Math.FloatBetween(0.3, 0.9),
+            ).setDepth(-50);
+            this.tweens.add({
+                targets: star,
+                alpha: { from: star.alpha, to: Phaser.Math.FloatBetween(0.05, 0.3) },
+                duration: Phaser.Math.Between(800, 3000),
+                yoyo: true,
+                repeat: -1,
+                delay: Phaser.Math.Between(0, 2000),
+                ease: 'Sine.easeInOut',
+            });
+        }
 
-        // Wrecked ship — broken hull
-        const wreck = this.add.graphics();
-        // Main hull (tilted, broken)
-        wreck.fillStyle(0x555555, 1);
-        wreck.fillRect(width * 0.35, height * 0.45, 180, 30);
-        // Broken nose
-        wreck.fillStyle(0x444444, 1);
-        wreck.fillTriangle(
-            width * 0.35 + 180, height * 0.45,
-            width * 0.35 + 180, height * 0.45 + 30,
-            width * 0.35 + 210, height * 0.45 + 25
-        );
-        // Damage marks
-        wreck.fillStyle(0x333333, 1);
-        wreck.fillRect(width * 0.35 + 40, height * 0.45 + 5, 15, 20);
-        wreck.fillRect(width * 0.35 + 80, height * 0.45 + 8, 10, 15);
-        // Debris on ground
-        wreck.fillStyle(0x444444, 0.6);
-        wreck.fillRect(width * 0.3, height * 0.63, 20, 8);
-        wreck.fillRect(width * 0.55, height * 0.62, 12, 10);
-        wreck.fillRect(width * 0.65, height * 0.64, 15, 6);
+        // Ship — landed to the left of the dog, scaled to match Planet.ts
+        const ship = this.add.image(width * 0.22, height * 0.66 + 110, 'ship_default').setOrigin(0.5, 1);
+        ship.displayHeight = 256;
+        ship.scaleX = ship.scaleY;
 
         // Dog — small figure near the wreck
         const dogX = width * 0.55;
-        const dogGroundY = height * 0.66;
+        const dogGroundY = height * 0.66 + 30;
         createDogSprite(this, dogX, dogGroundY);
 
         // --- Story text sequence ---
@@ -121,7 +114,5 @@ export class CompanionEvent extends Scene {
         this.time.delayedCall(1000, showNextLine);
     }
 
-    update(_time: number, delta: number) {
-        this.space.update(delta);
-    }
+    update() {}
 }

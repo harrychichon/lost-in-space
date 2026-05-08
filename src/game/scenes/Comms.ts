@@ -121,17 +121,10 @@ export class Comms extends RoomScene {
                             msg = 'You scan the frequencies. Nothing new.';
                         }
                         this.showMessage(msg);
-                        this.add.text(choreX, this.floorY - 85, '✓', {
-                            fontFamily: 'Arial', fontSize: '22px', color: '#556655',
-                        }).setOrigin(0.5).setDepth(5);
                     }
                 },
             };
             this.interactPoints.push(chorePoint);
-        } else {
-            this.add.text(choreX, this.floorY - 85, '✓', {
-                fontFamily: 'Arial', fontSize: '22px', color: '#556655',
-            }).setOrigin(0.5).setDepth(5);
         }
 
         this.setupPlayerAndUI();

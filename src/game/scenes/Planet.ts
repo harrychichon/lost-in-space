@@ -159,6 +159,7 @@ export class Planet extends Scene {
         this.planetId = data.planetId;
         this.pickups = [];
         this.currentPickup = null;
+        this.leaving = false;
 
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
@@ -174,6 +175,9 @@ export class Planet extends Scene {
         });
 
         this.cameras.main.setBackgroundColor(0x000000);
+
+        // Fade in from black on landing — matches the sleep-cycle fade pattern
+        this.cameras.main.fadeIn(500, 0, 0, 0);
 
         GameState.applyGrayscale(this);
 
@@ -649,7 +653,7 @@ export class Planet extends Scene {
             this.prompt.setAlpha(1);
 
             if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-                this.scene.start('Ship');
+                this.leaveToShip();
                 return;
             }
             return;
@@ -681,7 +685,17 @@ export class Planet extends Scene {
 
         // Leave planet
         if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
-            this.scene.start('Ship');
+            this.leaveToShip();
         }
+    }
+
+    /** Fade to black, then return to Ship. Idempotent — repeated calls are ignored. */
+    private leaveToShip(): void {
+        if (this.leaving) return;
+        this.leaving = true;
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('Ship');
+        });
     }
 }
