@@ -740,6 +740,8 @@ export class Ship extends Scene {
     update(_time: number, _delta: number) {
         if (this.dayComplete) return
 
+        AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'ship' })
+
         const body = this.player.body as Phaser.Physics.Arcade.Body
 
         // Movement (arrows or WASD)
