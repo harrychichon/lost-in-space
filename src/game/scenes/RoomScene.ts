@@ -27,8 +27,6 @@ export abstract class RoomScene extends Scene {
     protected message!: HudPanel;
     protected interactPoints: InteractPoint[] = [];
     protected currentPoint: InteractPoint | null = null;
-    /** Tracks the previous frame's interact-point so we know when to re-anchor the prompt. */
-    private lastPoint: InteractPoint | null = null;
     protected transitioning = false;
     protected floorY = 0;
     /** Left edge of the walkable room area. */
@@ -44,7 +42,6 @@ export abstract class RoomScene extends Scene {
         this.floorY = height * 0.7;
         this.interactPoints = [];
         this.currentPoint = null;
-        this.lastPoint = null;
         this.transitioning = false;
 
         // Room bounds — centered, 50% of canvas width
@@ -194,17 +191,19 @@ export abstract class RoomScene extends Scene {
             }
         }
 
-        // Show/hide prompt — re-anchor to player only when the target changes
+        // Show/hide prompt — keep it pinned above the player every frame
         if (this.currentPoint) {
             this.prompt.setContent(`[E] ${this.currentPoint.label}`);
-            if (this.currentPoint !== this.lastPoint) {
-                this.anchorPanelAtPlayer(this.prompt);
-            }
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0);
         }
-        this.lastPoint = this.currentPoint;
+
+        // Message panel also follows the player while visible
+        if (this.message.alpha > 0) {
+            this.anchorPanelAtPlayer(this.message);
+        }
 
         // Handle E key
         if (this.currentPoint && Phaser.Input.Keyboard.JustDown(this.interactKey)) {

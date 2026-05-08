@@ -85,8 +85,6 @@ export class Cave extends Scene {
     private exitY = 0;
     private nearExit = false;
     private exitIndicator!: HudPanel;
-    /** Tracks the last prompt target so we re-anchor to player only on transitions. */
-    private lastPromptTarget: PickupSprite | 'exit' | null = null;
 
     constructor() {
         super('Cave');
@@ -97,7 +95,6 @@ export class Cave extends Scene {
         this.planetId = data.planetId;
         this.pickups = [];
         this.currentPickup = null;
-        this.lastPromptTarget = null;
 
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
@@ -347,28 +344,20 @@ export class Cave extends Scene {
         // HUD: hide indicator when near exit (prompt takes over)
         this.exitIndicator.setAlpha(this.nearExit ? 0 : 0.7);
 
-        // Prompt priority: items > exit > nothing
-        // Re-anchor to player only when the prompt target changes (option-2 lock).
-        const promptTarget: PickupSprite | 'exit' | null = this.currentPickup
-            ? this.currentPickup
-            : this.nearExit
-              ? 'exit'
-              : null;
-
+        // Prompt priority: items > exit > nothing — pinned above player every frame
         if (this.currentPickup) {
             const info = this.getItemInfo(this.currentPickup.item);
             const resourceHint = info.resource ? ` (+${info.gain} ${info.resource})` : '';
             this.prompt.setContent('[E] Pick up', `${info.name}${resourceHint}\n${info.desc}`);
-            if (promptTarget !== this.lastPromptTarget) this.anchorPanelAtPlayer(this.prompt);
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
         } else if (this.nearExit) {
             this.prompt.setContent('[E] Leave', 'Surface');
-            if (promptTarget !== this.lastPromptTarget) this.anchorPanelAtPlayer(this.prompt);
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0);
         }
-        this.lastPromptTarget = promptTarget;
 
         // Interactions
         if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {

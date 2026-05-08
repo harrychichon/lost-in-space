@@ -27,8 +27,6 @@ export class Ship extends Scene {
     private interactKey!: Phaser.Input.Keyboard.Key
     private doors: Door[] = []
     private currentDoor: Door | null = null
-    private lastDoor: Door | null = null
-    private wasNearDog = false
     private prompt!: HudPanel
     private dogPrompt!: HudPanel
     private playerSprite!: Phaser.GameObjects.Sprite
@@ -46,8 +44,6 @@ export class Ship extends Scene {
         this.dayComplete = false
         this.doors = []
         this.currentDoor = null
-        this.lastDoor = null
-        this.wasNearDog = false
 
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
@@ -567,12 +563,10 @@ export class Ship extends Scene {
 
     private showMessage(text: string) {
         const { width } = this.scale
-        // Anchor to the player at the moment the message fires (option-2 lock)
         const halfW = 200
-        const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
-        const y = this.player.y - 90
+        const initialX = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
         const msg = this.add
-            .text(x, y, text, {
+            .text(initialX, this.player.y - 90, text, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '18px',
                 color: '#999999',
@@ -589,6 +583,11 @@ export class Ship extends Scene {
             duration: 500,
             yoyo: true,
             hold: 1500,
+            // Reposition every frame so the message follows the player
+            onUpdate: () => {
+                const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
+                msg.setPosition(x, this.player.y - 90)
+            },
             onComplete: () => msg.destroy(),
         })
     }
@@ -876,27 +875,21 @@ export class Ship extends Scene {
             }
         }
 
-        // Show/hide door prompt — re-anchor to player only when the door changes
+        // Show/hide door prompt — keep it pinned above the player every frame
         if (this.currentDoor) {
             this.prompt.setContent('[E] Enter', this.currentDoor.name)
-            if (this.currentDoor !== this.lastDoor) {
-                this.anchorPanelAtPlayer(this.prompt)
-            }
+            this.anchorPanelAtPlayer(this.prompt)
             this.prompt.setAlpha(1)
         } else {
             this.prompt.setAlpha(0)
         }
-        this.lastDoor = this.currentDoor
 
-        // Show/hide dog prompt when near the dog — re-anchor on transition
+        // Show/hide dog prompt when near the dog — also follows
         if (this.dogSprite && this.dogPrompt) {
             const nearDog = Math.abs(this.player.x - this.dogX) < 60
             const visible = nearDog && !this.currentDoor
-            if (visible && !this.wasNearDog) {
-                this.anchorPanelAtPlayer(this.dogPrompt, -120)
-            }
+            if (visible) this.anchorPanelAtPlayer(this.dogPrompt, -120)
             this.dogPrompt.setAlpha(visible ? 1 : 0)
-            this.wasNearDog = visible
         }
 
         // Handle interaction
