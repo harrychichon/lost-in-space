@@ -4,6 +4,8 @@ import { GameState } from '../systems/GameState';
 const FONT = '"Share Tech Mono", "Courier New", monospace';
 
 export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameState.get>) {
+    const startIdx = scene.children.length;
+
     const x = 14;
     const y = 14;
     const panelW = 180;
@@ -37,5 +39,15 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
         fontSize: '13px',
         color: '#888899',
     });
+
+    // Pin to camera + soften alpha so the world shows through slightly
+    for (let i = startIdx; i < scene.children.length; i++) {
+        const obj = scene.children.list[i] as Phaser.GameObjects.GameObject & {
+            setScrollFactor?: (x: number) => void;
+            setAlpha?: (a: number) => void;
+        };
+        obj.setScrollFactor?.(0);
+        obj.setAlpha?.(0.75);
+    }
 }
 

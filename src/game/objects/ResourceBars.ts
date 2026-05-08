@@ -12,6 +12,8 @@ function px(value: number) {
 }
 
 export function drawResourceBars(scene: Scene, state: ReturnType<typeof GameState.get>) {
+    const startIdx = scene.children.length;
+
     const { width } = scene.scale;
     const panelW = s(338);
     const panelH = s(410);
@@ -81,6 +83,16 @@ export function drawResourceBars(scene: Scene, state: ReturnType<typeof GameStat
             color: res.accent,
         }).setScale(0.5, 0.5).setOrigin(1, 0);
     });
+
+    // Pin to camera + soften alpha so the world shows through slightly
+    for (let i = startIdx; i < scene.children.length; i++) {
+        const obj = scene.children.list[i] as Phaser.GameObjects.GameObject & {
+            setScrollFactor?: (x: number) => void;
+            setAlpha?: (a: number) => void;
+        };
+        obj.setScrollFactor?.(0);
+        obj.setAlpha?.(0.75);
+    }
 }
 
 function drawResourceIcon(

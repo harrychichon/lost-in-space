@@ -4,6 +4,8 @@ import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
 import { HudPanel } from '../objects/HudPanel';
 import { GlobalNavBar } from '../objects/GlobalNavBar';
+import { drawDayIndicator } from '../objects/DayIndicator';
+import { drawResourceBars } from '../objects/ResourceBars';
 
 interface PickupSprite {
     sprite: Phaser.GameObjects.Arc | Phaser.GameObjects.Image;
@@ -172,6 +174,11 @@ export class Planet extends Scene {
         this.cameras.main.setBackgroundColor(0x000000);
 
         GameState.applyGrayscale(this);
+
+        // HUD overlays — pinned to camera by the draw helpers
+        const hudState = GameState.get(this);
+        drawDayIndicator(this, hudState);
+        drawResourceBars(this, hudState);
 
         // Ground line — above this is sky/backdrop, below is walkable ground
         const groundLine = height * 0.75;
