@@ -116,6 +116,9 @@ const DEFAULT_STATE: GameStateData = {
 
 const REGISTRY_KEY = "gameState";
 
+/** Hard cap on discovered planets — Navigation lays them out in 4 rings of 5. */
+export const MAX_PLANETS = 20;
+
 /**
  * Distribute items along the x-axis using slot-based spacing.
  * Divides [minX, maxX] into N equal slots; each item lands inside its own
@@ -268,6 +271,8 @@ export class GameState {
 
     static isPlanetDiscoveryDay(scene: Phaser.Scene): boolean {
         const state = GameState.get(scene);
+        // No more discoveries once we've hit the MAX_PLANETS cap.
+        if (state.planets.length >= MAX_PLANETS) return false;
         return state.currentDay % 2 === 0;
     }
 
@@ -464,6 +469,12 @@ export class GameState {
 
     static discoverPlanet(scene: Phaser.Scene): PlanetData {
         const state = GameState.get(scene);
+        // Defensive cap — isPlanetDiscoveryDay already prevents this in normal play,
+        // but if something else calls discoverPlanet directly, just return the last
+        // discovered planet rather than overflowing past MAX_PLANETS.
+        if (state.planets.length >= MAX_PLANETS) {
+            return state.planets[state.planets.length - 1];
+        }
         const isFirstPlanet = state.planets.length === 0;
 
         const usedNames = new Set(state.planets.map((p) => p.name));
