@@ -297,7 +297,7 @@ Each room shows different flavor text depending on companion count (solo = bleak
 | M | Any scene | Toggle dev panel overlay |
 | C | Dev panel | Add cavediver companion |
 | V | Dev panel | Fast-forward to 5 discovered planets (cavediver-ready) |
-| Click | MainMenu | Start game |
+| E | MainMenu | Start game |
 | Click | Navigation | Select planet to visit |
 
 ## Visual Approach
