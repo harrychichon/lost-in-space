@@ -334,17 +334,6 @@ export class Ship extends Scene {
             label.setVisible(false)
         }
 
-        // Checkmark if done
-        if (done && !hideVisual) {
-            this.add
-                .text(x, y + h / 2, '✓', {
-                    fontFamily: 'Arial',
-                    fontSize: '22px',
-                    color: '#555555',
-                })
-                .setOrigin(0.5)
-        }
-
         this.doors.push({
             x,
             label,

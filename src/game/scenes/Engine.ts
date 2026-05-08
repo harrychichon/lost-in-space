@@ -114,16 +114,9 @@ export class Engine extends RoomScene {
                         msg = 'Gauges read normal. Running a bit hotter with more life support online.';
                     }
                     this.showMessage(msg);
-                    this.add.text(choreX, this.floorY - 85, '✓', {
-                        fontFamily: 'Arial', fontSize: '22px', color: '#556655',
-                    }).setOrigin(0.5).setDepth(5);
                 },
             };
             this.interactPoints.push(chorePoint);
-        } else {
-            this.add.text(choreX, this.floorY - 85, '✓', {
-                fontFamily: 'Arial', fontSize: '22px', color: '#556655',
-            }).setOrigin(0.5).setDepth(5);
         }
 
         this.setupPlayerAndUI();
