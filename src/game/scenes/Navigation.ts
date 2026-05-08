@@ -149,12 +149,11 @@ export class Navigation extends Scene {
                 orbitRing.strokeCircle(px, py, 34)
 
                 // Selection ring — bright cyan rounded rectangle wrapping planet + name +
-                // item label. The previous ellipse (140×100) was too wide for the
-                // roughly-square content; a rounded rect hugs it tightly.
-                // Spans py-30 (top of planet + padding) to py+65 (below item label).
+                // item label, with ~10px breathing room on all sides so the content
+                // doesn't crowd the border.
                 const selectionRing = this.add.graphics()
                 selectionRing.lineStyle(2, 0x6ee0ff, 0.9)
-                selectionRing.strokeRoundedRect(px - 55, py - 30, 110, 95, 14)
+                selectionRing.strokeRoundedRect(px - 65, py - 38, 130, 112, 16)
                 selectionRing.setVisible(false)
 
                 // Planet name
