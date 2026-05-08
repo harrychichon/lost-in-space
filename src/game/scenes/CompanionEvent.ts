@@ -1,12 +1,9 @@
 import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
-import { SpaceBackground } from '../objects/SpaceBackground';
 import { createDogSprite } from '../objects/Dog';
 
 export class CompanionEvent extends Scene {
-    private space!: SpaceBackground;
-
     constructor() {
         super('CompanionEvent');
     }
@@ -19,15 +16,28 @@ export class CompanionEvent extends Scene {
         GameState.applyGrayscale(this);
         AudioManager.playEvent(this, 'companion_found');
 
-        this.space = new SpaceBackground(this);
+        const bg = this.add.image(width * 0.5, height * 0.5, 'bg_companion_event').setDepth(-100);
+        bg.setDisplaySize(width, height);
 
-        // Ground — barren rocky surface
-        const ground = this.add.graphics();
-        ground.fillStyle(0x1a1a12, 1);
-        ground.fillRect(0, height * 0.65, width, height * 0.35);
-        ground.fillStyle(0x222218, 1);
-        ground.fillCircle(width * 0.3, height * 0.65, 40);
-        ground.fillCircle(width * 0.7, height * 0.65, 50);
+        // Twinkling stars overlay
+        for (let i = 0; i < 60; i++) {
+            const star = this.add.circle(
+                Phaser.Math.Between(0, width),
+                Phaser.Math.Between(0, height * 0.6),
+                Phaser.Math.Between(1, 4),
+                0xffffff,
+                Phaser.Math.FloatBetween(0.3, 0.9),
+            ).setDepth(-50);
+            this.tweens.add({
+                targets: star,
+                alpha: { from: star.alpha, to: Phaser.Math.FloatBetween(0.05, 0.3) },
+                duration: Phaser.Math.Between(800, 3000),
+                yoyo: true,
+                repeat: -1,
+                delay: Phaser.Math.Between(0, 2000),
+                ease: 'Sine.easeInOut',
+            });
+        }
 
         // Ship — floats in space, same drift as DayIntro
         const ship = this.add.image(width * 0.5, height * 0.4, 'ship_default').setOrigin(0.5);
@@ -42,7 +52,7 @@ export class CompanionEvent extends Scene {
 
         // Dog — small figure near the wreck
         const dogX = width * 0.55;
-        const dogGroundY = height * 0.66;
+        const dogGroundY = height * 0.66 + 30;
         createDogSprite(this, dogX, dogGroundY);
 
         // --- Story text sequence ---
@@ -110,7 +120,5 @@ export class CompanionEvent extends Scene {
         this.time.delayedCall(1000, showNextLine);
     }
 
-    update(_time: number, delta: number) {
-        this.space.update(delta);
-    }
+    update() {}
 }
