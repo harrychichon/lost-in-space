@@ -570,6 +570,7 @@ export class Planet extends Scene {
         this.bgTile.tilePositionX = this.cameras.main.scrollX * 0.3;
 
         AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'planet', biome: this.biome });
+        GameState.applyGrayscale(this);
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 

@@ -814,6 +814,7 @@ export class Ship extends Scene {
         if (this.dayComplete) return
 
         AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'ship' })
+        GameState.applyGrayscale(this)
 
         const body = this.player.body as Phaser.Physics.Arcade.Body
 

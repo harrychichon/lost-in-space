@@ -310,6 +310,7 @@ export class Cave extends Scene {
 
     update() {
         AudioManager.update(this, { warmth: GameState.getSaturation(this), location: 'cave' });
+        GameState.applyGrayscale(this);
 
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 

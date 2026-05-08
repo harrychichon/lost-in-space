@@ -167,6 +167,8 @@ function distributeInSlots(items: PlanetItem[], minX: number, maxX: number): voi
  * Usage from any scene: GameState.get(this) / GameState.update(this, { ... })
  */
 export class GameState {
+    private static _lastWarmth: number | null = null;
+
     static init(scene: Phaser.Scene): void {
         scene.registry.set(REGISTRY_KEY, {
             ...DEFAULT_STATE,
@@ -324,11 +326,12 @@ export class GameState {
     }
 
     // Apply grayscale by setting a CSS filter on the canvas element.
-    // Works in both WebGL and Canvas renderer modes.
+    // Safe to call every frame — skips the DOM write when warmth hasn't changed.
     static applyGrayscale(scene: Phaser.Scene): void {
         const warmth = GameState.getSaturation(scene);
+        if (warmth === GameState._lastWarmth) return;
+        GameState._lastWarmth = warmth;
         scene.game.canvas.style.filter = `grayscale(${((1 - warmth) * 100).toFixed(1)}%)`;
-        console.log(`[warmth] ${scene.scene.key} companions=${GameState.get(scene).companions} warmth=${warmth.toFixed(3)}`);
     }
 
     // --- Companion methods ---
