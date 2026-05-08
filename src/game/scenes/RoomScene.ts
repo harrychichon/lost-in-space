@@ -22,7 +22,7 @@ export abstract class RoomScene extends Scene {
     protected keyA!: Phaser.Input.Keyboard.Key;
     protected keyD!: Phaser.Input.Keyboard.Key;
     protected interactKey!: Phaser.Input.Keyboard.Key;
-    protected escKey!: Phaser.Input.Keyboard.Key;
+    protected leaveKey!: Phaser.Input.Keyboard.Key;
     protected prompt!: HudPanel;
     protected message!: HudPanel;
     protected interactPoints: InteractPoint[] = [];
@@ -61,7 +61,7 @@ export abstract class RoomScene extends Scene {
         this.keyA = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A);
         this.keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D);
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-        this.escKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.leaveKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L);
     }
 
     /** Convert a 0–1 fraction to an x position within the room bounds. */
@@ -105,10 +105,10 @@ export abstract class RoomScene extends Scene {
         this.add.existing(this.message);
         this.message.setDepth(20).setAlpha(0);
 
-        // ESC hint — small indicator-style panel bottom-left, sits above the global nav bar
+        // Leave hint — small indicator-style panel bottom-left, sits above the global nav bar
         const escHint = new HudPanel(this, 20, height - 24 - 52, { variant: 'indicator', anchor: 'left' });
         this.add.existing(escHint);
-        escHint.setLabel('[ESC] Leave');
+        escHint.setLabel('[L] Leave');
         escHint.setDepth(20).setAlpha(0.6);
 
         // Global navigation bar — pinned to bottom of screen
@@ -188,8 +188,8 @@ export abstract class RoomScene extends Scene {
             this.currentPoint.action();
         }
 
-        // ESC to leave
-        if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
+        // L to leave
+        if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
             if (!this.transitioning) {
                 this.transitioning = true;
                 this.scene.start('Ship', { fromRoom: this.scene.key });

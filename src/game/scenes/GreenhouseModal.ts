@@ -20,7 +20,7 @@ export class GreenhouseModal extends Scene {
     private plantIcons: Phaser.GameObjects.Text[] = [];
     private statusText!: Phaser.GameObjects.Text;
     private interactKey!: Phaser.Input.Keyboard.Key;
-    private escKey!: Phaser.Input.Keyboard.Key;
+    private leaveKey!: Phaser.Input.Keyboard.Key;
     private zoneRect!: Phaser.GameObjects.Rectangle;
 
     constructor() {
@@ -143,8 +143,8 @@ export class GreenhouseModal extends Scene {
             align: 'center',
         }).setOrigin(0.5);
 
-        // ── ESC hint ───────────────────────────────────────────────────────
-        this.add.text(cx + mw / 2 - 16, mt + mh - 18, '[ESC] Leave', {
+        // ── Leave hint ─────────────────────────────────────────────────────
+        this.add.text(cx + mw / 2 - 16, mt + mh - 18, '[L] Leave', {
             fontFamily: 'Georgia, serif',
             fontSize: '11px',
             color: '#445544',
@@ -152,7 +152,7 @@ export class GreenhouseModal extends Scene {
 
         // ── Input ──────────────────────────────────────────────────────────
         this.interactKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E);
-        this.escKey      = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.leaveKey    = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L);
     }
 
     update(_time: number, delta: number) {
@@ -173,7 +173,7 @@ export class GreenhouseModal extends Scene {
             this.handlePress(inZone);
         }
 
-        if (Phaser.Input.Keyboard.JustDown(this.escKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
             this.closeModal(false);
         }
     }

@@ -174,17 +174,17 @@ export class Navigation extends Scene {
         }
 
         // Back prompt
-        this.add.text(cx, height - 30, '[ESC] Back to Ship', {
+        this.add.text(cx, height - 30, '[L] Back to Ship', {
             fontFamily: 'Georgia, serif',
             fontSize: '14px',
             color: '#555555',
         }).setOrigin(0.5);
 
-        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
+        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L).on('down', () => {
             this.scene.start('Ship', { fromRoom: 'Navigation' });
         });
 
-        this.add.existing(new GlobalNavBar(this));
+        this.add.existing(new GlobalNavBar(this, ['L']));
     }
 
     update(_time: number, delta: number) {
