@@ -178,6 +178,14 @@ export class Ship extends Scene {
         this.createDoor(width * 0.6, doorY, doorW, doorH, 'Comms', 0x555566, 'comms', 'Comms', {
             hideVisual: true,
             hideLabel: true,
+            customAction: () => {
+                if (GameState.get(this).chores.comms) {
+                    this.showMessage('You have already checked comms today.')
+                    return
+                }
+                this.scene.launch('CommsModal')
+                this.scene.pause('Ship')
+            },
         })
 
         // Collection room — always visible, only usable after botanist joins
