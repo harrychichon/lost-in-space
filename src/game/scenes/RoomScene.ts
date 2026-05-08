@@ -24,7 +24,6 @@ export abstract class RoomScene extends Scene {
     protected interactKey!: Phaser.Input.Keyboard.Key;
     protected escKey!: Phaser.Input.Keyboard.Key;
     protected prompt!: HudPanel;
-    protected message!: HudPanel;
     protected interactPoints: InteractPoint[] = [];
     protected currentPoint: InteractPoint | null = null;
     protected transitioning = false;
@@ -100,11 +99,6 @@ export abstract class RoomScene extends Scene {
         this.add.existing(this.prompt);
         this.prompt.setDepth(20).setAlpha(0);
 
-        // Message panel — shown after interacting (description-only narrative)
-        this.message = new HudPanel(this, width * 0.5, height * 0.7, { variant: 'prompt', anchor: 'center' });
-        this.add.existing(this.message);
-        this.message.setDepth(20).setAlpha(0);
-
         // ESC hint — small indicator-style panel bottom-left, sits above the global nav bar
         const escHint = new HudPanel(this, 20, height - 24 - 52, { variant: 'indicator', anchor: 'left' });
         this.add.existing(escHint);
@@ -133,20 +127,41 @@ export abstract class RoomScene extends Scene {
         });
     }
 
-    /** Show a narrative message that fades in, holds, then fades out. */
+    /**
+     * Show a narrative message that fades in, holds, then fades out.
+     * Plain Phaser Text matching Ship.showMessage / "An empty room" style — no
+     * panel background, just floating Georgia serif. Follows the player on x
+     * for the duration of the tween.
+     */
     protected showMessage(text: string, _color?: string) {
-        // _color kept for back-compat with old callers; HudPanel uses one consistent colour scheme.
-        this.message.setContent(undefined, text);
-        this.anchorPanelAtPlayer(this.message);
-        this.message.setAlpha(0);
-        this.tweens.killTweensOf(this.message);
+        // _color kept for back-compat with old callers; we use one consistent colour now.
+        const { width, height } = this.scale;
+        const msgY = height * 0.5;
+        const msg = this.add
+            .text(this.player.x, msgY, text, {
+                fontFamily: 'Georgia, serif',
+                fontSize: '18px',
+                color: '#c0cdd9',
+                wordWrap: { width: 400 },
+                align: 'center',
+            })
+            .setOrigin(0.5)
+            .setAlpha(0)
+            .setDepth(50);
+
         this.tweens.add({
-            targets: this.message,
+            targets: msg,
             alpha: 1,
             duration: 500,
             hold: 2500,
             yoyo: true,
             ease: 'Power2',
+            onUpdate: () => {
+                const halfW = msg.width / 2;
+                const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x));
+                msg.setX(x);
+            },
+            onComplete: () => msg.destroy(),
         });
     }
 
@@ -200,10 +215,8 @@ export abstract class RoomScene extends Scene {
             this.prompt.setAlpha(0);
         }
 
-        // Message panel also follows the player while visible
-        if (this.message.alpha > 0) {
-            this.anchorPanelAtPlayer(this.message);
-        }
+        // Note: showMessage now creates its own follow-text via tween onUpdate,
+        // so there's nothing to do here for it.
 
         // Handle E key
         if (this.currentPoint && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
