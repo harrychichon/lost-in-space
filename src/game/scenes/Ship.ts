@@ -888,7 +888,7 @@ export class Ship extends Scene {
         if (this.dogSprite && this.dogPrompt) {
             const nearDog = Math.abs(this.player.x - this.dogX) < 60
             const visible = nearDog && !this.currentDoor
-            if (visible) this.anchorPanelAtPlayer(this.dogPrompt, -120)
+            if (visible) this.anchorPanelAtPlayer(this.dogPrompt)
             this.dogPrompt.setAlpha(visible ? 1 : 0)
         }
 
