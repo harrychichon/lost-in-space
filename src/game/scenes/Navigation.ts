@@ -153,7 +153,7 @@ export class Navigation extends Scene {
                 // doesn't crowd the border.
                 const selectionRing = this.add.graphics()
                 selectionRing.lineStyle(2, 0x6ee0ff, 0.9)
-                selectionRing.strokeRoundedRect(px - 65, py - 38, 130, 112, 16)
+                selectionRing.strokeRoundedRect(px - 65, py - 40, 130, 112, 16)
                 selectionRing.setVisible(false)
 
                 // Planet name
