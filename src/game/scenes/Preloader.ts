@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 import { loadPlayerAssets, createPlayerAnimations } from "../objects/Player";
 import { loadDogAssets, createDogAnimations } from "../objects/Dog";
+import { musicEntries } from "../systems/MusicRegistry";
 
 export class Preloader extends Scene {
     constructor() {
@@ -30,26 +31,14 @@ export class Preloader extends Scene {
 
         this.load.image("logo", "logo.png");
 
-        // --- Music: mood-based (warmth 0→1 maps very_sad→sad→neutral→happy→very_happy) ---
-        // sad low intensity (warmth < 0.4)
-        this.load.audio("music_sad_low_1",     "audio/music/2. sad/1. low intensity/bensound-silentsuspicions.mp3");
-        this.load.audio("music_sad_low_2",     "audio/music/2. sad/1. low intensity/bensound-stifledscreams.mp3");
-        this.load.audio("music_sad_low_3",     "audio/music/2. sad/1. low intensity/bensound-vanishinghope.mp3");
-        // sad medium intensity (warmth < 0.4)
-        this.load.audio("music_sad_medium",    "audio/music/2. sad/2. medium intensity/bensound-refract.mp3");
-        // neutral low intensity (warmth 0.4–0.6)
-        this.load.audio("music_neutral_low",   "audio/music/3. neutral/1. low intensity/freesound_community-low-ambient-01-61547.mp3");
-        // neutral medium intensity (warmth 0.4–0.6, also fallback for happy/very_happy)
-        this.load.audio("music_neutral_medium_1", "audio/music/3. neutral/2. medium intensity/bensound-asyourworldgrowssmaller.mp3");
-        this.load.audio("music_neutral_medium_2", "audio/music/3. neutral/2. medium intensity/finding-doggo.mp3");
-        // --- Music: high-intensity event tracks ---
-        this.load.audio("music_event_verysad", "audio/music/1. very sad/3. high intensity/bensound-november.mp3");
-        this.load.audio("music_event_happy_1", "audio/music/4. happy/3. high intensity/bensound-hearty.mp3");
-        this.load.audio("music_event_happy_2", "audio/music/4. happy/3. high intensity/bensound-longnight.mp3");
+        // Music — all tracks loaded from MusicRegistry (add files there, not here)
+        for (const [key, path] of musicEntries()) {
+            this.load.audio(key, path);
+        }
         // --- Tension + SFX ---
         this.load.audio("spooky_wind",   "audio/environment/dragon-studio-spooky-wind-429221.mp3");
-        this.load.audio("creepy_static", "audio/environment/creepy_static.wav");
-        this.load.audio("beep_sequence", "audio/environment/beep_sequence_02.wav");
+        this.load.audio("creepy_static", "audio/environment/creepy-static.wav");
+        this.load.audio("beep_sequence", "audio/environment/beep-sequence-02.wav");
         // Environment ambience (uncomment once files are added)
         // this.load.audio("env_ship",           "audio/environment/env_ship.mp3");
         // this.load.audio("env_room",           "audio/environment/env_room.mp3");
@@ -80,6 +69,7 @@ export class Preloader extends Scene {
         this.load.image("bg_rock", "planetbgs/rock.png");
         this.load.image("bg_snow", "planetbgs/snow.png");
         this.load.image("bg_main", "sceens/main.png");
+        this.load.image("bg_kitchen", "sceens/kitchen.png");
 
         // Terrain tile atlas (Kenney-style XML)
         this.load.atlasXML(

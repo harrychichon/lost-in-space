@@ -106,7 +106,7 @@ export function drawChoreChecklist(scene: Scene, state: ReturnType<typeof GameSt
     const COL_ICON_A  = 0xc8a030;
 
     // Container groups everything so we can destroy + redraw on toggle
-    const container = scene.add.container(0, 0);
+    const container = scene.add.container(0, 0).setDepth(30);
 
     const panelH = collapsed ? miniH : fullH;
 

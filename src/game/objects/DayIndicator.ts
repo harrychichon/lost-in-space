@@ -1,53 +1,53 @@
-import { Scene } from 'phaser';
-import { GameState } from '../systems/GameState';
+import { Scene } from 'phaser'
+import { GameState } from '../systems/GameState'
 
-const FONT = '"Share Tech Mono", "Courier New", monospace';
+const FONT = '"Share Tech Mono", "Courier New", monospace'
 
 export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameState.get>) {
-    const startIdx = scene.children.length;
+    const x = 14
+    const y = 14
+    const panelW = 180
+    const panelH = 72
 
-    const x = 14;
-    const y = 14;
-    const panelW = 180;
-    const panelH = 72;
+    const HUD_DEPTH = 30
+    const container = scene.add
+        .container(0, 0)
+        .setDepth(HUD_DEPTH)
+        .setScrollFactor(0)
+        .setAlpha(0.75)
 
     // Background panel with border
-    const panel = scene.add.graphics();
-    panel.fillStyle(0x000000, 0.75);
-    panel.fillRoundedRect(x, y, panelW, panelH, 6);
-    panel.lineStyle(1, 0x555566, 1);
-    panel.strokeRoundedRect(x, y, panelW, panelH, 6);
+    const panel = scene.add.graphics()
+    panel.fillStyle(0x000000, 0.75)
+    panel.fillRoundedRect(x, y, panelW, panelH, 6)
+    panel.lineStyle(1, 0x555566, 1)
+    panel.strokeRoundedRect(x, y, panelW, panelH, 6)
+    container.add(panel)
 
     // Day text
-    scene.add.text(x + 14, y + 12, `DAY ${state.currentDay}`, {
-        fontFamily: FONT,
-        fontSize: '22px',
-        color: '#e1e0e0',
-    });
+    container.add(
+        scene.add.text(x + 14, y + 12, `DAY ${state.currentDay}`, {
+            fontFamily: FONT,
+            fontSize: '22px',
+            color: '#e1e0e0',
+        })
+    )
 
     // Separator line
-    const line = scene.add.graphics();
-    line.lineStyle(1, 0x555566, 0.7);
-    line.lineBetween(x + 10, y + 42, x + panelW - 10, y + 42);
+    const line = scene.add.graphics()
+    line.lineStyle(1, 0x555566, 0.7)
+    line.lineBetween(x + 10, y + 42, x + panelW - 10, y + 42)
+    container.add(line)
 
     // Real time
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    scene.add.text(x + 14, y + 48, `TIME   ${hours}:${minutes}`, {
-        fontFamily: FONT,
-        fontSize: '13px',
-        color: '#888899',
-    });
-
-    // Pin to camera + soften alpha so the world shows through slightly
-    for (let i = startIdx; i < scene.children.length; i++) {
-        const obj = scene.children.list[i] as Phaser.GameObjects.GameObject & {
-            setScrollFactor?: (x: number) => void;
-            setAlpha?: (a: number) => void;
-        };
-        obj.setScrollFactor?.(0);
-        obj.setAlpha?.(0.75);
-    }
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    container.add(
+        scene.add.text(x + 14, y + 48, `TIME   ${hours}:${minutes}`, {
+            fontFamily: FONT,
+            fontSize: '13px',
+            color: '#888899',
+        })
+    )
 }
-

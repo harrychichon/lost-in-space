@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { musicPool, eventTrack } from './MusicRegistry';
 
 export type LocationKey = 'ship' | 'room' | 'planet' | 'cave' | 'navigation';
 export type MoodKey = 'very_sad' | 'sad' | 'neutral' | 'happy' | 'very_happy';
@@ -19,22 +20,31 @@ const WARMTH_BRACKETS: Array<{ max: number; mood: MoodKey }> = [
     { max: 1.01, mood: 'very_happy'},
 ];
 
-// Low + medium intensity tracks per mood — default gameplay pool.
-// Moods without their own low/medium tracks fall back to the nearest available mood.
-const MOOD_TRACKS: Record<MoodKey, string[]> = {
-    very_sad:  ['music_sad_low_1', 'music_sad_low_2', 'music_sad_low_3', 'music_sad_medium'],
-    sad:       ['music_sad_low_1', 'music_sad_low_2', 'music_sad_low_3', 'music_sad_medium'],
-    neutral:   ['music_neutral_low', 'music_neutral_medium_1', 'music_neutral_medium_2'],
-    happy:     ['music_neutral_medium_1', 'music_neutral_medium_2'],
-    very_happy:['music_neutral_medium_1', 'music_neutral_medium_2'],
+// Low-intensity pools (ship / rooms / navigation) — derived from MusicRegistry
+// very_sad and very_happy have no dedicated low tracks; fall back to nearest mood.
+const LOW_TRACKS: Record<MoodKey, string[]> = {
+    very_sad:   musicPool('sad',     'low'),
+    sad:        musicPool('sad',     'low'),
+    neutral:    musicPool('neutral', 'low'),
+    happy:      musicPool('neutral', 'low'),
+    very_happy: musicPool('neutral', 'low'),
 };
 
-// High-intensity event tracks played during companion/discovery moments
+// Medium-intensity pools (planets / caves) — derived from MusicRegistry
+const MEDIUM_TRACKS: Record<MoodKey, string[]> = {
+    very_sad:   musicPool('sad',     'medium'),
+    sad:        musicPool('sad',     'medium'),
+    neutral:    musicPool('neutral', 'medium'),
+    happy:      musicPool('happy',   'medium'),
+    very_happy: musicPool('happy',   'medium'),
+};
+
+// Event tracks — first high-intensity track per mood from MusicRegistry
 const EVENT_TRACKS: Record<EventKey, string> = {
-    companion_found: 'music_event_happy_1',
-    rescue:          'music_event_happy_2',
-    cavediver:       'music_event_happy_1',
-    alarm:           'music_event_verysad',
+    companion_found: eventTrack('happy'),
+    rescue:          eventTrack('happy'),
+    cavediver:       eventTrack('neutral'),
+    alarm:           eventTrack('very-sad'),
 };
 
 // Environment sounds by location (independent of mood)
@@ -66,6 +76,7 @@ export class AudioManager {
     private static musicKey: string | null = null;
     private static musicSound: Phaser.Sound.BaseSound | null = null;
     private static currentMood: MoodKey | null = null;
+    private static currentLocation: LocationKey | null = null;
     private static envKey: string | null = null;
     private static envSound: Phaser.Sound.BaseSound | null = null;
     private static tensionActive = false;
@@ -82,9 +93,10 @@ export class AudioManager {
     static update(scene: Scene, ctx: AudioCtx): void {
         if (AudioManager.eventActive) return;
         const mood     = AudioManager.moodFromWarmth(ctx.warmth);
-        const musicKey = AudioManager.resolveMusic(scene, mood);
+        const musicKey = AudioManager.resolveMusic(scene, mood, ctx.location);
         const envKey   = AudioManager.resolveEnv(ctx.location, ctx.biome);
-        AudioManager.currentMood = mood;
+        AudioManager.currentMood     = mood;
+        AudioManager.currentLocation = ctx.location;
         AudioManager.updateMusic(scene, musicKey);
         AudioManager.updateEnv(scene, envKey);
         AudioManager.updateTension(scene, ctx.warmth);
@@ -117,6 +129,7 @@ export class AudioManager {
         AudioManager.musicSound      = null;
         AudioManager.musicKey        = null;
         AudioManager.currentMood     = null;
+        AudioManager.currentLocation = null;
         AudioManager.eventActive     = false;
         AudioManager.currentEventKey = null;
         AudioManager.fadeOut(scene, AudioManager.envSound);
@@ -134,6 +147,7 @@ export class AudioManager {
         AudioManager.currentEventKey = null;
         AudioManager.musicKey        = null; // force re-resolve; updateMusic fades old sound
         AudioManager.currentMood     = null; // force fresh track pick on resume
+        AudioManager.currentLocation = null;
     }
 
     private static moodFromWarmth(warmth: number): MoodKey {
@@ -143,13 +157,14 @@ export class AudioManager {
         return 'very_happy';
     }
 
-    private static resolveMusic(scene: Scene, mood: MoodKey): string | null {
-        const pool   = MOOD_TRACKS[mood];
+    private static resolveMusic(scene: Scene, mood: MoodKey, location: LocationKey): string | null {
+        const isExploration = location === 'planet' || location === 'cave';
+        const pool   = isExploration ? MEDIUM_TRACKS[mood] : LOW_TRACKS[mood];
         const loaded = pool.filter(k => scene.cache.audio.has(k));
         if (loaded.length === 0) return null;
-        // Only keep the current track if the mood hasn't changed — when mood changes,
-        // always pick from the new pool so the track matches the displayed mood.
-        if (mood === AudioManager.currentMood && AudioManager.musicKey && loaded.includes(AudioManager.musicKey)) {
+        // Keep the current track only if both mood and intensity tier are unchanged.
+        const sameContext = mood === AudioManager.currentMood && location === AudioManager.currentLocation;
+        if (sameContext && AudioManager.musicKey && loaded.includes(AudioManager.musicKey)) {
             return AudioManager.musicKey;
         }
         const choices = loaded.filter(k => k !== AudioManager.musicKey);
