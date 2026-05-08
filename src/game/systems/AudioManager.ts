@@ -1,5 +1,5 @@
 import { Scene } from 'phaser';
-import { musicPool, eventTrack } from './MusicRegistry';
+import { musicPool, eventTrack, namedTrack } from './MusicRegistry';
 
 export type LocationKey = 'ship' | 'room' | 'planet' | 'cave' | 'navigation';
 export type MoodKey = 'very_sad' | 'sad' | 'neutral' | 'happy' | 'very_happy';
@@ -21,30 +21,29 @@ const WARMTH_BRACKETS: Array<{ max: number; mood: MoodKey }> = [
 ];
 
 // Low-intensity pools (ship / rooms / navigation) — derived from MusicRegistry
-// very_sad and very_happy have no dedicated low tracks; fall back to nearest mood.
 const LOW_TRACKS: Record<MoodKey, string[]> = {
-    very_sad:   musicPool('sad',     'low'),
-    sad:        musicPool('sad',     'low'),
-    neutral:    musicPool('neutral', 'low'),
-    happy:      musicPool('neutral', 'low'),
-    very_happy: musicPool('neutral', 'low'),
+    very_sad:   musicPool('very-sad',   'low'),
+    sad:        musicPool('sad',        'low'),
+    neutral:    musicPool('neutral',    'low'),
+    happy:      musicPool('happy',      'low'),
+    very_happy: musicPool('very-happy', 'low'),
 };
 
 // Medium-intensity pools (planets / caves) — derived from MusicRegistry
 const MEDIUM_TRACKS: Record<MoodKey, string[]> = {
-    very_sad:   musicPool('sad',     'medium'),
-    sad:        musicPool('sad',     'medium'),
-    neutral:    musicPool('neutral', 'medium'),
-    happy:      musicPool('happy',   'medium'),
-    very_happy: musicPool('happy',   'medium'),
+    very_sad:   musicPool('very-sad',   'medium'),
+    sad:        musicPool('sad',        'medium'),
+    neutral:    musicPool('neutral',    'medium'),
+    happy:      musicPool('happy',      'medium'),
+    very_happy: musicPool('very-happy', 'medium'),
 };
 
-// Event tracks — first high-intensity track per mood from MusicRegistry
+// Event tracks — pinned by name where a specific track is required
 const EVENT_TRACKS: Record<EventKey, string> = {
-    companion_found: eventTrack('happy'),
+    companion_found: namedTrack('finding-doggo.mp3'),
     rescue:          eventTrack('happy'),
     cavediver:       eventTrack('neutral'),
-    alarm:           eventTrack('very-sad'),
+    alarm:           namedTrack('bensound-november.mp3'),
 };
 
 // Environment sounds by location (independent of mood)
