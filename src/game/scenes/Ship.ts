@@ -563,12 +563,12 @@ export class Ship extends Scene {
 
     private showMessage(text: string) {
         const { width, height } = this.scale
-        const msgY = height * 0.55
+        const msgY = height * 0.5
         const msg = this.add
             .text(this.player.x, msgY, text, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '18px',
-                color: '#999999',
+                color: '#c0cdd9',
                 wordWrap: { width: 400 },
                 align: 'center',
             })

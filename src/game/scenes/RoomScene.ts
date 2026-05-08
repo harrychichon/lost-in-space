@@ -101,7 +101,7 @@ export abstract class RoomScene extends Scene {
         this.prompt.setDepth(20).setAlpha(0);
 
         // Message panel — shown after interacting (description-only narrative)
-        this.message = new HudPanel(this, width * 0.5, height * 0.78, { variant: 'prompt', anchor: 'center' });
+        this.message = new HudPanel(this, width * 0.5, height * 0.7, { variant: 'prompt', anchor: 'center' });
         this.add.existing(this.message);
         this.message.setDepth(20).setAlpha(0);
 
