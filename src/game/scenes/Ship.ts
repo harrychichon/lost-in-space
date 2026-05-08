@@ -45,6 +45,10 @@ export class Ship extends Scene {
         this.doors = []
         this.currentDoor = null
 
+        // Fade in from black on every entry — smooths the morning-after-sleep transition
+        // and any return from rooms / planets / cave.
+        this.cameras.main.fadeIn(500, 0, 0, 0)
+
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
             Kitchen: 0.18,
