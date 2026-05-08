@@ -38,6 +38,8 @@ function planetTextureFor(planet: PlanetData): string {
 
 interface PlanetEntry {
     sprite: Phaser.GameObjects.Image
+    /** Scale assigned by setDisplaySize() — multiply, don't replace. */
+    baseScale: number
     orbitRing: Phaser.GameObjects.Graphics
     selectionRing: Phaser.GameObjects.Graphics
     nameText: Phaser.GameObjects.Text
@@ -139,6 +141,7 @@ export class Navigation extends Scene {
                 // Planet body (sprite)
                 const planetSprite = this.add.image(px, py, planetTextureFor(planet))
                 planetSprite.setDisplaySize(54, 54)
+                const baseScale = planetSprite.scale
 
                 // Subtle orbit ring, biome-tinted
                 const orbitRing = this.add.graphics()
@@ -176,6 +179,7 @@ export class Navigation extends Scene {
 
                 this.planetEntries.push({
                     sprite: planetSprite,
+                    baseScale,
                     orbitRing,
                     selectionRing,
                     nameText,
@@ -228,7 +232,7 @@ export class Navigation extends Scene {
     private updateSelection() {
         this.planetEntries.forEach((e, i) => {
             const isSelected = i === this.selectedIndex
-            e.sprite.setScale(isSelected ? 1.18 : 1.0)
+            e.sprite.setScale(isSelected ? e.baseScale * 1.18 : e.baseScale)
             e.orbitRing.setAlpha(isSelected ? 0.6 : 0.15)
             e.selectionRing.setVisible(isSelected)
             e.nameText.setColor(isSelected ? '#c0cdd9' : '#999999')
