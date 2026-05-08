@@ -46,7 +46,7 @@ export function drawResourceBars(scene: Scene, state: ReturnType<typeof GameStat
         fontFamily: titleFont,
         fontSize: px(57),
         color: '#fafaff',
-    }).setScale(0.5, 0.5);
+    }).setScale(0.5, 0.5));
 
     const headerLine = scene.add.graphics();
     headerLine.lineStyle(1, 0x424a56, 0.75);
