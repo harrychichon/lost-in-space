@@ -45,6 +45,10 @@ export class Ship extends Scene {
         this.doors = []
         this.currentDoor = null
 
+        // Fade in from black on every entry — smooths the morning-after-sleep transition
+        // and any return from rooms / planets / cave.
+        this.cameras.main.fadeIn(500, 0, 0, 0)
+
         // Spawn position — default to corridor center, or outside the door we just left.
         const spawnDoorX: Record<string, number> = {
             Kitchen: 0.18,
@@ -542,9 +546,12 @@ export class Ship extends Scene {
 
                 this.dayComplete = true
                 this.showMessage('You close your eyes. Another day done.')
-                this.time.delayedCall(2000, () => {
-                    GameState.advanceDay(this)
-                    this.scene.start('DayIntro')
+                this.time.delayedCall(800, () => {
+                    this.cameras.main.fadeOut(1200, 0, 0, 0)
+                    this.cameras.main.once('camerafadeoutcomplete', () => {
+                        GameState.advanceDay(this)
+                        this.scene.start('DayIntro')
+                    })
                 })
             },
         })
