@@ -152,10 +152,10 @@ export abstract class RoomScene extends Scene {
 
     /**
      * Position a HudPanel at the player's current screen position, clamped to viewport.
-     * Uses the panel's actual bounds so short prompts can reach the screen edges
-     * (otherwise the panel "stops" several hundred px before doors at viewport edges).
+     * Depth is forced above the corner HUD panels (which sit at 30) so the text
+     * never renders behind ResourceBars / DayIndicator / ChoreChecklist.
      */
-    protected anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -90) {
+    protected anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -120) {
         const cam = this.cameras.main;
         const screenX = this.player.x - cam.scrollX;
         const screenY = this.player.y - cam.scrollY;
@@ -163,6 +163,7 @@ export abstract class RoomScene extends Scene {
         const halfW = panel.getBounds().width / 2;
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
         panel.setPosition(clampedX, screenY + yOffset);
+        panel.setDepth(50);
     }
 
     /** Call from update() — handles movement, proximity detection, and input. */

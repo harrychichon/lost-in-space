@@ -684,8 +684,8 @@ export class Planet extends Scene {
         }
     }
 
-    /** Position a HudPanel at the player's screen position, clamped to viewport. */
-    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -90) {
+    /** Position a HudPanel at the player's screen position, depth above the corner HUD. */
+    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -120) {
         const cam = this.cameras.main;
         const screenX = this.player.x - cam.scrollX;
         const screenY = this.player.y - cam.scrollY;
@@ -693,5 +693,6 @@ export class Planet extends Scene {
         const halfW = panel.getBounds().width / 2;
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
         panel.setPosition(clampedX, screenY + yOffset);
+        panel.setDepth(50);
     }
 }

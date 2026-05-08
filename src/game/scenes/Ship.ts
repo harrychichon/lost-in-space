@@ -564,7 +564,7 @@ export class Ship extends Scene {
     private showMessage(text: string) {
         const { width } = this.scale
         const msg = this.add
-            .text(this.player.x, this.player.y - 90, text, {
+            .text(this.player.x, this.player.y - 120, text, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '18px',
                 color: '#999999',
@@ -573,7 +573,7 @@ export class Ship extends Scene {
             })
             .setOrigin(0.5)
             .setAlpha(0)
-            .setDepth(20)
+            .setDepth(50)
 
         this.tweens.add({
             targets: msg,
@@ -585,14 +585,14 @@ export class Ship extends Scene {
             onUpdate: () => {
                 const halfW = msg.width / 2
                 const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
-                msg.setPosition(x, this.player.y - 90)
+                msg.setPosition(x, this.player.y - 120)
             },
             onComplete: () => msg.destroy(),
         })
     }
 
-    /** Position a HudPanel at the player's screen position, clamped to viewport. */
-    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -90) {
+    /** Position a HudPanel at the player's screen position, depth above the corner HUD. */
+    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -120) {
         const cam = this.cameras.main
         const screenX = this.player.x - cam.scrollX
         const screenY = this.player.y - cam.scrollY
@@ -600,6 +600,7 @@ export class Ship extends Scene {
         const halfW = panel.getBounds().width / 2
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX))
         panel.setPosition(clampedX, screenY + yOffset)
+        panel.setDepth(50)
     }
 
     private drawCavediver(gfx: Phaser.GameObjects.Graphics, x: number, y: number) {
