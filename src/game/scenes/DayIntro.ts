@@ -70,7 +70,7 @@ export class DayIntro extends Scene {
             const subText = this.add.text(width * 0.5, height * 0.73, `Sensors detect a planet: ${planet.name}`, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '20px',
-                color: '#999999',
+                color: '#c0cdd9',
             }).setOrigin(0.5).setAlpha(0);
 
             this.tweens.add({

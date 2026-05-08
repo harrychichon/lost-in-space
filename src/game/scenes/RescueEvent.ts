@@ -68,7 +68,7 @@ export class RescueEvent extends Scene {
         const textStyle = {
             fontFamily: 'Georgia, serif',
             fontSize: '18px',
-            color: '#999999',
+            color: '#c0cdd9',
             align: 'center' as const,
             wordWrap: { width: 600 },
         };
@@ -83,13 +83,13 @@ export class RescueEvent extends Scene {
         ];
 
         let lineIndex = 0;
-        const storyText = this.add.text(width * 0.5, height * 0.75, '', textStyle)
+        const storyText = this.add.text(width * 0.5, height * 0.7, '', textStyle)
             .setOrigin(0.5).setAlpha(0);
 
         const showNextLine = () => {
             if (lineIndex >= lines.length) {
                 storyText.setText('They board your ship. The silence feels different now.');
-                storyText.setColor('#aaaaaa');
+                storyText.setColor('#c0cdd9');
                 this.tweens.add({
                     targets: storyText,
                     alpha: 1,
@@ -117,7 +117,7 @@ export class RescueEvent extends Scene {
             if (lines[lineIndex].startsWith('"')) {
                 storyText.setColor('#bbaa99');
             } else {
-                storyText.setColor('#999999');
+                storyText.setColor('#c0cdd9');
             }
 
             this.tweens.add({

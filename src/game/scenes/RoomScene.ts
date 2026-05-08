@@ -16,19 +16,18 @@ export interface InteractPoint {
  * Provides player movement, proximity-based interaction, and shared drawing methods.
  */
 export abstract class RoomScene extends Scene {
-    protected player!: Phaser.GameObjects.Rectangle
-    protected playerSprite!: Phaser.GameObjects.Sprite
-    protected cursors!: Phaser.Types.Input.Keyboard.CursorKeys
-    protected keyA!: Phaser.Input.Keyboard.Key
-    protected keyD!: Phaser.Input.Keyboard.Key
-    protected interactKey!: Phaser.Input.Keyboard.Key
-    protected leaveKey!: Phaser.Input.Keyboard.Key
-    protected prompt!: HudPanel
-    protected message!: HudPanel
-    protected interactPoints: InteractPoint[] = []
-    protected currentPoint: InteractPoint | null = null
-    protected transitioning = false
-    protected floorY = 0
+    protected player!: Phaser.GameObjects.Rectangle;
+    protected playerSprite!: Phaser.GameObjects.Sprite;
+    protected cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+    protected keyA!: Phaser.Input.Keyboard.Key;
+    protected keyD!: Phaser.Input.Keyboard.Key;
+    protected interactKey!: Phaser.Input.Keyboard.Key;
+    protected escKey!: Phaser.Input.Keyboard.Key;
+    protected prompt!: HudPanel;
+    protected interactPoints: InteractPoint[] = [];
+    protected currentPoint: InteractPoint | null = null;
+    protected transitioning = false;
+    protected floorY = 0;
     /** Left edge of the walkable room area. */
     protected roomLeft = 0
     /** Right edge of the walkable room area. */
@@ -103,22 +102,11 @@ export abstract class RoomScene extends Scene {
         this.add.existing(this.prompt)
         this.prompt.setDepth(20).setAlpha(0)
 
-        // Message panel — shown after interacting (description-only narrative)
-        this.message = new HudPanel(this, width * 0.5, height * 0.78, {
-            variant: 'prompt',
-            anchor: 'center',
-        })
-        this.add.existing(this.message)
-        this.message.setDepth(20).setAlpha(0)
-
-        // Leave hint — small indicator-style panel bottom-left, sits above the global nav bar
-        const leaveHint = new HudPanel(this, 20, height - 24 - 52, {
-            variant: 'indicator',
-            anchor: 'left',
-        })
-        this.add.existing(leaveHint)
-        leaveHint.setLabel('[L] Leave')
-        leaveHint.setDepth(20).setAlpha(0.6)
+        // ESC hint — small indicator-style panel bottom-left, sits above the global nav bar
+        const escHint = new HudPanel(this, 20, height - 24 - 52, { variant: 'indicator', anchor: 'left' });
+        this.add.existing(escHint);
+        escHint.setLabel('[ESC] Leave');
+        escHint.setDepth(20).setAlpha(0.6);
 
         // Global navigation bar — pinned to bottom of screen
         this.add.existing(new GlobalNavBar(this))
@@ -142,20 +130,57 @@ export abstract class RoomScene extends Scene {
         })
     }
 
-    /** Show a narrative message that fades in, holds, then fades out. */
+    /**
+     * Show a narrative message that fades in, holds, then fades out.
+     * Plain Phaser Text matching Ship.showMessage / "An empty room" style — no
+     * panel background, just floating Georgia serif. Follows the player on x
+     * for the duration of the tween.
+     */
     protected showMessage(text: string, _color?: string) {
-        // _color kept for back-compat with old callers; HudPanel uses one consistent colour scheme.
-        this.message.setContent(undefined, text)
-        this.message.setAlpha(0)
-        this.tweens.killTweensOf(this.message)
+        // _color kept for back-compat with old callers; we use one consistent colour now.
+        const { width, height } = this.scale;
+        const msgY = height * 0.5;
+        const msg = this.add
+            .text(this.player.x, msgY, text, {
+                fontFamily: 'Georgia, serif',
+                fontSize: '18px',
+                color: '#c0cdd9',
+                wordWrap: { width: 400 },
+                align: 'center',
+            })
+            .setOrigin(0.5)
+            .setAlpha(0)
+            .setDepth(50);
+
         this.tweens.add({
-            targets: this.message,
+            targets: msg,
             alpha: 1,
             duration: 500,
             hold: 2500,
             yoyo: true,
             ease: 'Power2',
-        })
+            onUpdate: () => {
+                const halfW = msg.width / 2;
+                const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x));
+                msg.setX(x);
+            },
+            onComplete: () => msg.destroy(),
+        });
+    }
+
+    /**
+     * Pin a HudPanel's x to the player's screen position, clamped to viewport.
+     * Y is left alone so the panel stays at its original spawn height (bottom area)
+     * instead of floating above the player's head.
+     */
+    protected anchorPanelAtPlayer(panel: HudPanel) {
+        const cam = this.cameras.main;
+        const screenX = this.player.x - cam.scrollX;
+        const { width } = this.scale;
+        const halfW = panel.getBounds().width / 2;
+        const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
+        panel.setX(clampedX);
+        panel.setDepth(50);
     }
 
     /** Call from update() — handles movement, proximity detection, and input. */
@@ -184,13 +209,17 @@ export abstract class RoomScene extends Scene {
             }
         }
 
-        // Show/hide prompt
+        // Show/hide prompt — keep it pinned above the player every frame
         if (this.currentPoint) {
-            this.prompt.setContent(`[E] ${this.currentPoint.label}`)
-            this.prompt.setAlpha(1)
+            this.prompt.setContent(`[E] ${this.currentPoint.label}`);
+            this.anchorPanelAtPlayer(this.prompt);
+            this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0)
         }
+
+        // Note: showMessage now creates its own follow-text via tween onUpdate,
+        // so there's nothing to do here for it.
 
         // Handle E key
         if (this.currentPoint && Phaser.Input.Keyboard.JustDown(this.interactKey)) {

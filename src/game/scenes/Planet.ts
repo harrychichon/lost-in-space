@@ -630,6 +630,7 @@ export class Planet extends Scene {
             } else {
                 this.prompt.setContent(undefined, "A dark cave. Wouldn't go in there.");
             }
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
 
             if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
@@ -650,6 +651,7 @@ export class Planet extends Scene {
 
         if (this.nearShip) {
             this.prompt.setContent('[E] Board', 'Your ship');
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
 
             if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
@@ -659,7 +661,7 @@ export class Planet extends Scene {
             return;
         }
 
-        // Show/hide prompt
+        // Show/hide prompt — keep it pinned above the player every frame
         if (this.currentPickup) {
             const info = this.getItemInfo(this.currentPickup.item);
             const isLocked = this.currentPickup.item.locked;
@@ -670,6 +672,7 @@ export class Planet extends Scene {
                 const resourceHint = info.resource ? ` (+${info.gain} ${info.resource})` : '';
                 this.prompt.setContent('[E] Pick up', `${info.name}${resourceHint}\n${info.desc}`);
             }
+            this.anchorPanelAtPlayer(this.prompt);
             this.prompt.setAlpha(1);
         } else {
             this.prompt.setAlpha(0);
@@ -689,13 +692,14 @@ export class Planet extends Scene {
         }
     }
 
-    /** Fade to black, then return to Ship. Idempotent — repeated calls are ignored. */
-    private leaveToShip(): void {
-        if (this.leaving) return;
-        this.leaving = true;
-        this.cameras.main.fadeOut(500, 0, 0, 0);
-        this.cameras.main.once('camerafadeoutcomplete', () => {
-            this.scene.start('Ship');
-        });
+    /** Pin a HudPanel's x to the player's screen position; y stays at spawn. */
+    private anchorPanelAtPlayer(panel: HudPanel) {
+        const cam = this.cameras.main;
+        const screenX = this.player.x - cam.scrollX;
+        const { width } = this.scale;
+        const halfW = panel.getBounds().width / 2;
+        const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
+        panel.setX(clampedX);
+        panel.setDepth(50);
     }
 }

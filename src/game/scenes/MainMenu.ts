@@ -38,14 +38,11 @@ export class MainMenu extends Scene {
             .setAlpha(0)
 
         // Start prompt
-        const prompt = this.add
-            .text(width * 0.5, height * 0.65, '[E] Start Game', {
-                fontFamily: 'Georgia, serif',
-                fontSize: '16px',
-                color: '#444444',
-            })
-            .setOrigin(0.5)
-            .setAlpha(0)
+        const prompt = this.add.text(width * 0.5, height * 0.65, 'Press [E] to start', {
+            fontFamily: 'Georgia, serif',
+            fontSize: '16px',
+            color: '#444444',
+        }).setOrigin(0.5).setAlpha(0);
 
         // Fade in sequence
         this.tweens.add({ targets: title, alpha: 1, duration: 2000, ease: 'Power2' })
@@ -71,15 +68,11 @@ export class MainMenu extends Scene {
 
         this.game.canvas.style.filter = 'grayscale(100%)'
 
-        const startGame = () => {
-            if (started) return
-            started = true
-            GameState.init(this)
-            this.scene.start('DayIntro')
-        }
-
-        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E).once('down', startGame)
-        this.input.once('pointerdown', startGame)
+        // Press E to start
+        this.input.keyboard!.once('keydown-E', () => {
+            GameState.init(this);
+            this.scene.start('DayIntro');
+        });
     }
 
     update(_time: number, delta: number) {
