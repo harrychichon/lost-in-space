@@ -105,7 +105,7 @@ export class CavediverEvent extends Scene {
         const textStyle = {
             fontFamily: 'Georgia, serif',
             fontSize: '18px',
-            color: '#cccc99',
+            color: '#c0cdd9',
             align: 'center' as const,
             wordWrap: { width: 620 },
         };
@@ -120,7 +120,7 @@ export class CavediverEvent extends Scene {
         ];
 
         let lineIndex = 0;
-        const storyText = this.add.text(width * 0.5, height * 0.88, '', textStyle)
+        const storyText = this.add.text(width * 0.5, height * 0.78, '', textStyle)
             .setOrigin(0.5).setAlpha(0);
 
         const showNextLine = () => {
