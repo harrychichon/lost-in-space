@@ -32,6 +32,11 @@ export function drawDayIndicator(scene: Scene, state: ReturnType<typeof GameStat
             color: '#e1e0e0',
         })
     )
+    scene.add.text(x + 14, y + 12, `DAY ${state.currentDay}`, {
+        fontFamily: FONT,
+        fontSize: '22px',
+        color: '#e1e0e0',
+    }).setDepth(HUD_DEPTH);
 
     // Separator line
     const line = scene.add.graphics()
