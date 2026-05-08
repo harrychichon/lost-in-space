@@ -375,15 +375,14 @@ export class Cave extends Scene {
         }
     }
 
-    /** Position a HudPanel at the player's screen position, depth above the corner HUD. */
-    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -120) {
+    /** Pin a HudPanel's x to the player's screen position; y stays at spawn. */
+    private anchorPanelAtPlayer(panel: HudPanel) {
         const cam = this.cameras.main;
         const screenX = this.player.x - cam.scrollX;
-        const screenY = this.player.y - cam.scrollY;
         const { width } = this.scale;
         const halfW = panel.getBounds().width / 2;
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
-        panel.setPosition(clampedX, screenY + yOffset);
+        panel.setX(clampedX);
         panel.setDepth(50);
     }
 }

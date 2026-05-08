@@ -151,18 +151,17 @@ export abstract class RoomScene extends Scene {
     }
 
     /**
-     * Position a HudPanel at the player's current screen position, clamped to viewport.
-     * Depth is forced above the corner HUD panels (which sit at 30) so the text
-     * never renders behind ResourceBars / DayIndicator / ChoreChecklist.
+     * Pin a HudPanel's x to the player's screen position, clamped to viewport.
+     * Y is left alone so the panel stays at its original spawn height (bottom area)
+     * instead of floating above the player's head.
      */
-    protected anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -120) {
+    protected anchorPanelAtPlayer(panel: HudPanel) {
         const cam = this.cameras.main;
         const screenX = this.player.x - cam.scrollX;
-        const screenY = this.player.y - cam.scrollY;
         const { width } = this.scale;
         const halfW = panel.getBounds().width / 2;
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX));
-        panel.setPosition(clampedX, screenY + yOffset);
+        panel.setX(clampedX);
         panel.setDepth(50);
     }
 

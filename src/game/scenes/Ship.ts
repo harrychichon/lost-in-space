@@ -562,9 +562,10 @@ export class Ship extends Scene {
     }
 
     private showMessage(text: string) {
-        const { width } = this.scale
+        const { width, height } = this.scale
+        const msgY = height * 0.55
         const msg = this.add
-            .text(this.player.x, this.player.y - 120, text, {
+            .text(this.player.x, msgY, text, {
                 fontFamily: 'Georgia, serif',
                 fontSize: '18px',
                 color: '#999999',
@@ -581,25 +582,24 @@ export class Ship extends Scene {
             duration: 500,
             yoyo: true,
             hold: 1500,
-            // Reposition every frame so the message follows the player
+            // Follow the player on x; y stays where the message spawned
             onUpdate: () => {
                 const halfW = msg.width / 2
                 const x = Math.max(halfW + 16, Math.min(width - halfW - 16, this.player.x))
-                msg.setPosition(x, this.player.y - 120)
+                msg.setX(x)
             },
             onComplete: () => msg.destroy(),
         })
     }
 
-    /** Position a HudPanel at the player's screen position, depth above the corner HUD. */
-    private anchorPanelAtPlayer(panel: HudPanel, yOffset: number = -120) {
+    /** Pin a HudPanel's x to the player's screen position; y stays at spawn. */
+    private anchorPanelAtPlayer(panel: HudPanel) {
         const cam = this.cameras.main
         const screenX = this.player.x - cam.scrollX
-        const screenY = this.player.y - cam.scrollY
         const { width } = this.scale
         const halfW = panel.getBounds().width / 2
         const clampedX = Math.max(halfW + 16, Math.min(width - halfW - 16, screenX))
-        panel.setPosition(clampedX, screenY + yOffset)
+        panel.setX(clampedX)
         panel.setDepth(50)
     }
 
