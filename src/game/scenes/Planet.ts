@@ -482,7 +482,7 @@ export class Planet extends Scene {
         this.shipIndicator.setAlpha(0.5);
 
         // Global navigation bar — shows A/D, M, E/L hints across the bottom
-        this.add.existing(new GlobalNavBar(this));
+        this.add.existing(new GlobalNavBar(this, ['E', 'L']));
 
         // --- Input ---
         this.cursors = this.input.keyboard!.createCursorKeys();

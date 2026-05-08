@@ -250,7 +250,7 @@ export class Cave extends Scene {
         this.leaveKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L);
 
         // Global navigation bar — shows A/D, M, E/L hints across the bottom
-        this.add.existing(new GlobalNavBar(this));
+        this.add.existing(new GlobalNavBar(this, ['E', 'L']));
     }
 
     private getItemInfo(item: PlanetItem) {

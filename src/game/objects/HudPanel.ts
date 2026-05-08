@@ -16,7 +16,7 @@ const PANEL_BORDER      = 0x4ab0d4;
 const PANEL_BORDER_A    = 0.6;
 const CORNER_COLOR      = 0x6ee0ff;
 const ACTION_COLOR      = '#6ee0ff';
-const DESC_COLOR        = '#8a99a8';
+const DESC_COLOR        = '#c0cdd9';
 const FONT_FAMILY       = "'Share Tech Mono', 'Consolas', monospace";
 
 /**
@@ -54,8 +54,9 @@ export class HudPanel extends Phaser.GameObjects.Container {
         this.radius  = 6;
         this.armLen  = isPrompt ? 12 : 8;
 
-        const actionSize = isPrompt ? 22 : 18;
-        const descSize   = 18;
+        // action matches the nav-bar key/label size; desc bumped slightly for readability
+        const actionSize = 16;
+        const descSize   = 12;
         const fontStyle  = 'normal'; // Share Tech Mono carries its own weight; bold renders unevenly
 
         this.glowGfx    = scene.add.graphics();
