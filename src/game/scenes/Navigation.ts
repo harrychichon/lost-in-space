@@ -2,6 +2,7 @@ import { Scene } from 'phaser';
 import { GameState, PlanetData } from '../systems/GameState';
 import { SpaceBackground } from '../objects/SpaceBackground';
 import { AudioManager } from '../systems/AudioManager';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
 
 const BIOME_COLORS: Record<PlanetData['biome'], number> = {
     lush: 0x558855,
@@ -182,6 +183,8 @@ export class Navigation extends Scene {
         this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ESC).on('down', () => {
             this.scene.start('Ship', { fromRoom: 'Navigation' });
         });
+
+        this.add.existing(new GlobalNavBar(this));
     }
 
     update(_time: number, delta: number) {

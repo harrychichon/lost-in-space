@@ -2,6 +2,8 @@ import { Scene } from 'phaser';
 import { GameState } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
+import { HudPanel } from '../objects/HudPanel';
 
 export interface InteractPoint {
     x: number;
@@ -21,8 +23,8 @@ export abstract class RoomScene extends Scene {
     protected keyD!: Phaser.Input.Keyboard.Key;
     protected interactKey!: Phaser.Input.Keyboard.Key;
     protected escKey!: Phaser.Input.Keyboard.Key;
-    protected promptText!: Phaser.GameObjects.Text;
-    protected messageText!: Phaser.GameObjects.Text;
+    protected prompt!: HudPanel;
+    protected message!: HudPanel;
     protected interactPoints: InteractPoint[] = [];
     protected currentPoint: InteractPoint | null = null;
     protected transitioning = false;
@@ -93,28 +95,24 @@ export abstract class RoomScene extends Scene {
         walls.fillRect(this.roomLeft - 3, height * 0.15, 3, height * 0.85);
         walls.fillRect(this.roomRight, height * 0.15, 3, height * 0.85);
 
-        // Prompt text (shown when near an interact point)
-        this.promptText = this.add.text(width * 0.5, height * 0.9, '', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '16px',
-            color: '#aaaaaa',
-        }).setOrigin(0.5).setAlpha(0).setDepth(20);
+        // Prompt panel — shown when near an interact point
+        this.prompt = new HudPanel(this, width * 0.5, height * 0.9, { variant: 'prompt', anchor: 'center' });
+        this.add.existing(this.prompt);
+        this.prompt.setDepth(20).setAlpha(0);
 
-        // Message text (shown after interacting)
-        this.messageText = this.add.text(width * 0.5, height * 0.82, '', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '16px',
-            color: '#999999',
-            wordWrap: { width: 500 },
-            align: 'center',
-        }).setOrigin(0.5).setAlpha(0).setDepth(20);
+        // Message panel — shown after interacting (description-only narrative)
+        this.message = new HudPanel(this, width * 0.5, height * 0.78, { variant: 'prompt', anchor: 'center' });
+        this.add.existing(this.message);
+        this.message.setDepth(20).setAlpha(0);
 
-        // ESC hint
-        this.add.text(this.roomLeft + 8, height - 24, '[ESC] Leave', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '12px',
-            color: '#444444',
-        }).setDepth(20);
+        // ESC hint — small indicator-style panel bottom-left, sits above the global nav bar
+        const escHint = new HudPanel(this, 20, height - 24 - 52, { variant: 'indicator', anchor: 'left' });
+        this.add.existing(escHint);
+        escHint.setLabel('[ESC] Leave');
+        escHint.setDepth(20).setAlpha(0.6);
+
+        // Global navigation bar — pinned to bottom of screen
+        this.add.existing(new GlobalNavBar(this));
     }
 
     /** Draw an exit door and register its interact point. */
@@ -135,14 +133,14 @@ export abstract class RoomScene extends Scene {
         });
     }
 
-    /** Show a message that fades in, holds, then fades out. */
-    protected showMessage(text: string, color = '#999999') {
-        this.messageText.setText(text);
-        this.messageText.setColor(color);
-        this.messageText.setAlpha(0);
-        this.tweens.killTweensOf(this.messageText);
+    /** Show a narrative message that fades in, holds, then fades out. */
+    protected showMessage(text: string, _color?: string) {
+        // _color kept for back-compat with old callers; HudPanel uses one consistent colour scheme.
+        this.message.setContent(undefined, text);
+        this.message.setAlpha(0);
+        this.tweens.killTweensOf(this.message);
         this.tweens.add({
-            targets: this.messageText,
+            targets: this.message,
             alpha: 1,
             duration: 500,
             hold: 2500,
@@ -179,10 +177,10 @@ export abstract class RoomScene extends Scene {
 
         // Show/hide prompt
         if (this.currentPoint) {
-            this.promptText.setText(`[E] ${this.currentPoint.label}`);
-            this.promptText.setAlpha(1);
+            this.prompt.setContent(`[E] ${this.currentPoint.label}`);
+            this.prompt.setAlpha(1);
         } else {
-            this.promptText.setAlpha(0);
+            this.prompt.setAlpha(0);
         }
 
         // Handle E key

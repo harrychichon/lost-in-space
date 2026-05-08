@@ -28,6 +28,10 @@ export class GreenhouseModal extends Scene {
     }
 
     create() {
+        this.finished = false;
+        this.canPress = true;
+        this.currentPlant = 0;
+
         const { width, height } = this.scale;
         const cx = width  * 0.5;
         const cy = height * 0.5;

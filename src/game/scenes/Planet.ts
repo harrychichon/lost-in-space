@@ -2,6 +2,8 @@ import { Scene } from 'phaser';
 import { GameState, PlanetData, PlanetItem, ResourceType } from '../systems/GameState';
 import { AudioManager } from '../systems/AudioManager';
 import { createPlayerSprite, updatePlayerSprite } from '../objects/Player';
+import { HudPanel } from '../objects/HudPanel';
+import { GlobalNavBar } from '../objects/GlobalNavBar';
 
 interface PickupSprite {
     sprite: Phaser.GameObjects.Arc | Phaser.GameObjects.Image;
@@ -104,6 +106,23 @@ const BIOME_RIM: Record<PlanetData['biome'], number> = {
     desert: 0x6a4a30,
 };
 
+const WORLD_WIDTH = 3072;
+
+/**
+ * Draws an arch / doorway shape (flat bottom, vertical sides, semicircle top)
+ * onto the given Graphics object, anchored with its bottom on `baseY`.
+ */
+function drawArch(g: Phaser.GameObjects.Graphics, cx: number, baseY: number, halfW: number, height: number) {
+    const archCenterY = baseY - height + halfW;
+    g.beginPath();
+    g.moveTo(cx - halfW, baseY);
+    g.lineTo(cx - halfW, archCenterY);
+    g.arc(cx, archCenterY, halfW, Math.PI, 0, false);
+    g.lineTo(cx + halfW, baseY);
+    g.closePath();
+    g.fillPath();
+}
+
 export class Planet extends Scene {
     private player!: Phaser.GameObjects.Rectangle;
     private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -115,19 +134,24 @@ export class Planet extends Scene {
     private playerSprite!: Phaser.GameObjects.Sprite;
     private groundY = 0;
     private statusText!: Phaser.GameObjects.Text;
-    private promptText!: Phaser.GameObjects.Text;
+    private prompt!: HudPanel;
     private planetId!: string;
     private currentPickup: PickupSprite | null = null;
     private caveX = 0;
     private caveY = 0;
-    private caveRadius = 55;
+    private caveRadius = 70;
     private nearCave = false;
+    private bgTile!: Phaser.GameObjects.TileSprite;
+    private shipX = 120;
+    private nearShip = false;
+    private caveIndicator!: HudPanel;
+    private shipIndicator!: HudPanel;
 
     constructor() {
         super('Planet');
     }
 
-    create(data: { planetId: string }) {
+    create(data: { planetId: string; spawnAtCave?: boolean }) {
         const { width, height } = this.scale;
         this.planetId = data.planetId;
         this.pickups = [];
@@ -152,16 +176,19 @@ export class Planet extends Scene {
         // Ground line — above this is sky/backdrop, below is walkable ground
         const groundLine = height * 0.75;
 
-        // Biome backdrop — sits behind the ground, only fills the sky portion
-        const bg = this.add.image(width / 2, 0, BIOME_BG[planet.biome]);
-        bg.setOrigin(0.5, 0);
-        bg.setDisplaySize(width, groundLine);
-        bg.setDepth(-10);
+        this.physics.world.setBounds(0, 0, WORLD_WIDTH, height);
+
+        // Biome backdrop — TileSprite pinned to screen; tilePositionX driven in update() for parallax
+        this.bgTile = this.add
+            .tileSprite(width / 2, groundLine / 2, width, groundLine, BIOME_BG[planet.biome])
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(-10);
 
         // Tiled ground strip — surface row + fill rows down to canvas bottom
         const tileSize = 64;
         const family = BIOME_TILE_FAMILY[planet.biome];
-        const cols = Math.ceil(width / tileSize);
+        const cols = Math.ceil(WORLD_WIDTH / tileSize);
         const rows = Math.ceil((height - groundLine) / tileSize);
         for (let r = 0; r < rows; r++) {
             const suffix = r === 0 ? 'top' : 'center';
@@ -176,36 +203,160 @@ export class Planet extends Scene {
         const rimColor = BIOME_RIM[planet.biome];
 
         // --- Cave entrance ---
-        // Position at the far side of the planet, nestled into a hill
-        this.caveX = width * 0.9;
-        this.caveY = height * 0.75 - 2;
         const caveGfx = this.add.graphics();
-        // Dark hillside behind the mouth
-        caveGfx.fillStyle(0x111111, 1);
-        caveGfx.fillEllipse(this.caveX, this.caveY + 4, 70, 56);
-        // Inner cave (arched opening)
-        caveGfx.fillStyle(0x000000, 1);
-        caveGfx.slice(
-            this.caveX,
-            this.caveY,
-            28,
-            Phaser.Math.DegToRad(180),
-            Phaser.Math.DegToRad(360),
-            false,
-        );
-        caveGfx.fillPath();
-        caveGfx.fillRect(this.caveX - 28, this.caveY, 56, 24);
-        // Rim stones
-        caveGfx.fillStyle(rimColor, 1);
-        caveGfx.fillCircle(this.caveX - 30, this.caveY + 6, 6);
-        caveGfx.fillCircle(this.caveX + 30, this.caveY + 8, 5);
-        caveGfx.fillCircle(this.caveX - 24, this.caveY - 14, 4);
-        caveGfx.fillCircle(this.caveX + 22, this.caveY - 16, 5);
 
-        // Warm light flickering from inside — only on the cavediver-event planet,
-        // and only before she's joined
+        // Position depends on entrance type: mountain tunnel sits at the far-right edge
+        // with the trigger at the tunnel mouth; bare cave sits at 90% of world width.
+        this.caveX = planet.mountainCave ? WORLD_WIDTH - 280 : WORLD_WIDTH * 0.9;
+        this.caveY = planet.mountainCave ? groundLine - 50  : groundLine - 2;
+
+        // Overhang color: darker than rimColor for the rock ceiling
+        const rv = (rimColor >> 16) & 0xff;
+        const gv = (rimColor >> 8) & 0xff;
+        const bv = rimColor & 0xff;
+        const overhangColor = (Math.floor(rv * 0.6) << 16) | (Math.floor(gv * 0.6) << 8) | Math.floor(bv * 0.6);
+
+        if (planet.mountainCave) {
+            // ===== MOUNTAIN + ARCH TUNNEL =====
+            const mtnMain:   Record<string, number> = { lush: 0x3d4a2d, frozen: 0x4a5566, desert: 0x6a4a33 };
+            const mtnShadow: Record<string, number> = { lush: 0x2a3320, frozen: 0x3a4455, desert: 0x523a27 };
+            const mtnBg:     Record<string, number> = { lush: 0x4a5a38, frozen: 0x5a6677, desert: 0x7a5a44 };
+
+            const peakX = WORLD_WIDTH - 60;
+            const peakY = groundLine - 240;
+            const leftBaseX  = WORLD_WIDTH - 380;
+            const rightBaseX = WORLD_WIDTH + 50;
+
+            // 1. Background range — a higher peak slightly behind, lighter color (depth)
+            caveGfx.fillStyle(mtnBg[planet.biome] ?? 0x4a5a44, 1);
+            caveGfx.fillTriangle(WORLD_WIDTH - 20, groundLine - 180,
+                                 WORLD_WIDTH - 250, groundLine,
+                                 WORLD_WIDTH + 80, groundLine);
+
+            // 2. Main mountain body — long visible left slope, steeper hidden right slope
+            caveGfx.fillStyle(mtnMain[planet.biome] ?? 0x3d4a2d, 1);
+            caveGfx.fillTriangle(peakX, peakY,  leftBaseX, groundLine,  rightBaseX, groundLine);
+
+            // 3. Shadow on right slope — sun coming from left, left face is lit
+            caveGfx.fillStyle(mtnShadow[planet.biome] ?? 0x2a3320, 1);
+            caveGfx.fillTriangle(peakX, peakY,  peakX, groundLine,  rightBaseX, groundLine);
+
+            // 4. Rock ledges on the visible left face — texture
+            caveGfx.fillStyle(mtnShadow[planet.biome] ?? 0x2a3320, 1);
+            caveGfx.fillTriangle(peakX - 90,  groundLine - 110, peakX - 140, groundLine - 80,  peakX - 70,  groundLine - 80);
+            caveGfx.fillTriangle(peakX - 30,  groundLine - 180, peakX - 70,  groundLine - 150, peakX - 15,  groundLine - 150);
+
+            // 5. Snow cap — frozen biome only
+            if (planet.biome === 'frozen') {
+                caveGfx.fillStyle(0xddeeff, 1);
+                caveGfx.fillTriangle(peakX, peakY,  peakX - 35, peakY + 45,  peakX + 35, peakY + 50);
+            }
+
+            // 6. Tunnel arch — drawn into the mountain face
+            const archHalfW = 35;
+            const archH     = 100;
+            const cx        = this.caveX;
+
+            // Outer rim (frame around opening — biome-rim color rock)
+            caveGfx.fillStyle(rimColor, 1);
+            drawArch(caveGfx, cx, groundLine, archHalfW + 8, archH + 6);
+
+            // Inner depth gradient — 5 nested arches, lightest outer to pure black core
+            const archShades = [0x2a2a2a, 0x1a1a1a, 0x0e0e0e, 0x040404, 0x000000];
+            const archScale  = [1.00,     0.84,     0.68,     0.52,     0.36];
+            archShades.forEach((shade, i) => {
+                caveGfx.fillStyle(shade, 1);
+                drawArch(caveGfx, cx, groundLine, archHalfW * archScale[i], archH * archScale[i]);
+            });
+
+            // 7. Tunnel pillars — rock columns flanking the arch
+            caveGfx.fillStyle(rimColor, 1);
+            // Left pillar — stack of boulders
+            caveGfx.fillCircle(cx - 50, groundLine - 18, 16);
+            caveGfx.fillCircle(cx - 48, groundLine - 50, 14);
+            caveGfx.fillCircle(cx - 54, groundLine - 80, 11);
+            // Right pillar
+            caveGfx.fillCircle(cx + 50, groundLine - 16, 15);
+            caveGfx.fillCircle(cx + 48, groundLine - 48, 13);
+            caveGfx.fillCircle(cx + 54, groundLine - 78, 10);
+
+            // 8. Overhang — keystone rock above the arch
+            caveGfx.fillStyle(overhangColor, 1);
+            caveGfx.fillEllipse(cx, groundLine - archH - 6, 100, 22);
+
+            // 9. Ground scatter — loose rocks just outside the tunnel mouth
+            caveGfx.fillStyle(rimColor, 1);
+            caveGfx.fillCircle(cx - 30, groundLine + 6, 5);
+            caveGfx.fillCircle(cx + 22, groundLine + 8, 4);
+            caveGfx.fillCircle(cx - 14, groundLine + 10, 3);
+        } else {
+            // ===== EXISTING FLAT-GROUND CAVE (unchanged) =====
+            const moundColors: Record<string, number> = {
+                lush: 0x2a3522, frozen: 0x3a4a55, desert: 0x4a3520,
+            };
+            const moundColor = moundColors[planet.biome] ?? 0x2a2a2a;
+
+            // 1. Ground mound — hillside the cave is carved into
+            caveGfx.fillStyle(moundColor, 1);
+            caveGfx.fillEllipse(this.caveX, this.caveY + 12, 170, 80);
+
+            // 2. Depth gradient — concentric ellipses dark gray → black
+            const depthShades = [0x242424, 0x161616, 0x090909, 0x000000];
+            const depthW      = [88, 74, 60, 46];
+            const depthH      = [56, 46, 36, 26];
+            depthShades.forEach((shade, i) => {
+                caveGfx.fillStyle(shade, 1);
+                caveGfx.fillEllipse(this.caveX, this.caveY + 8, depthW[i], depthH[i]);
+            });
+
+            // 2b. Edge-breakers: mound-colored blobs biting into the opening rim
+            caveGfx.fillStyle(moundColor, 1);
+            caveGfx.fillCircle(this.caveX - 32, this.caveY - 18,  9);
+            caveGfx.fillCircle(this.caveX - 10, this.caveY - 26,  7);
+            caveGfx.fillCircle(this.caveX + 22, this.caveY - 22, 10);
+            caveGfx.fillCircle(this.caveX - 44, this.caveY - 2,   8);
+            caveGfx.fillCircle(this.caveX + 42, this.caveY - 6,   7);
+            caveGfx.fillTriangle(
+                this.caveX - 18, this.caveY - 28,
+                this.caveX - 28, this.caveY - 22,
+                this.caveX - 22, this.caveY - 16,
+            );
+            caveGfx.fillTriangle(
+                this.caveX + 16, this.caveY - 28,
+                this.caveX + 10, this.caveY - 20,
+                this.caveX + 26, this.caveY - 22,
+            );
+
+            // 3. Left boulder cluster
+            caveGfx.fillStyle(rimColor, 1);
+            caveGfx.fillCircle(this.caveX - 46, this.caveY + 4,  20);
+            caveGfx.fillCircle(this.caveX - 38, this.caveY - 14, 14);
+            caveGfx.fillCircle(this.caveX - 56, this.caveY - 2,  10);
+
+            // 4. Right boulder cluster
+            caveGfx.fillCircle(this.caveX + 44, this.caveY + 6,  18);
+            caveGfx.fillCircle(this.caveX + 36, this.caveY - 12, 13);
+            caveGfx.fillCircle(this.caveX + 52, this.caveY,       9);
+
+            // 5. Top overhang
+            caveGfx.fillStyle(overhangColor, 1);
+            caveGfx.fillEllipse(this.caveX, this.caveY - 20, 110, 28);
+
+            // 6. Ground scatter
+            caveGfx.fillStyle(rimColor, 1);
+            caveGfx.fillCircle(this.caveX - 20, this.caveY + 22, 5);
+            caveGfx.fillCircle(this.caveX + 14, this.caveY + 24, 4);
+            caveGfx.fillCircle(this.caveX + 30, this.caveY + 20, 3);
+        }
+
+        // 7. Glow states — positioned inside the opening so light shines outward
+        // Mountain: caveY is already at arch center, larger glow for the tunnel.
+        // Cave: small offset to land inside the depth ellipse.
+        const glowY = planet.mountainCave ? this.caveY : this.caveY + 6;
+        const glowR = planet.mountainCave ? 28 : 22;
+
         if (planet.caveLit && !GameState.hasCompanion(this, 'cavediver')) {
-            const glow = this.add.circle(this.caveX, this.caveY + 2, 18, 0xffcc66, 0.45);
+            const glow = this.add.circle(this.caveX, glowY, glowR, 0xffcc66, 0.45);
             this.tweens.add({
                 targets: glow,
                 alpha: 0.2,
@@ -216,6 +367,27 @@ export class Planet extends Scene {
                 ease: 'Sine.easeInOut',
             });
         }
+        if (GameState.hasCompanion(this, 'cavediver')) {
+            const glow = this.add.circle(this.caveX, glowY, glowR, 0x44bbaa, 0.22);
+            this.tweens.add({
+                targets: glow,
+                alpha: 0.08,
+                scale: 1.2,
+                duration: 1800,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut',
+            });
+        }
+
+        // --- Landed ship at world start ---
+        this.shipX = -100;
+        const shipImg = this.add.image(this.shipX, groundLine, 'ship_default')
+            .setOrigin(0.5, 1)
+            .setDepth(-1);
+        shipImg.displayHeight = 256;
+        shipImg.scaleX = shipImg.scaleY; // preserve aspect ratio
+        shipImg.setFlipX(true);          // show rear of ship — player approaches from the right
 
         // --- Resource pickups from planet data ---
         const uncollectedItems = planet.items
@@ -223,7 +395,7 @@ export class Planet extends Scene {
             .filter(item => !item.collected);
 
         uncollectedItems.forEach((item, i) => {
-            const px = item.x * width;
+            const px = item.x * WORLD_WIDTH;
             const py = height * 0.75 - Phaser.Math.Between(5, 25);
             const colorKey = item.type === 'unique' ? (item.uniqueId ?? 'unique') : item.type;
 
@@ -257,45 +429,60 @@ export class Planet extends Scene {
 
         // --- Player ---
         this.groundY = height * 0.75;
-        this.player = this.add.rectangle(60, this.groundY - 25, 20, 50, 0xaaaaaa, 0); // invisible hitbox
+        const playerStartX = data.spawnAtCave ? WORLD_WIDTH * 0.9 - 120 : 80;
+        this.player = this.add.rectangle(playerStartX, this.groundY - 25, 20, 50, 0xaaaaaa, 0); // invisible hitbox
         this.physics.add.existing(this.player);
         const body = this.player.body as Phaser.Physics.Arcade.Body;
         body.setCollideWorldBounds(true);
         this.playerSprite = createPlayerSprite(this, this.player.x, this.groundY);
 
-        // --- HUD ---
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, height);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        if (data.spawnAtCave) {
+            // Snap camera to cave area immediately — avoids slow pan from world start
+            this.cameras.main.scrollX = playerStartX - width / 2;
+            // Fade in from black — "emerging from darkness" after leaving the cave
+            this.cameras.main.fadeIn(500, 0, 0, 0);
+        }
+
+        // --- HUD (all pinned to screen) ---
         this.add.text(width * 0.5, 20, planet.name, {
-            fontFamily: 'Georgia, serif',
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
             fontSize: '22px',
             color: '#888888',
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setScrollFactor(0);
 
-        this.add.text(width * 0.5, 44, planet.biome, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '12px',
-            color: '#666666',
-        }).setOrigin(0.5);
-
-        this.statusText = this.add.text(width * 0.5, 64, `Items remaining: ${uncollectedItems.length}`, {
-            fontFamily: 'Georgia, serif',
+        this.add.text(width * 0.5, 48, planet.biome.toUpperCase(), {
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
             fontSize: '14px',
-            color: '#777777',
-        }).setOrigin(0.5);
+            color: '#8a99a8',
+        }).setOrigin(0.5).setScrollFactor(0);
 
-        // Item prompt (shown when near a pickup)
-        this.promptText = this.add.text(width * 0.5, height * 0.88, '', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#aaaaaa',
-            align: 'center',
-            wordWrap: { width: 500 },
-        }).setOrigin(0.5).setAlpha(0);
+        this.statusText = this.add.text(width * 0.5, 72, `Items remaining: ${uncollectedItems.length}`, {
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
+            fontSize: '18px',
+            color: '#8a99a8',
+        }).setOrigin(0.5).setScrollFactor(0);
 
-        this.add.text(width * 0.5, height - 20, '[L] Leave Planet', {
-            fontFamily: 'Georgia, serif',
-            fontSize: '13px',
-            color: '#555555',
-        }).setOrigin(0.5);
+        // Center prompt — sci-fi panel, shown when near a pickup / cave / ship
+        this.prompt = new HudPanel(this, width * 0.5, height * 0.88, { variant: 'prompt', anchor: 'center' });
+        this.add.existing(this.prompt);
+        this.prompt.setAlpha(0);
+
+        // Cave indicator — bottom-right, visible when cavediver joined and not near cave
+        this.caveIndicator = new HudPanel(this, width - 20, height * 0.88, { variant: 'indicator', anchor: 'right' });
+        this.add.existing(this.caveIndicator);
+        this.caveIndicator.setLabel('→ Cave');
+        this.caveIndicator.setAlpha(0);
+
+        // Ship indicator — bottom-left, quiet wayfinding cue toward the landing site
+        this.shipIndicator = new HudPanel(this, 20, height * 0.88, { variant: 'indicator', anchor: 'left' });
+        this.add.existing(this.shipIndicator);
+        this.shipIndicator.setLabel('← Ship');
+        this.shipIndicator.setAlpha(0.5);
+
+        // Global navigation bar — shows A/D, M, E/L hints across the bottom
+        this.add.existing(new GlobalNavBar(this, ['E', 'L']));
 
         // --- Input ---
         this.cursors = this.input.keyboard!.createCursorKeys();
@@ -343,9 +530,9 @@ export class Planet extends Scene {
             : `Collected: ${info.name}`;
 
         const label = this.add.text(pickup.sprite.x, pickup.sprite.y - 20, feedbackText, {
-            fontFamily: 'Georgia, serif',
-            fontSize: '14px',
-            color: '#cccccc',
+            fontFamily: "'Share Tech Mono', 'Consolas', monospace",
+            fontSize: '18px',
+            color: '#6ee0ff',
         }).setOrigin(0.5);
 
         this.tweens.add({
@@ -362,11 +549,13 @@ export class Planet extends Scene {
 
         const remaining = this.pickups.length;
         this.statusText.setText(`Items remaining: ${remaining}`);
-        this.promptText.setAlpha(0);
+        this.prompt.setAlpha(0);
         this.currentPickup = null;
     }
 
     update() {
+        this.bgTile.tilePositionX = this.cameras.main.scrollX * 0.3;
+
         const body = this.player.body as Phaser.Physics.Arcade.Body;
 
         // Movement
@@ -379,6 +568,18 @@ export class Planet extends Scene {
         }
 
         updatePlayerSprite(this.playerSprite, this.player.x, this.groundY, body.velocity.x);
+
+        // Cave indicator — show when cavediver joined, hide when near cave (prompt takes over)
+        {
+            const hasCavediver = GameState.hasCompanion(this, 'cavediver');
+            const caveHasItems = GameState.getPlanet(this, this.planetId)
+                ?.caveItems.some(i => !i.collected) ?? false;
+            this.caveIndicator.setAlpha(
+                hasCavediver && !this.nearCave ? (caveHasItems ? 0.7 : 0.25) : 0,
+            );
+            // Ship indicator — quiet wayfinding cue, hides only when at the ship
+            this.shipIndicator.setAlpha(this.nearShip ? 0 : 0.5);
+        }
 
         // Find nearest pickup in range
         this.currentPickup = null;
@@ -406,16 +607,15 @@ export class Planet extends Scene {
             const planet = GameState.getPlanet(this, this.planetId);
             const hasCavediver = GameState.hasCompanion(this, 'cavediver');
             if (hasCavediver) {
-                this.promptText.setText('Cave\n[E] Enter');
-                this.promptText.setColor('#aaaaaa');
+                const caveItemsLeft = planet?.caveItems.filter(i => !i.collected).length ?? 0;
+                const caveLabel = caveItemsLeft > 0 ? `Cave — ${caveItemsLeft} items` : 'Cave — explored';
+                this.prompt.setContent('[E] Enter', caveLabel);
             } else if (planet?.caveLit) {
-                this.promptText.setText('A warm light flickers from deep within...\n[E] Enter');
-                this.promptText.setColor('#ccaa77');
+                this.prompt.setContent('[E] Enter', 'A warm light flickers from deep within…');
             } else {
-                this.promptText.setText('A dark cave.\nWouldn\'t go in there.');
-                this.promptText.setColor('#666666');
+                this.prompt.setContent(undefined, "A dark cave. Wouldn't go in there.");
             }
-            this.promptText.setAlpha(1);
+            this.prompt.setAlpha(1);
 
             if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
                 if (hasCavediver) {
@@ -429,34 +629,43 @@ export class Planet extends Scene {
             return;
         }
 
+        // Ship proximity — ship sits at the far-left edge (partly off-screen),
+        // so "near the ship" = player is in the leftmost zone of the world
+        this.nearShip = !this.currentPickup && !this.nearCave && this.player.x < 110;
+
+        if (this.nearShip) {
+            this.prompt.setContent('[E] Board', 'Your ship');
+            this.prompt.setAlpha(1);
+
+            if (Phaser.Input.Keyboard.JustDown(this.interactKey)) {
+                this.scene.start('Ship');
+                return;
+            }
+            return;
+        }
+
         // Show/hide prompt
         if (this.currentPickup) {
             const info = this.getItemInfo(this.currentPickup.item);
             const isLocked = this.currentPickup.item.locked;
 
             if (isLocked) {
-                this.promptText.setText(`${info.name}\n${info.desc}`);
-                this.promptText.setColor('#666666');
+                this.prompt.setContent(undefined, `${info.name}\n${info.desc}`);
             } else {
                 const resourceHint = info.resource ? ` (+${info.gain} ${info.resource})` : '';
-                this.promptText.setText(`${info.name}${resourceHint}\n${info.desc}\n[E] Pick up`);
-                this.promptText.setColor('#aaaaaa');
+                this.prompt.setContent('[E] Pick up', `${info.name}${resourceHint}\n${info.desc}`);
             }
-            this.promptText.setAlpha(1);
+            this.prompt.setAlpha(1);
         } else {
-            this.promptText.setAlpha(0);
+            this.prompt.setAlpha(0);
         }
 
         // Handle pickup
         if (this.currentPickup && Phaser.Input.Keyboard.JustDown(this.interactKey)) {
-            if (this.currentPickup.item.locked) {
-                // Can't pick up — show rejection message
-                const info = this.getItemInfo(this.currentPickup.item);
-                this.promptText.setText(`${info.name}\n${info.desc}`);
-                this.promptText.setColor('#554444');
-            } else {
+            if (!this.currentPickup.item.locked) {
                 this.collectItem(this.currentPickup);
             }
+            // Locked: prompt already shows the rejection (no [E] action)
         }
 
         // Leave planet
