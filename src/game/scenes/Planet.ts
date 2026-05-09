@@ -149,6 +149,7 @@ export class Planet extends Scene {
     private caveIndicator!: HudPanel;
     private shipIndicator!: HudPanel;
     private biome = '';
+    private leaving = false;
 
     constructor() {
         super('Planet');
@@ -159,7 +160,7 @@ export class Planet extends Scene {
         this.planetId = data.planetId;
         this.pickups = [];
         this.currentPickup = null;
-        this.leaving = false;
+        this.leaving = false; // reset for scene restart
 
         const planet = GameState.getPlanet(this, this.planetId);
         if (!planet) {
@@ -690,6 +691,15 @@ export class Planet extends Scene {
         if (Phaser.Input.Keyboard.JustDown(this.leaveKey)) {
             this.leaveToShip();
         }
+    }
+
+    private leaveToShip() {
+        if (this.leaving) return;
+        this.leaving = true;
+        this.cameras.main.fadeOut(500, 0, 0, 0);
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+            this.scene.start('Ship');
+        });
     }
 
     /** Pin a HudPanel's x to the player's screen position; y stays at spawn. */
