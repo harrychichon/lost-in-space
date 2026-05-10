@@ -36,8 +36,20 @@ function planetTextureFor(planet: PlanetData): string {
     return PLANET_TEXTURES[(n - 1 + PLANET_TEXTURES.length) % PLANET_TEXTURES.length]
 }
 
+interface PlanetEntry {
+    sprite: Phaser.GameObjects.Image
+    /** Scale assigned by setDisplaySize() — multiply, don't replace. */
+    baseScale: number
+    orbitRing: Phaser.GameObjects.Graphics
+    selectionRing: Phaser.GameObjects.Graphics
+    nameText: Phaser.GameObjects.Text
+    planet: PlanetData
+}
+
 export class Navigation extends Scene {
     private space!: SpaceBackground
+    private selectedIndex = 0
+    private planetEntries: PlanetEntry[] = []
 
     constructor() {
         super('Navigation')
@@ -48,6 +60,9 @@ export class Navigation extends Scene {
         const state = GameState.get(this)
         const cx = width * 0.5
         const cy = height * 0.5
+
+        this.selectedIndex = 0
+        this.planetEntries = []
 
         this.cameras.main.setBackgroundColor(0x000000)
 
@@ -69,33 +84,22 @@ export class Navigation extends Scene {
             })
             .setOrigin(0.5)
 
-        // Ship in center (top-down view)
-        const ship = this.add.graphics()
-        // Hull
-        ship.fillStyle(0x888888, 1)
-        ship.fillTriangle(cx, cy - 20, cx - 10, cy + 14, cx + 10, cy + 14)
-        // Cockpit window
-        ship.fillStyle(0xaaaacc, 1)
-        ship.fillTriangle(cx, cy - 12, cx - 5, cy, cx + 5, cy)
-        // Engine glow
-        ship.fillStyle(0x666677, 0.6)
-        ship.fillRect(cx - 6, cy + 14, 12, 4)
-        // Wings
-        ship.fillStyle(0x777777, 1)
-        ship.fillTriangle(cx - 10, cy + 6, cx - 22, cy + 16, cx - 10, cy + 14)
-        ship.fillTriangle(cx + 10, cy + 6, cx + 22, cy + 16, cx + 10, cy + 14)
+        // Ship in center — pixel-art sprite
+        const ship = this.add.image(cx, cy, 'ship_navigation').setOrigin(0.5)
+        ship.displayHeight = 105
+        ship.scaleX = ship.scaleY
 
         this.add
-            .text(cx, cy + 28, 'Your Ship', {
+            .text(cx, cy + ship.displayHeight / 2 + 12, 'Your Ship', {
                 fontFamily: 'Georgia, serif',
                 fontSize: '11px',
-                color: '#666666',
+                color: '#b0b8c0',
             })
             .setOrigin(0.5)
 
         if (state.planets.length === 0) {
             this.add
-                .text(cx, cy + 60, 'No planets discovered yet.\nKeep drifting...', {
+                .text(cx, cy + 100, 'No planets discovered yet.\nKeep drifting...', {
                     fontFamily: 'Georgia, serif',
                     fontSize: '18px',
                     color: '#555555',
@@ -103,16 +107,26 @@ export class Navigation extends Scene {
                 })
                 .setOrigin(0.5)
         } else {
-            // Spread planets in a circle around the ship
-            const minRadius = 140
-            const maxRadius = Math.min(width, height) * 0.4
-            const angleStep = (Math.PI * 2) / Math.max(state.planets.length, 1)
+            // Solar-system layout — concentric rings of 5 planets each.
+            // Index 0..4 → ring 0, 5..9 → ring 1, 10..14 → ring 2, 15..19 → ring 3.
+            // Odd rings are angle-staggered by half a step so adjacent rings don't
+            // align radially and visually clash.
+            const PLANETS_PER_RING = 5
+            // Tightened so the outermost ring's straight-down planet (radius 270)
+            // and its labels fit above the GlobalNavBar without clipping.
+            const RING_RADII = [160, 200, 235, 270]
+            const angleStep = (Math.PI * 2) / PLANETS_PER_RING // 72°
             const startAngle = -Math.PI / 2 // start from top
 
             state.planets.forEach((planet, i) => {
-                // Vary the radius so they don't sit on a perfect circle
-                const radius = minRadius + ((i * 67) % 3) * ((maxRadius - minRadius) / 3)
-                const angle = startAngle + i * angleStep
+                const ringIndex = Math.min(
+                    Math.floor(i / PLANETS_PER_RING),
+                    RING_RADII.length - 1,
+                )
+                const positionInRing = i % PLANETS_PER_RING
+                const radius = RING_RADII[ringIndex]
+                const ringStagger = (ringIndex % 2) * (angleStep / 2)
+                const angle = startAngle + positionInRing * angleStep + ringStagger
                 const px = cx + Math.cos(angle) * radius
                 const py = cy + Math.sin(angle) * radius
                 const color = BIOME_COLORS[planet.biome]
@@ -137,18 +151,27 @@ export class Navigation extends Scene {
                 // Planet body (sprite)
                 const planetSprite = this.add.image(px, py, planetTextureFor(planet))
                 planetSprite.setDisplaySize(54, 54)
+                const baseScale = planetSprite.scale
 
                 // Subtle orbit ring, biome-tinted
                 const orbitRing = this.add.graphics()
                 orbitRing.lineStyle(1, color, 0.15)
                 orbitRing.strokeCircle(px, py, 34)
 
+                // Selection ring — bright cyan rounded rectangle wrapping planet + name +
+                // item label, with ~10px breathing room on all sides so the content
+                // doesn't crowd the border.
+                const selectionRing = this.add.graphics()
+                selectionRing.lineStyle(2, 0x6ee0ff, 0.9)
+                selectionRing.strokeRoundedRect(px - 65, py - 43, 130, 112, 16)
+                selectionRing.setVisible(false)
+
                 // Planet name
-                this.add
+                const nameText = this.add
                     .text(px, py + 32, planet.name, {
                         fontFamily: 'Georgia, serif',
                         fontSize: '13px',
-                        color: '#999999',
+                        color: '#b0b8c0',
                     })
                     .setOrigin(0.5)
 
@@ -157,7 +180,7 @@ export class Navigation extends Scene {
                     uncollected > 0
                         ? `${planet.biome} · ${uncollected}/${total} items`
                         : `${planet.biome} · explored`
-                const itemColor = uncollected > 0 ? '#777777' : '#555555'
+                const itemColor = uncollected > 0 ? '#969ea6' : '#707880'
                 this.add
                     .text(px, py + 47, itemLabel, {
                         fontFamily: 'Georgia, serif',
@@ -166,53 +189,58 @@ export class Navigation extends Scene {
                     })
                     .setOrigin(0.5)
 
-                // Key shortcut
-                if (i < 9) {
-                    this.add
-                        .text(px, py - 32, `[${i + 1}]`, {
-                            fontFamily: 'Georgia, serif',
-                            fontSize: '11px',
-                            color: '#555555',
-                        })
-                        .setOrigin(0.5)
-
-                    const key = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ONE + i)
-                    key.on('down', () => {
-                        this.scene.start('Planet', { planetId: planet.id })
-                    })
-                }
-
-                // Interactive hover/click
-                planetSprite.setInteractive({ useHandCursor: true })
-                const baseScale = planetSprite.scale
-                planetSprite.on('pointerover', () => {
-                    planetSprite.setScale(baseScale * 1.15)
-                    orbitRing.setAlpha(0.6)
-                })
-                planetSprite.on('pointerout', () => {
-                    planetSprite.setScale(baseScale)
-                    orbitRing.setAlpha(1)
-                })
-                planetSprite.on('pointerdown', () => {
-                    this.scene.start('Planet', { planetId: planet.id })
+                this.planetEntries.push({
+                    sprite: planetSprite,
+                    baseScale,
+                    orbitRing,
+                    selectionRing,
+                    nameText,
+                    planet,
                 })
             })
+
+            this.updateSelection()
         }
 
-        // Back prompt
-        this.add
-            .text(cx, height - 30, '[L] Back to Ship', {
-                fontFamily: 'Georgia, serif',
-                fontSize: '14px',
-                color: '#555555',
-            })
-            .setOrigin(0.5)
+        // Inputs — A/D cycle, E confirm, L back (the GlobalNavBar at the bottom
+        // already shows the L hint, so no extra prompt text needed up here).
+        const keyA = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A)
+        const keyD = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+        const keyE = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.E)
+        const keyL = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L)
 
-        this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.L).on('down', () => {
+        keyA.on('down', () => {
+            const n = this.planetEntries.length
+            if (n === 0) return
+            this.selectedIndex = (this.selectedIndex - 1 + n) % n
+            this.updateSelection()
+        })
+        keyD.on('down', () => {
+            const n = this.planetEntries.length
+            if (n === 0) return
+            this.selectedIndex = (this.selectedIndex + 1) % n
+            this.updateSelection()
+        })
+        keyE.on('down', () => {
+            if (this.planetEntries.length === 0) return
+            const planet = this.planetEntries[this.selectedIndex].planet
+            this.scene.start('Planet', { planetId: planet.id })
+        })
+        keyL.on('down', () => {
             this.scene.start('Ship', { fromRoom: 'Navigation' })
         })
 
-        this.add.existing(new GlobalNavBar(this, ['L']))
+        this.add.existing(new GlobalNavBar(this, ['E', 'L']))
+    }
+
+    private updateSelection() {
+        this.planetEntries.forEach((e, i) => {
+            const isSelected = i === this.selectedIndex
+            e.sprite.setScale(isSelected ? e.baseScale * 1.18 : e.baseScale)
+            e.orbitRing.setAlpha(isSelected ? 0.6 : 0.15)
+            e.selectionRing.setVisible(isSelected)
+            e.nameText.setColor(isSelected ? '#c0cdd9' : '#b0b8c0')
+        })
     }
 
     update(_time: number, delta: number) {
